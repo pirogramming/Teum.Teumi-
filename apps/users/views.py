@@ -4,10 +4,29 @@ import requests
 from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.contrib.auth import login
-from .models import User
+from .models import *
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.forms import AuthenticationForm
+from json import JSONDecodeError
+from django.http import JsonResponse
+from rest_framework import status
+from allauth.socialaccount.models import SocialAccount
 from dotenv import load_dotenv
+from dj_rest_auth.registration.views import SocialLoginView
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from allauth.socialaccount.providers.google import views as google_view
+from django.conf import settings
+
+
+GOOGLE_CALLBACK_URI = settings.GOOGLE_CALLBACK_URI
+
+state = os.environ.get("STATE")
+BASE_URL = 'http://localhost:8000/'
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = google_view.GoogleOAuth2Adapter
+    callback_url = GOOGLE_CALLBACK_URI
+    client_class = OAuth2Client
 
 load_dotenv()
 
@@ -50,7 +69,7 @@ def kakao_login(request):
 
 
 @csrf_exempt
-def kakao_login_callback(request):
+def kakao_callback(request):
     try:
         if request.user.is_authenticated:
             raise SocialLoginException("User already logged in")
@@ -129,3 +148,68 @@ def kakao_login_callback(request):
     except (KakaoException, SocialLoginException) as error:
         messages.error(request, str(error))
         return redirect("/")
+    
+def google_login(request):
+    scope = "https://www.googleapis.com/auth/userinfo.email"
+    client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
+    return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
+
+def google_callback(request):
+    client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
+    client_secret = os.environ.get("SOCIAL_AUTH_GOOGLE_SECRET")
+    code = request.GET.get('code')
+
+    token_req = requests.post(f"https://oauth2.googleapis.com/token?client_id={client_id}&client_secret={client_secret}&code={code}&grant_type=authorization_code&redirect_uri={GOOGLE_CALLBACK_URI}&state={state}")
+    
+    token_req_json = token_req.json()
+    error = token_req_json.get("error")
+
+    if error is not None:
+        raise JSONDecodeError(error)
+
+    access_token = token_req_json.get('access_token')
+
+    email_req = requests.get(f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}")
+    email_req_status = email_req.status_code
+
+    if email_req_status != 200:
+        return JsonResponse({'err_msg': 'failed to get email'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    email_req_json = email_req.json()
+    email = email_req_json.get('email')
+
+    try:
+        user = User.objects.get(email=email)
+
+        social_user = SocialAccount.objects.get(user=user)
+
+        if social_user.provider != 'google':
+            return JsonResponse({'err_msg': 'no matching social type'}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = {'access_token': access_token, 'code': code}
+        accept = requests.post(f"{BASE_URL}api/user/google/login/finish/", data=data)
+        accept_status = accept.status_code
+
+        if accept_status != 200:
+            return JsonResponse({'err_msg': 'failed to signin'}, status=accept_status)
+
+        accept_json = accept.json()
+        accept_json.pop('user', None)
+        return JsonResponse(accept_json)
+
+    except User.DoesNotExist:
+        data = {'access_token': access_token, 'code': code}
+        accept = requests.post(f"{BASE_URL}api/user/google/login/finish/", data=data)
+        accept_status = accept.status_code
+
+        if accept_status != 200:
+            return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
+
+        accept_json = accept.json()
+        accept_json.pop('user', None)
+        return JsonResponse(accept_json)
+    
+    except SocialAccount.DoesNotExist:
+        return JsonResponse({'err_msg': 'email exists but not social user'}, status=status.HTTP_400_BAD_REQUEST)
+
+print(GOOGLE_CALLBACK_URI)

@@ -10,3 +10,4 @@ requests==2.32.4
 djangorestframework_simplejwt==5.5.1
 dj-rest-auth==7.0.1
 django-allauth==65.10.0
+cryptography==45.0.5
