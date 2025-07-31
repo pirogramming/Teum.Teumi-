@@ -1,0 +1,90 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    color: #57564F;
+    background-color: #FAF9EE;
+    font-size: 16px;
+    margin: 100px;
+    text-align: center;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-logo > div {
+    background-color: white;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.2rem;
+}
+
+.body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.body > div {
+    background-color: white;
+    padding: 20px;
+    border-radius: 20px;
+    width: 500px;
+}
+
+.login-logo {
+    margin: 10px 0;
+}
+
+button {
+    width: 100%;
+    border: none;
+    background-color: white;
+}
+
+.login {
+    border-radius: 12px;
+}
+
+.login > a {
+    text-decoration: none;
+    color: black;
+    border-radius: 12px;
+}
+
+#kakao {
+    font-size: 1.2rem;
+    background-color: #FAE100;
+    padding: 10px 20px;
+}
+
+#kakao:hover {
+    background-color: color-mix(in srgb, #FAE100, black 5%);
+}
+
+#google {
+    font-size: 1.2rem;
+    background-color: #F6F6F6;
+    padding: 10px 20px;
+}
+
+#google:hover {
+    background-color: color-mix(in srgb, #F6F6F6, black 5%);
+}
+
+.strong {
+    text-decoration: underline;
+}
