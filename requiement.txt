@@ -6,3 +6,7 @@ python-dotenv==1.1.1
 sqlparse==0.5.3
 typing_extensions==4.14.1
 tzdata==2025.2
+requests==2.32.4
+djangorestframework_simplejwt==5.5.1
+dj-rest-auth==7.0.1
+django-allauth==65.10.0

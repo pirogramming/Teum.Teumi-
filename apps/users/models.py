@@ -1,3 +1,23 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
+
+class User(AbstractUser):
+
+    """ Custom User model """
+
+    LOGIN_EMAIL = "email"
+    LOGIN_KAKAO = "kakao"
+
+    LOGIN_CHOICES = (
+        (LOGIN_EMAIL, "Email"),
+        (LOGIN_KAKAO, "Kakao"),
+    )
+
+    login_method = models.CharField(
+        max_length=6, choices=LOGIN_CHOICES, default=LOGIN_EMAIL
+    )
+
+    gender = models.CharField(max_length=10, blank=True, null=True)  # 성별
+    avatar = models.ImageField(upload_to="avatars", blank=True, null=True)  # 이미지
