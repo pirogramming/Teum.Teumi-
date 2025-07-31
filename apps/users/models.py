@@ -9,10 +9,12 @@ class User(AbstractUser):
 
     LOGIN_EMAIL = "email"
     LOGIN_KAKAO = "kakao"
+    LOGIN_GOOGLE = "google"
 
     LOGIN_CHOICES = (
         (LOGIN_EMAIL, "Email"),
         (LOGIN_KAKAO, "Kakao"),
+        (LOGIN_GOOGLE, "Google"),
     )
 
     login_method = models.CharField(

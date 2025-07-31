@@ -138,10 +138,10 @@ STATIC_URL = 'static/'
 
 REST_USE_JWT = True
 
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None # username 필드 사용 x
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_SIGNUP_FIELDS = {
     'email': {'required': True},
-}      # eamil 필드 사용 o
+}
 ACCOUNT_LOGIN_METHODS = {'email'}
 
 ACCOUNT_EMAIL_REQUIRED = True
@@ -163,7 +163,7 @@ AUTH_USER_MODEL = 'users.User'
 import dotenv
 import os
 
-dotenv.load_dotenv()  #.env 파일 로드
+dotenv.load_dotenv()  # .env 파일 로드
 
 KAKAO_ID = os.getenv("KAKAO_ID")
 

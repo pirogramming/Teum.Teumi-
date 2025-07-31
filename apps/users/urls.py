@@ -4,10 +4,11 @@ from .views import *
 app_name = 'users'
 
 urlpatterns = [
-    path('login/', login, name='login'),
+    path('login/', user_login, name='login'),
     path('login/kakao/', kakao_login, name='kakao-login'),
     path('login/kakao/callback/', kakao_callback, name='kakao-callback'),
     path('login/google/', google_login, name='google-login'),
     path('login/google/callback/', google_callback, name='google-callback'),
-    path('login/google/finish/', GoogleLogin.as_view(), name='google-login-todjango'),
+    path('login/google/finish/', GoogleLoginFinishView.as_view(), name='google-login-todjango'),
+    path("logout/", user_logout, name="logout"),
 ]

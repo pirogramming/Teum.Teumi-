@@ -1,34 +1,31 @@
-from django.shortcuts import render, redirect, reverse
-import os
-import requests
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, logout
+from django.contrib.auth import login as django_login
 from django.contrib import messages
-from django.core.files.base import ContentFile
-from django.contrib.auth import login
-from .models import *
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.forms import AuthenticationForm
-from json import JSONDecodeError
+from django.core.files.base import ContentFile
 from django.http import JsonResponse
-from rest_framework import status
-from allauth.socialaccount.models import SocialAccount
-from dotenv import load_dotenv
-from dj_rest_auth.registration.views import SocialLoginView
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from allauth.socialaccount.providers.google import views as google_view
 from django.conf import settings
-
-
-GOOGLE_CALLBACK_URI = settings.GOOGLE_CALLBACK_URI
-
-state = os.environ.get("STATE")
-BASE_URL = 'http://localhost:8000/'
-
-class GoogleLogin(SocialLoginView):
-    adapter_class = google_view.GoogleOAuth2Adapter
-    callback_url = GOOGLE_CALLBACK_URI
-    client_class = OAuth2Client
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
+from allauth.socialaccount.models import SocialAccount
+from allauth.socialaccount.providers.google import views as google_view
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
+from dotenv import load_dotenv
+from json import JSONDecodeError
+import requests
+import os
+from .models import User
+from rest_framework_simplejwt.tokens import RefreshToken
 
 load_dotenv()
+
+GOOGLE_CALLBACK_URI = settings.GOOGLE_CALLBACK_URI
+BASE_URL = 'http://localhost:8000/'
 
 class SocialLoginException(Exception):
     pass
@@ -36,14 +33,13 @@ class SocialLoginException(Exception):
 class KakaoException(Exception):
     pass
 
-
-def login(request):
+def user_login(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('profiles:profile')  # 로그인 후 이동
+            return redirect('profiles:profile')
     else:
         form = AuthenticationForm()
     return render(request, 'login.html', {'form': form})
@@ -64,9 +60,9 @@ def kakao_login(request):
         )
 
     except (KakaoException, SocialLoginException) as error:
+        print(f"[kakao_login error] {error}")
         messages.error(request, str(error))
-        return redirect("/")
-
+        return JsonResponse({'error': '로그인 실패'}, status=400)
 
 @csrf_exempt
 def kakao_callback(request):
@@ -82,9 +78,6 @@ def kakao_callback(request):
         client_secret = os.environ.get("KAKAO_SECRET")
         redirect_uri = "http://127.0.0.1:8000/users/login/kakao/callback/"
 
-        if not client_id or not client_secret:
-            raise KakaoException("Kakao credentials not loaded")
-
         token_response = requests.post(
             "https://kauth.kakao.com/oauth/token",
             headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -99,12 +92,10 @@ def kakao_callback(request):
 
         token_json = token_response.json()
         if "error" in token_json:
-            print("Token Error:", token_json)
             raise KakaoException("Failed to get access token")
 
         access_token = token_json.get("access_token")
         headers = {"Authorization": f"Bearer {access_token}"}
-
         profile_request = requests.get("https://kapi.kakao.com/v2/user/me", headers=headers)
         profile_json = profile_request.json()
 
@@ -134,82 +125,150 @@ def kakao_callback(request):
 
             if avatar_url:
                 avatar_response = requests.get(avatar_url)
-                user.avatar.save(
-                    f"{nickname}-avatar.jpg", ContentFile(avatar_response.content)
-                )
+                user.avatar.save(f"{nickname}-avatar.jpg", ContentFile(avatar_response.content))
 
             user.set_unusable_password()
             user.save()
 
         login(request, user)
-        messages.success(request, f"{user.email} logged in with Kakao successfully")
-        return redirect("/")
+
+        refresh = RefreshToken.for_user(user)
+        return JsonResponse({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user_email': user.email
+        })
 
     except (KakaoException, SocialLoginException) as error:
-        messages.error(request, str(error))
-        return redirect("/")
-    
+        return JsonResponse({'error': str(error)}, status=400)
+
+
 def google_login(request):
     scope = "https://www.googleapis.com/auth/userinfo.email"
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
-    return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
+    return redirect(
+        f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}"
+    )
 
 def google_callback(request):
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("SOCIAL_AUTH_GOOGLE_SECRET")
     code = request.GET.get('code')
 
-    token_req = requests.post(f"https://oauth2.googleapis.com/token?client_id={client_id}&client_secret={client_secret}&code={code}&grant_type=authorization_code&redirect_uri={GOOGLE_CALLBACK_URI}&state={state}")
-    
-    token_req_json = token_req.json()
-    error = token_req_json.get("error")
+    token_req = requests.post(
+        "https://oauth2.googleapis.com/token",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "grant_type": "authorization_code",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": os.environ.get("GOOGLE_CALLBACK_URI"),
+            "code": code
+        }
+    )
 
-    if error is not None:
-        raise JSONDecodeError(error)
+    token_json = token_req.json()
+    if "error" in token_json:
+        return JsonResponse({"err_msg": f"Google token error: {token_json['error_description']}"}, status=400)
 
-    access_token = token_req_json.get('access_token')
+    access_token = token_json.get("access_token")
 
-    email_req = requests.get(f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}")
-    email_req_status = email_req.status_code
+    email_req = requests.get(
+        "https://www.googleapis.com/oauth2/v1/userinfo",
+        params={'access_token': access_token}
+    )
 
-    if email_req_status != 200:
-        return JsonResponse({'err_msg': 'failed to get email'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    email_req_json = email_req.json()
-    email = email_req_json.get('email')
+    if email_req.status_code != 200:
+        return JsonResponse({'err_msg': 'Failed to fetch user info'}, status=400)
+
+    email_info = email_req.json()
+    email = email_info.get('email')
+    name = email_info.get('name', '')
+    picture = email_info.get('picture', '')
+
+    if not email:
+        return JsonResponse({'err_msg': 'Email not found in response'}, status=400)
+
+    user = None     # 유저 객체 미리 선언
 
     try:
         user = User.objects.get(email=email)
-
         social_user = SocialAccount.objects.get(user=user)
 
         if social_user.provider != 'google':
-            return JsonResponse({'err_msg': 'no matching social type'}, status=status.HTTP_400_BAD_REQUEST)
-
-        data = {'access_token': access_token, 'code': code}
-        accept = requests.post(f"{BASE_URL}api/user/google/login/finish/", data=data)
-        accept_status = accept.status_code
-
-        if accept_status != 200:
-            return JsonResponse({'err_msg': 'failed to signin'}, status=accept_status)
-
-        accept_json = accept.json()
-        accept_json.pop('user', None)
-        return JsonResponse(accept_json)
+            return JsonResponse({'err_msg': 'No matching social type'}, status=400)
 
     except User.DoesNotExist:
-        data = {'access_token': access_token, 'code': code}
-        accept = requests.post(f"{BASE_URL}api/user/google/login/finish/", data=data)
-        accept_status = accept.status_code
+        user = User.objects.create_user(        # 유저 생성
+            email=email,
+            username=email,
+            first_name=name,
+            login_method=User.LOGIN_GOOGLE
+        )
+        user.set_unusable_password()
+        user.save()
 
-        if accept_status != 200:
-            return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
+        SocialAccount.objects.create(user=user, provider='google', uid=email_info.get('id'))
 
-        accept_json = accept.json()
-        accept_json.pop('user', None)
-        return JsonResponse(accept_json)
-    
     except SocialAccount.DoesNotExist:
-        return JsonResponse({'err_msg': 'email exists but not social user'}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'err_msg': 'Email exists but not social user'}, status=400)
 
-print(GOOGLE_CALLBACK_URI)
+    refresh = RefreshToken.for_user(user)   # JWT 발급
+    django_login(request, user)
+
+    return JsonResponse({
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
+        'user_email': user.email,
+    })
+
+class GoogleLoginFinishView(APIView):
+    def post(self, request):
+        access_token = request.data.get('access_token')
+
+        if not access_token:
+            return Response({'error': 'access_token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        google_user_info_url = 'https://www.googleapis.com/oauth2/v1/tokeninfo'
+        params = {'access_token': access_token}
+        user_info_response = requests.get(google_user_info_url, params=params)
+
+        if user_info_response.status_code != 200:
+            return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_info = user_info_response.json()
+        email = user_info.get('email')
+
+        if not email:
+            return Response({'error': 'Email not found in Google response'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:        
+            user = User.objects.get(email=email)    
+            social_user = SocialAccount.objects.filter(user=user).first()
+            if social_user and social_user.provider != 'google':
+                return Response({'error': f'Please login with {social_user.provider}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except User.DoesNotExist:
+            user = User.objects.create_user(    # 처음 로그인하는 거라면 회원가입 처리
+                email=email,
+                username=email,
+                login_method=User.LOGIN_GOOGLE,
+            )
+            user.set_unusable_password()
+            user.save()
+
+            SocialAccount.objects.create(
+                user=user,
+                uid=email,
+                provider='google'
+            )
+
+        refresh = RefreshToken.for_user(user)   # JWT 발급
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
+    
+def user_logout(request):   # 로그아웃
+    logout(request)
+    return redirect("/")
