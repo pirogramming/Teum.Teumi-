@@ -22,4 +22,8 @@ urlpatterns = [
     # path('users/', include('apps.users.urls')),
     # path('profiles/', include('apps.profiles.urls')),
     # path('schedules/', include('apps.schedules.urls')),
+    # path('matches/', include('matches.urls')),
+    # path('reviews/', include('reviews.urls')),
+    # path('chats/', include('chats.urls')),
+    # path('interests/', include('interests.urls')),
 ]

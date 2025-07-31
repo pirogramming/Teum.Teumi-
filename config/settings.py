@@ -41,6 +41,10 @@ INSTALLED_APPS = [
     'apps.profiles',
     'apps.schedules',
     'apps.core',
+    'apps.matches',
+    'apps.reviews',
+    'apps.chats',
+    'apps.interests',
 ]
 
 MIDDLEWARE = [
