@@ -5,4 +5,4 @@ from rest_framework import serializers
 class SchoolProfileSerializer(serializers.Serializer):
     school_name = serializers.CharField()
     department = serializers.CharField()
-    grade = serializers.IntegerField()
+    grade = serializers.CharField()
