@@ -6,7 +6,7 @@ body {
     color: #57564F;
     background-color: #FAF9EE;
     font-size: 16px;
-    margin: 100px;
+    margin: 95px;
     text-align: center;
 }
 
@@ -66,7 +66,6 @@ button {
 }
 
 #kakao {
-    font-size: 1.2rem;
     background-color: #FAE100;
     padding: 10px 20px;
 }
@@ -76,7 +75,6 @@ button {
 }
 
 #google {
-    font-size: 1.2rem;
     background-color: #F6F6F6;
     padding: 10px 20px;
 }
