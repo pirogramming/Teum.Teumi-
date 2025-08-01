@@ -26,6 +26,10 @@ class SchoolProfileSerializer(serializers.Serializer):
         if age < 20 or age > 40:
             raise serializers.ValidationError({'age': '유효한 나이 범위는 20세 이상 40세 이하입니다.'})
 
+        valid_grades = ['1 학년 (새내기)', '2 학년', '3 학년', '4 학년', '대학원생']
+        if data.get('grade') not in valid_grades:
+            raise serializers.ValidationError({'grade': '유효한 학년이 아닙니다.'})
+
         return data
 
     def create(self, validated_data):
