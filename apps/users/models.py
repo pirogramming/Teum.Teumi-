@@ -21,5 +21,4 @@ class User(AbstractUser):
         max_length=6, choices=LOGIN_CHOICES, default=LOGIN_EMAIL
     )
 
-    gender = models.CharField(max_length=10, blank=True, null=True)  # 성별
     avatar = models.ImageField(upload_to="avatars", blank=True, null=True)  # 이미지

@@ -67,18 +67,18 @@ def kakao_login(request):
 @csrf_exempt
 def kakao_callback(request):
     try:
-        if request.user.is_authenticated:
+        if request.user.is_authenticated:       # 이미 로그인한 상태라면
             raise SocialLoginException("User already logged in")
 
         code = request.GET.get("code")
-        if not code:
+        if not code:        # 카카오에서 제공한 인가 코드가 없다면 실패 처리
             raise KakaoException("Authorization code not provided")
 
-        client_id = os.environ.get("KAKAO_ID")
+        client_id = os.environ.get("KAKAO_ID")      # .env 파일에서 가져오기
         client_secret = os.environ.get("KAKAO_SECRET")
         redirect_uri = "http://127.0.0.1:8000/users/login/kakao/callback/"
 
-        token_response = requests.post(
+        token_response = requests.post(     # 카카오에게 엑세스 토큰 요청
             "https://kauth.kakao.com/oauth/token",
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             data={
@@ -91,43 +91,40 @@ def kakao_callback(request):
         )
 
         token_json = token_response.json()
-        if "error" in token_json:
+        if "error" in token_json:       # 정상적으로 토큰을 받지 못했다면 예외 처리
             raise KakaoException("Failed to get access token")
 
-        access_token = token_json.get("access_token")
+        access_token = token_json.get("access_token")       # 엑세스 토큰을 이용해 사용자 정보를 가져옴
         headers = {"Authorization": f"Bearer {access_token}"}
         profile_request = requests.get("https://kapi.kakao.com/v2/user/me", headers=headers)
         profile_json = profile_request.json()
 
         kakao_account = profile_json.get("kakao_account", {})
         profile = kakao_account.get("profile", {})
-
         nickname = profile.get("nickname")
         avatar_url = profile.get("profile_image_url")
         email = kakao_account.get("email")
-        gender = kakao_account.get("gender")
 
-        if not email:
+        if not email:       # 메일이 없으면 예외 처리
             raise KakaoException("Kakao did not return email")
 
         user = User.objects.filter(email=email).first()
-        if user:
+        if user:        # 같은 이메일로 가입한 유저가 있다면, 카카오로 가입한 것인지 확인
             if user.login_method != User.LOGIN_KAKAO:
                 raise KakaoException(f"Please login with: {user.login_method}")
         else:
-            user = User.objects.create_user(
+            user = User.objects.create_user(        # 유저 생성
                 email=email,
                 username=email,
                 first_name=nickname or "",
-                gender=gender,
                 login_method=User.LOGIN_KAKAO,
             )
 
-            if avatar_url:
+            if avatar_url:      # 프로필 이미지 저장
                 avatar_response = requests.get(avatar_url)
                 user.avatar.save(f"{nickname}-avatar.jpg", ContentFile(avatar_response.content))
 
-            user.set_unusable_password()
+            user.set_unusable_password()        # 일반 로그인 방지
             user.save()
 
         login(request, user)
@@ -155,7 +152,7 @@ def google_callback(request):
     client_secret = os.environ.get("SOCIAL_AUTH_GOOGLE_SECRET")
     code = request.GET.get('code')
 
-    token_req = requests.post(
+    token_req = requests.post(      # 엑세스 토큰 받아옴
         "https://oauth2.googleapis.com/token",
         headers={"Content-Type": "application/x-www-form-urlencoded"},
         data={
@@ -168,12 +165,12 @@ def google_callback(request):
     )
 
     token_json = token_req.json()
-    if "error" in token_json:
+    if "error" in token_json:       # 실패 시 오류 메시지 리턴
         return JsonResponse({"err_msg": f"Google token error: {token_json['error_description']}"}, status=400)
 
     access_token = token_json.get("access_token")
 
-    email_req = requests.get(
+    email_req = requests.get(       # 사용자 정보 요청
         "https://www.googleapis.com/oauth2/v1/userinfo",
         params={'access_token': access_token}
     )
@@ -181,7 +178,7 @@ def google_callback(request):
     if email_req.status_code != 200:
         return JsonResponse({'err_msg': 'Failed to fetch user info'}, status=400)
 
-    email_info = email_req.json()
+    email_info = email_req.json()       # 사용자 정보 받아옴
     email = email_info.get('email')
     name = email_info.get('name', '')
     picture = email_info.get('picture', '')
@@ -195,7 +192,7 @@ def google_callback(request):
         user = User.objects.get(email=email)
         social_user = SocialAccount.objects.get(user=user)
 
-        if social_user.provider != 'google':
+        if social_user.provider != 'google':        # 구글 이메일이 아닌 경우 오류
             return JsonResponse({'err_msg': 'No matching social type'}, status=400)
 
     except User.DoesNotExist:
@@ -214,7 +211,7 @@ def google_callback(request):
         return JsonResponse({'err_msg': 'Email exists but not social user'}, status=400)
 
     refresh = RefreshToken.for_user(user)   # JWT 발급
-    django_login(request, user)
+    django_login(request, user)     # 로그인 처리
 
     return JsonResponse({
         'access': str(refresh.access_token),
