@@ -77,30 +77,37 @@ class Profile(models.Model):
 # --- 프로필 5단계 추가정보 테이블 ---
 # 성격키워드를 저장하는 클래스
 class Personality(models.Model):
-    KEYWORD_CHOICES = [
-        "차분함", "논리적", "센스있는", "분석적",
-        "꼼꼼함", "창의적", "사교적", "열정적",
-        "배려심있는", "리더십있는", "유머러스",
-        "진중함", "적극적", "신중함", "낙관적",
-        "현실적", "독립적", "협력적"
-    ]
+    class PersonalityKeyword(models.TextChoices):
+        CALM = "차분함", "차분함"
+        LOGICAL = "논리적", "논리적"
+        SENSIBLE = "센스있는", "센스있는"
+        ANALYTICAL = "분석적", "분석적"
+        DETAIL_ORIENTED = "꼼꼼함", "꼼꼼함"
+        CREATIVE = "창의적", "창의적"
+        SOCIABLE = "사교적", "사교적"
+        PASSIONATE = "열정적", "열정적"
+        CARING = "배려심있는", "배려심있는"
+        LEADERSHIP = "리더십있는", "리더십있는"
+        HUMOROUS = "유머러스", "유머러스"
+        SERIOUS = "진중함", "진중함"
+        PROACTIVE = "적극적", "적극적"
+        CAUTIOUS = "신중함", "신중함"
+        OPTIMISTIC = "낙관적", "낙관적"
+        REALISTIC = "현실적", "현실적"
+        INDEPENDENT = "독립적", "독립적"
+        COOPERATIVE = "협력적", "협력적"
 
-    name = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=20, unique=True, choices=PersonalityKeyword.choices)
 
     def __str__(self):
         return f"#{self.name}"
 
 # 선호하는 대화 스타일을 저장하는 클래스
-class ConversationStyle(models.Model):
-    STYLE_CHOICES = [
-        ("편한대화", "☕ 가볍고 편한 대화"),
-        ("깊은이야기", "🎯 깊은 진로 이야기"),
-        ("전문조언", "💼 전문적인 조언"),
-        ("경험위주", "🤝 경험 공유 위주"),
-    ]
-
-    code = models.CharField(max_length=20, choices=STYLE_CHOICES, unique=True)
-    label = models.CharField(max_length=50)
+class ConversationStyle(models.TextChoices):
+    CASUAL = "casual", "수다형"
+    DEEP = "deep", "깊은대화형"
+    HUMOR = "humor", "유머형"
+    DEBATE = "debate", "토론형"
 
     def __str__(self):
         return self.label
@@ -113,7 +120,7 @@ class AdditionalInfo(models.Model):
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name='additional_info')
 
     experience = models.TextField(null=True, blank=True)
-    conversation_style = models.ManyToManyField(ConversationStyle, blank=True)
+    conversation_style = models.CharField(max_length=100,choices=ConversationStyle.choices,null=True,blank=True)
     activity_location = models.CharField(max_length=100, null=True, blank=True)
     personality_keyword = models.ManyToManyField(Personality, blank=True)
     goal_or_concern = models.TextField(null=True, blank=True)
