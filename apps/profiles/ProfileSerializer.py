@@ -95,7 +95,42 @@ class FreeTimeListSerializer(serializers.Serializer):
     
 # 프로필 4단계 시리얼라이저
 class BasicInfoSerializer(serializers.Serializer):
-    pass
+    nickname = serializers.CharField(max_length=50)
+    mbti = serializers.ChoiceField(choices=Profile.MBTI_CHOICES)
+    gender = serializers.ChoiceField(choices=Profile.GENDER_CHOICES)
+    introduction = serializers.CharField(min_length=50)
+
+    def validate(self, data):
+        user = self.context['request'].user
+
+        # 닉네임 중복 검사
+        nickname = data.get('nickname')
+        if Profile.objects.exclude(user=user).filter(nickname=nickname).exists():
+            raise serializers.ValidationError({"nickname": "이미 사용 중인 닉네임입니다."})
+
+        # MBTI 검사
+        valid_mbti = [choice[0] for choice in Profile.MBTI_CHOICES]
+        if data.get('mbti') not in valid_mbti:
+            raise serializers.ValidationError({"mbti": "유효한 MBTI 값이 아닙니다."})
+
+        # 성별 검사
+        valid_gender = [choice[0] for choice in Profile.GENDER_CHOICES]
+        if data.get('gender') not in valid_gender:
+            raise serializers.ValidationError({"gender": "유효한 성별 값이 아닙니다."})
+
+        # 자기소개 글자 수 검사
+        if len(data.get('introduction', '').strip()) < 50:
+            raise serializers.ValidationError({"introduction": "자기소개는 최소 50자 이상 작성해야 합니다."})
+
+        return data
+
+    def update(self, instance, validated_data):
+        instance.nickname = validated_data.get('nickname', instance.nickname)
+        instance.mbti = validated_data.get('mbti', instance.mbti)
+        instance.gender = validated_data.get('gender', instance.gender)
+        instance.introduction = validated_data.get('introduction', instance.introduction)
+        instance.save()
+        return instance
 
 # 프로필 5단계 시리얼라이저
 class AddtionalInfoSerializer(serializers.Serializer):
