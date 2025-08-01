@@ -21,4 +21,6 @@ class User(AbstractUser):
         max_length=6, choices=LOGIN_CHOICES, default=LOGIN_EMAIL
     )
 
+    created_at = models.DateTimeField(auto_now_add=True)
+
     avatar = models.ImageField(upload_to="avatars", blank=True, null=True)  # 이미지
