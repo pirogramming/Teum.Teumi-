@@ -1,0 +1,44 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
+    <title>Teum.Teumi</title>
+</head>
+<body>
+<div class="header">
+    <div class="header-logo">
+        <div>☕</div>
+    </div>
+    <div class="header-title"><h2>틈틈이</h2></div>
+    <div class="header-comment"><strong>공강에 피어나는 특별한 만남</strong></div>
+    <div><p>함께 성장하고, 서로 공감하며, 가벼운 대화로 시작해요</p></div>
+</div>
+<div class="body">
+    <div>
+        <div class="login-logo">
+            <button id="kakao" class="login">
+                <a href="{% url 'users:kakao-login' %}">
+                KaKao 로그인
+                </a>
+            </button>
+        </div>
+        <div class="login-logo">
+            <button id="google" class="login">
+                <a  href="{% url 'users:google-login' %}">
+                Google 로그인
+                </a>
+            </button>
+        </div>
+    </div>
+</div>
+<div class="footer">
+    <p>🌟 로그인하시면 <strong class="strong">이용약관</strong> 및 <strong class="strong">개인정보처리방침</strong>에 동의하시는 거예요</p>
+    <!--일단 이용약관, 개인정보처리방침은 css 서식으로 처리, 나중에 링크 추가할 거면 수정할 수 있음-->
+    <strong>처음이시라면 프로필을 차근차근 만들어가요!</strong>
+</div>
+</body>
+</html>
