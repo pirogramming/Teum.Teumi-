@@ -56,7 +56,7 @@ class Profile(models.Model):
     # 외래키
     school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL, related_name='profiles') # 학교와의 관계
     department = models.ForeignKey(Department, null=True, blank=True, on_delete=models.SET_NULL, related_name='profiles') # 학과와의 관계
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='profiles') # 사용자와의 관계
+    user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, related_name='profile') # 사용자와의 관계
 
     nickname = models.CharField(max_length=50, null=True, blank=True) # 닉네임
     age = models.BigIntegerField(null=True, blank=True) # 나이
