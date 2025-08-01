@@ -2,6 +2,8 @@
 # 프로필 5단계의 요청 데이터를 검증할 시리얼라이저
 from rest_framework import serializers
 from .models import School, Department, Profile
+from apps.schedules.models import FreeTime, DayOfWeek
+from datetime import time
 
 # 프로필 1단계 시리얼라이저
 class SchoolProfileSerializer(serializers.Serializer):
@@ -50,3 +52,51 @@ class SchoolProfileSerializer(serializers.Serializer):
             grade=grade,
             age=age
         )
+# 프로필 2단계 시리얼라이저
+class InterestSerializer(serializers.Serializer):
+    pass
+# 프로필 3단계 시리얼라이저
+# 공강시간 개별의 요청 데이터를 검증할 시리얼라이저
+class FreeTimeSerializer(serializers.Serializer):
+    day_of_week = serializers.ChoiceField(choices=DayOfWeek.choices)
+    start_time = serializers.TimeField(format='%H:%M', input_formats=['%H:%M'])
+    end_time = serializers.TimeField(format='%H:%M', input_formats=['%H:%M'])
+
+    def validate(self, data):
+        start = data.get('start_time')
+        end = data.get('end_time')
+
+        if start >= end:
+            raise serializers.ValidationError({"error": "종료 시간은 시작 시간보다 이후여야 합니다."})
+        
+        # 시간은 24시간 단위로 입력되며, 30분 단위로 입력되어야 합니다.
+        if start.minute not in (0, 30) or end.minute not in (0, 30):
+            raise serializers.ValidationError({
+                "error": "시작 시간과 종료 시간은 30분 단위로 입력되어야 합니다. (예: 09:00, 09:30)"
+            })
+
+        return data
+    
+# 공강시간 전체 등록 요청 데이터를 검증할 시리얼라이저
+class FreeTimeListSerializer(serializers.Serializer):
+    free_times = FreeTimeSerializer(many=True)
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        free_time_data = validated_data['free_times']
+
+        # 기존 공강 시간 삭제 후 새로 등록
+        FreeTime.objects.filter(user=user).delete()
+
+        for entry in free_time_data:
+            FreeTime.objects.create(user=user, **entry)
+
+        return {"message": "공강 시간이 성공적으로 등록되었습니다."}
+    
+# 프로필 4단계 시리얼라이저
+class BasicInfoSerializer(serializers.Serializer):
+    pass
+
+# 프로필 5단계 시리얼라이저
+class AddtionalInfoSerializer(serializers.Serializer):
+    pass
