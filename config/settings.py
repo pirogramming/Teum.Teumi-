@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +47,7 @@ INSTALLED_APPS = [
     'apps.profiles',
     'apps.schedules',
     'apps.core',
+<<<<<<< HEAD
 
     'rest_framework',
     'rest_framework.authtoken',
@@ -54,6 +60,12 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.kakao',
     'allauth.socialaccount.providers.google',
+=======
+    'apps.matches',
+    'apps.reviews',
+    'apps.chats',
+    'apps.interests',
+>>>>>>> 31aa878358b54488cb0643f905581dd482c6ebea
 ]
 
 MIDDLEWARE = [
@@ -72,7 +84,11 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+<<<<<<< HEAD
         'DIRS': [BASE_DIR / 'templates'],
+=======
+        'DIRS': [ BASE_DIR / 'templates' ],
+>>>>>>> 31aa878358b54488cb0643f905581dd482c6ebea
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
