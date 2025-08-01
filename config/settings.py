@@ -148,18 +148,16 @@ STATIC_URL = 'static/'
 REST_USE_JWT = True
 
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_SIGNUP_FIELDS = {
-    'email': {'required': True},
-}
-ACCOUNT_LOGIN_METHODS = {'email'}
-
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_LOGIN_METHODS = ["email"]
+ACCOUNT_SIGNUP_FIELDS = ["email"]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated', 
+    ],
 }
 
 # Default primary key field type
@@ -173,7 +171,9 @@ import dotenv
 import os
 
 dotenv.load_dotenv()  # .env 파일 로드
-
+SOCIAL_AUTH_GOOGLE_CLIENT_ID = os.getenv("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
+SOCIAL_AUTH_GOOGLE_SECRET = os.getenv("SOCIAL_AUTH_GOOGLE_SECRET")
+GOOGLE_CALLBACK_URI = os.getenv("GOOGLE_CALLBACK_URI")
 KAKAO_ID = os.getenv("KAKAO_ID")
 
 STATIC_URL = 'static/'
@@ -183,5 +183,3 @@ STATICFILES_DIRS = [
 ]
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-GOOGLE_CALLBACK_URI = os.environ.get("GOOGLE_CALLBACK_URI")
