@@ -42,7 +42,7 @@ def user_login(request):
             return redirect('profiles:profile')
     else:
         form = AuthenticationForm()
-    return render(request, 'login.html', {'form': form})
+    return render(request, 'users/login.html', {'form': form})
 
 def kakao_login(request):
     try:
