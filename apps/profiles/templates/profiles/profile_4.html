@@ -1,18 +1,32 @@
-{% extends 'base.html' %}
+{% extends 'profiles/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'profiles/css/profile_4.css' %}">
+{% endblock %}
+
 {% block content %}
 <div id="header">
-    <div>
-        <div><strong>나만의 프로필 만들기</strong></div>
-        <div><span>✨ 4/5단계 - 차근차근 함께해요</span></div>
-        <div><progress id="progress" value="4" min="0" max="5"></progress></div>
+    <div id="header-div">
+        <div id="header-grid">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+            </svg>
+            <div>
+                <div class="title"><strong>나만의 프로필 만들기</strong></div>
+                <div><span class="progress-text">✨ 3/5단계 - 차근차근 함께해요</span></div>
+            </div>
+            <div></div>
+        </div>
+        <div class="progress"><progress id="progress" value="3" min="0" max="5"></progress></div>
     </div>
-</div>
+</div><hr class="border">
 <div id="body">
     <div>
-        <div>
+        <div class="icon">
             <div>😊</div>
         </div>
-        <div class="question">나를 소개해주세요</div>
+        <div class="question"><h2>나를 소개해주세요</h2></div>
         <div>친구들이 나를 더 잘 알 수 있도록 도와주세요</div>
         <div class="section">
             <div class="section-text">✨ <strong>닉네임(필수)</strong></div>
@@ -22,7 +36,9 @@
             <div>
                 <div class="select-text">🧠 <strong>MBTI(필수)</strong></div>
                 <select name="mbti" id="mbti">
-                    {% for in %} {% endfor %}
+                    {% for major in majors %}
+                    <option value="{{ major }}">{{ major }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div>
@@ -39,5 +55,14 @@
         </div>
         <div>✍️ 자세히 쓸수록 매칭 정확도가 올라가요. 부담 없이, 자유롭게 적어보세요!</div>
     </div>
+</div>
+<hr class="border">
+<div id="footer">
+    <button>
+        <a href="#">다음으로 넘어가기</a>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+        </svg>
+    </button>
 </div>
 {% endblock %}
