@@ -25,5 +25,5 @@ urlpatterns = [
     # path('matches/', include('matches.urls')),
     # path('reviews/', include('reviews.urls')),
     # path('chats/', include('chats.urls')),
-    # path('interests/', include('interests.urls')),
+    path('interests/', include('apps.interests.urls')),
 ]
