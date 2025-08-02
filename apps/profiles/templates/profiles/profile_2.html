@@ -1,24 +1,42 @@
-{% extends 'base.html' %}
+{% extends 'profiles/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'profiles/css/profile_2.css' %}">
+{% endblock %}
+
 {% block content %}
 <div id="header">
-    <div>
-        <div><strong>나만의 프로필 만들기</strong></div>
-        <div><span>✨ 2/5단계 - 차근차근 함께해요</span></div>
-        <div><progress id="progress" value="2" min="0" max="5"></progress></div>
+    <div id="header-div">
+        <div id="header-grid">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+            </svg>
+            <div>
+                <div class="title"><strong>나만의 프로필 만들기</strong></div>
+                <div><span class="progress-text">✨ 2/5단계 - 차근차근 함께해요</span></div>
+            </div>
+            <div></div>
+        </div>
+        <div class="progress"><progress id="progress" value="2" min="0" max="5"></progress></div>
     </div>
-</div>
+</div><hr class="border">
 <div id="body">
     <div>
-        <div>
+        <div class="icon">
             <div>🌱</div>
         </div>
+        <div class="question-container">
+            <div class="question"><h2>어떤 분야에 관심이 있으세요?</h2></div>
+            <div class="question">같은 관심사를 가진 친구들과 연결해드릴게요</div>
+        </div>
         <div class="tag-container">
-            <div class="tag">#창업</div>
-            <div class="tag">#개발</div>
-            <div class="tag">#취업</div>
-            <div class="tag">#진로</div>
-            <div class="tag">#AI</div>
-            <div class="tag">#UX/UI</div>
+            <div class="tag" data-label="">#창업</div>
+            <div class="tag" data-label="">#개발</div>
+            <div class="tag" data-label="">#취업</div>
+            <div class="tag" data-label="">#진로</div>
+            <div class="tag" data-label="AI">#AI</div>
+            <div class="tag" data-label="">#UX/UI</div>
             <div class="tag">#마케팅</div>
             <div class="tag">#투자</div>
             <div class="tag">#데이터분석</div>
@@ -45,9 +63,31 @@
             <div class="tag">#동아리</div>
         </div>
         <div class="comment">
-            <div>🎯 <span><strong>선택된 관심사 : </strong>0/4</span></div> <!--선택개수만큼 바뀌는 거 구현해야 함-->
+            <div>🎯 <span>선택된 관심사 : 0/4</span></div> <!--선택개수만큼 바뀌는 거 구현해야 함-->
             <div>정확한 매칭을 위해 관심사 4개를 모두 선택해주세요.</div>
         </div>
     </div>
 </div>
+<hr class="border">
+<div id="footer">
+        <button>
+            <a href="#">다음으로 넘어가기</a>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+            </svg>
+        </button>
+</div>
+
+<script>
+    const tags = document.querySelectorAll('.tag');
+
+    tags.forEach(tag => {
+        tag.addEventListener('click', () => {
+            const isSelected = tag.classList.toggle('selected'); // 클릭 시 토글 상태 저장
+
+      // innerHTML 업데이트
+      tag.innerHTML = isSelected ? `✨ #${tag.dataset.label}` : `#${tag.dataset.label}`;
+        });
+    });
+</script>
 {% endblock %}

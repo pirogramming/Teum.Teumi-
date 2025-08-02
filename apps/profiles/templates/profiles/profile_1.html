@@ -1,56 +1,91 @@
-{% extends 'base.html' %}
+{% extends 'profiles/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'profiles/css/profile_1.css' %}">
+{% endblock %}
+
 {% block content %}
 <div id="header">
-    <div>
-        <div><strong>나만의 프로필 만들기</strong></div>
-        <div><span>✨ 1/5단계 - 차근차근 함께해요</span></div>
-        <div><progress id="progress" value="1" min="0" max="5"></progress></div>
+    <div id="header-div">
+        <div id="header-grid">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+            </svg>
+            <div>
+                <div class="title"><strong>나만의 프로필 만들기</strong></div>
+                <div><span class="progress-text">✨ 1/5단계 - 차근차근 함께해요</span></div>
+            </div>
+            <div></div>
+        </div>
+        <div class="progress"><progress id="progress" value="1" min="0" max="5"></progress></div>
     </div>
-</div>
+</div><hr class="border">
 <div id="body">
     <div>
-        <div>
+        <div class="icon">
             <div>🎓</div>
         </div>
-        <div class="question">어느 학교에 다니세요?</div>
-        <div>같은 캠퍼스 친구들과 더 쉽게 만날 수 있어요</div>
-        <div class="section">
-            <div class="select-text">🏫 <strong>대학교</strong></div>
-            <select name="university" id="university">
-                {% for in %} {% endfor %}
-            </select>
+        <div class="question-container">
+            <div class="question"><h2>어느 학교에 다니세요?</h2></div>
+            <div class="question">같은 캠퍼스 친구들과 더 쉽게 만날 수 있어요</div>
         </div>
-        <div class="section">
-            <div class="select-text">📚 <strong>학과</strong></div>
-            <select name="major" id="major">
-                {% for in %} {% endfor %}
-            </select>
-        </div>
-        <div class="section">
-            <div class="select-text">🎯 <strong>학년</strong></div>
-            <select name="grade" id="grade">
-                <option value="1">1학년</option>
-                <option value="2">2학년</option>
-                <option value="3">3학년</option>
-                <option value="4">4학년</option>
-                <option value="5">대학원생</option>
-            </select>
-        </div>
-        <div class="section">
-            <div class="select-text">🌱 <strong>나이</strong></div>
-            <select name="major" id="major">
-                <option value="1">20</option>
-                <option value="2">21</option>
-                <option value="3">22</option>
-                <option value="4">23</option>
-                <option value="5">24</option>
-                <option value="6">25</option>
-                <option value="7">26</option>
-                <option value="8">27</option>
-                <option value="9">28</option>
-                <option value="10">29</option>
-            </select>
+        <div class="section-container">
+            <div class="section">
+                <div class="select-text">🏫 <strong>대학교</strong></div>
+                <select name="university" id="university" class="selectbox" required>
+                    <option selected disabled value="">다니고 계신 대학교를 선택해주세요</option>
+                    {% for uni in universities %}
+                    <option value="{{ uni }}">{{ uni }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="section">
+                <div class="select-text">📚 <strong>학과</strong></div>
+                <select name="major" id="major" class="selectbox" required>
+                    <option selected disabled value="">전공하시는 학과를 선택해주세요</option>
+                    {% for major in majors %}
+                    <option value="{{ major }}">{{ major }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="section">
+                <div class="select-text">🎯 <strong>학년</strong></div>
+                <select name="grade" id="grade" class="selectbox" required>
+                    <option selected disabled value="">현재 학년을 선택해주세요</option>
+                    <option value="first-grade">1학년</option>
+                    <option value="second-grade">2학년</option>
+                    <option value="third-grade">3학년</option>
+                    <option value="fourth-grade">4학년</option>
+                    <option value="grad-student">대학원생</option>
+                </select>
+            </div>
+            <div class="section">
+                <div class="select-text">🌱 <strong>나이</strong></div>
+                <select name="major" id="age" class="selectbox" required>
+                    <option selected disabled value="">현재 나이를 선택해주세요</option>
+                    <option value="20">20</option>
+                    <option value="21">21</option>
+                    <option value="22">22</option>
+                    <option value="23">23</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="26">26</option>
+                    <option value="27">27</option>
+                    <option value="28">28</option>
+                    <option value="29">29</option>
+                </select>
+            </div>
         </div>
     </div>
+</div>
+<hr class="border">
+<div id="footer">
+        <button>
+            <a href="#">다음으로 넘어가기</a>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+            </svg>
+        </button>
 </div>
 {% endblock %}
