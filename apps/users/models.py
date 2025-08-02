@@ -30,3 +30,4 @@ class UserInterest(BaseEntity):
 
     class Meta:
         unique_together = ('user', 'interest')
+
