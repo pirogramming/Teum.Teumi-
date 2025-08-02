@@ -1,7 +1,7 @@
 # profiles/serializers.py
 # 프로필 5단계의 요청 데이터를 검증할 시리얼라이저
 from rest_framework import serializers
-from .models import School, Department, Profile
+from .models import School, Department, Profile, Personality, AdditionalInfo
 from apps.schedules.models import FreeTime, DayOfWeek
 from datetime import time
 
@@ -133,5 +133,34 @@ class BasicInfoSerializer(serializers.Serializer):
         return instance
 
 # 프로필 5단계 시리얼라이저
-class AddtionalInfoSerializer(serializers.Serializer):
-    pass
+class AddtionalInfoSerializer(serializers.ModelSerializer):
+    personality_keyword = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Personality.objects.all(),
+        required=False
+    )
+
+    class Meta:
+        model = AdditionalInfo
+        exclude = ['profile']
+        # 각 필드들을 required=False, allow_null=True로 설정해서 입력 필수는 아님을 명시
+        extra_kwargs = {
+            'experience': {'required': False, 'allow_null': True},
+            'conversation_style': {'required': False, 'allow_null': True},
+            'activity_location': {'required': False, 'allow_null': True},
+            'personality_keyword': {'required': False, 'allow_null': True},
+            'goal_or_concern': {'required': False, 'allow_null': True},
+        }
+
+    def validate_personality_keyword(self, value):
+        if len(value) not in (0, 3):
+            raise serializers.ValidationError("성격 키워드는 반드시 3개를 선택해야 합니다.")
+        return value
+    
+    def create(self, validated_data):
+        personality_keyword = validated_data.pop('personality_keyword', [])
+        profile = validated_data.pop('profile')  # Remove to prevent duplication
+        additional_info = AdditionalInfo.objects.create(profile=profile, **validated_data)
+        if personality_keyword:
+            additional_info.personality_keyword.set(personality_keyword)
+        return additional_info

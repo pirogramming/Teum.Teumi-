@@ -48,4 +48,11 @@ class BasicInfoAPIView(APIView):
 
 # Additional Info 등록
 class AddtionalInfoAPIView(APIView):
-    pass
+    def post(self, request):
+        profile = get_object_or_404(Profile, user=request.user)
+        serializer = AddtionalInfoSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(profile=profile)
+            return Response({"message": "추가 정보가 성공적으로 저장되었습니다."}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

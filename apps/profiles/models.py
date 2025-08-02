@@ -77,30 +77,9 @@ class Profile(models.Model):
 # --- 프로필 5단계 추가정보 테이블 ---
 # 성격키워드를 저장하는 클래스
 class Personality(models.Model):
-    class PersonalityKeyword(models.TextChoices):
-        CALM = "차분함", "차분함"
-        LOGICAL = "논리적", "논리적"
-        SENSIBLE = "센스있는", "센스있는"
-        ANALYTICAL = "분석적", "분석적"
-        DETAIL_ORIENTED = "꼼꼼함", "꼼꼼함"
-        CREATIVE = "창의적", "창의적"
-        SOCIABLE = "사교적", "사교적"
-        PASSIONATE = "열정적", "열정적"
-        CARING = "배려심있는", "배려심있는"
-        LEADERSHIP = "리더십있는", "리더십있는"
-        HUMOROUS = "유머러스", "유머러스"
-        SERIOUS = "진중함", "진중함"
-        PROACTIVE = "적극적", "적극적"
-        CAUTIOUS = "신중함", "신중함"
-        OPTIMISTIC = "낙관적", "낙관적"
-        REALISTIC = "현실적", "현실적"
-        INDEPENDENT = "독립적", "독립적"
-        COOPERATIVE = "협력적", "협력적"
-
-    name = models.CharField(max_length=20, unique=True, choices=PersonalityKeyword.choices)
-
+    keyword = models.CharField(max_length=50, unique=True, null=False)
     def __str__(self):
-        return f"#{self.name}"
+        return self.keyword
 
 # 선호하는 대화 스타일을 저장하는 클래스
 class ConversationStyle(models.TextChoices):
