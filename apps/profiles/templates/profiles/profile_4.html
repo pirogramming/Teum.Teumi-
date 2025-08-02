@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="header">
+    <div>
+        <div><strong>나만의 프로필 만들기</strong></div>
+        <div><span>✨ 4/5단계 - 차근차근 함께해요</span></div>
+        <div><progress id="progress" value="4" min="0" max="5"></progress></div>
+    </div>
+</div>
+<div id="body">
+    <div>
+        <div>
+            <div>😊</div>
+        </div>
+        <div class="question">나를 소개해주세요</div>
+        <div>친구들이 나를 더 잘 알 수 있도록 도와주세요</div>
+        <div class="section">
+            <div class="select-text">✨ <strong>닉네임(필수)</strong></div>
+            <input type="text" placeholder="다른 친구들에게 보여질 친근한 닉네임을 지어주세요">
+        </div>
+        <div id="section" class="section">  <!--display: grid-->
+            <div>
+                <div class="select-text">🧠 <strong>MBTI(필수)</strong></div>
+                <select name="mbti" id="mbti">
+                    {% for in %} {% endfor %}
+                </select>
+            </div>
+            <div>
+                <div class="select-text">🙋 <strong>성별(필수)</strong></div>
+                <select name="gender" id="gender">
+                    <option value="male">남성</option>
+                    <option value="female">여성</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <span>0/50자</span>     <!--텍스트 개수에 따라 바뀌는 기능 구현 필요-->
+            <span>📝 조금 더 써주세요</span>
+        </div>
+        <div>✍️ 자세히 쓸수록 매칭 정확도가 올라가요. 부담 없이, 자유롭게 적어보세요!</div>
+    </div>
+</div>
+{% endblock %}
