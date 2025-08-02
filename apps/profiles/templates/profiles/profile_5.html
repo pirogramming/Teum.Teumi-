@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="header">
+    <div>
+        <div><strong>나만의 프로필 만들기</strong></div>
+        <div><span>✨ 5/5단계 - 차근차근 함께해요</span></div>
+        <div><progress id="progress" value="5" min="0" max="5"></progress></div>
+    </div>
+</div>
+<div id="body">
+    <div>
+        <div>
+            <div>🌟</div>
+        </div>
+        <div class="question">더 자세한 프로필을 완성해보세요</div>
+        <div>더 정확한 매칭을 위해 모든 항목을 작성해주세요</div>
+        <div class="section">
+            <div class="section-text">✍️ <strong>나의 경험과 활동</strong></div>
+            <input type="text" placeholder="예 : UX 해커톤 2회 참가, 스타트업 인턴 경험 있어요">
+        </div>
+        <div id="section" class="section">  <!--display: grid-->
+            <div class="select-text">🧠 <strong>어떤 대화를 좋아하세요?</strong></div>
+            <select name="communication" id="communication" required>
+                <option selected disabled value="">선호하는 대화 스타일을 선택해주세요</option>     <!--display:none 처리-->
+                <option value="comfortable">☕ 가볍고 편한 대화</option>
+                <option value="career">🎯 깊은 진로 이야기</option>
+                <option value="advice">💼 전문적인 조언</option>
+                <option value="experience">🤝 경험 공유 위주</option>
+            </select>
+        </div>
+        <div class="section">
+            <div class="section-text">📍 <strong>주로 어디서 활동하세요?</strong></div>
+            <input type="text" placeholder="예 : 혜화 캠퍼스 위주로 활동해요, 기숙사 생활 중이에요">
+        </div>
+        <div class="keywords">
+            <div>🤹 <strong>나의 성격 키워드 (3개 선택)</strong></div>
+            {% for in %} {% endfor %}
+            <div>선택된 키워드 : 0/3</div>      <!--선택개수만큼 구현-->
+        </div>
+        <div class="section">
+            <div class="section-text">📌 <strong>현재 나의 목표나 고민</strong></div>
+            <input type="text" placeholder="예 : 디자인 포트폴리오 준비 중이에요, 진로 고민이 많아요">
+        </div>
+        <div>🎉 모든 항목을 작성하면 더 정확한 매칭을 받을 수 있어요!</div>
+    </div>
+</div>
+<div id="footer">
+    <div>
+        <button>
+            <a href="#">다음으로 넘어가기</a>
+        </button>
+        <button>
+            <a href="#">기본 정보로만 시작하기</a>
+        </button>
+    </div>
+</div>
+{% endblock %}
