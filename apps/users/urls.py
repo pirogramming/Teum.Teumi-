@@ -13,5 +13,4 @@ urlpatterns = [
     path('login/google/finish/', GoogleLoginFinishView.as_view(), name='google-login-todjango'),
     path("logout/", user_logout, name="logout"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"), # JWT 토큰 갱신 
-    path("interests/", create_user_interest, name="user-interest-create"), #관심사 등록 
 ]

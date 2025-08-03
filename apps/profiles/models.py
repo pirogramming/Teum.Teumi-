@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from apps.core.models import BaseEntity
+from apps.interests.models import Interest
 
 # 학교 테이블
 class School(models.Model):
@@ -74,8 +75,17 @@ class Profile(BaseEntity):
     def __str__(self):
         return f"{self.user.username}의 프로필"
 
+# 프로필 2단계 관심사 테이블
+class ProfileInterest(BaseEntity):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='interests')
+    interest = models.ForeignKey(Interest, on_delete=models.CASCADE)
 
-# --- 프로필 5단계 추가정보 테이블 ---
+    class Meta:
+        unique_together = ('profile', 'interest')
+
+
+
+# 프로필 5단계 추가정보 테이블 
 # 성격키워드를 저장하는 클래스
 class Personality(models.Model):
     keyword = models.CharField(max_length=50, unique=True, null=False)

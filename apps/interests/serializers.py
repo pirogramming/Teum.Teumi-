@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.users.models import UserInterest
+from apps.profiles.models import ProfileInterest
 from apps.interests.models import Interest
 
 class InterestSerializer(serializers.ModelSerializer):
