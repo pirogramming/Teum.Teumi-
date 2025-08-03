@@ -6,17 +6,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teum.Teumi</title>
-    <link href="djfkjsl" rel="stylesheet">
+    <link href="{% static 'profiles/css/profile.css' %}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+<div id="wrapper">
 {% block content %} {% endblock %}
-<div id="footer">
-    <div>
-        <button>
-            <a href="#">다음으로 넘어가기</a>
-        </button>
-    </div>
 </div>
 </body>
 </html>

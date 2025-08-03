@@ -1,53 +1,135 @@
-{% extends 'base.html' %}
+{% extends 'profiles/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'profiles/css/profile_2.css' %}">
+{% endblock %}
+
 {% block content %}
 <div id="header">
-    <div>
-        <div><strong>나만의 프로필 만들기</strong></div>
-        <div><span>✨ 2/5단계 - 차근차근 함께해요</span></div>
-        <div><progress id="progress" value="2" min="0" max="5"></progress></div>
+    <div id="header-div">
+        <div id="header-grid">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+            </svg>
+            <div>
+                <div class="title"><strong>나만의 프로필 만들기</strong></div>
+                <div><span class="progress-text">✨ 2/5단계 - 차근차근 함께해요</span></div>
+            </div>
+            <div></div>
+        </div>
+        <div class="progress"><progress id="progress" value="2" min="0" max="5"></progress></div>
     </div>
-</div>
+</div><hr class="border">
 <div id="body">
     <div>
-        <div>
+        <div class="icon">
             <div>🌱</div>
         </div>
+        <div class="question-container">
+            <div class="question"><h2>어떤 분야에 관심이 있으세요?</h2></div>
+            <div class="question">같은 관심사를 가진 친구들과 연결해드릴게요</div>
+        </div>
         <div class="tag-container">
-            <div class="tag">#창업</div>
-            <div class="tag">#개발</div>
-            <div class="tag">#취업</div>
-            <div class="tag">#진로</div>
-            <div class="tag">#AI</div>
-            <div class="tag">#UX/UI</div>
-            <div class="tag">#마케팅</div>
-            <div class="tag">#투자</div>
-            <div class="tag">#데이터분석</div>
-            <div class="tag">#디자인</div>
-            <div class="tag">#외국어</div>
-            <div class="tag">#스터디</div>
-            <div class="tag">#프로젝트관리</div>
-            <div class="tag">#경제</div>
-            <div class="tag">#금융</div>
-            <div class="tag">#컨설팅</div>
-            <div class="tag">#기획</div>
-            <div class="tag">#영업</div>
-            <div class="tag">#교환학생</div>
-            <div class="tag">#인턴십</div>
-            <div class="tag">#블록체인</div>
-            <div class="tag">#게임개발</div>
-            <div class="tag">#모바일앱</div>
-            <div class="tag">#웹개발</div>
-            <div class="tag">#머신러닝</div>
-            <div class="tag">#정보보안</div>
-            <div class="tag">#대학원</div>
-            <div class="tag">#공모전</div>
-            <div class="tag">#부트캠프</div>
-            <div class="tag">#동아리</div>
+            <div class="tag" data-label="창업">#창업</div>
+            <div class="tag" data-label="개발">#개발</div>
+            <div class="tag" data-label="취업">#취업</div>
+            <div class="tag" data-label="진로">#진로</div>
+            <div class="tag" data-label="AI">#AI</div>
+            <div class="tag" data-label="UX/UI">#UX/UI</div>
+            <div class="tag" data-label="마케팅">#마케팅</div>
+            <div class="tag" data-label="투자">#투자</div>
+            <div class="tag" data-label="데이터분석">#데이터분석</div>
+            <div class="tag" data-label="디자인">#디자인</div>
+            <div class="tag" data-label="외국어">#외국어</div>
+            <div class="tag" data-label="스터디">#스터디</div>
+            <div class="tag" data-label="프로젝트관리">#프로젝트관리</div>
+            <div class="tag" data-label="경제">#경제</div>
+            <div class="tag" data-label="금융">#금융</div>
+            <div class="tag" data-label="컨설팅">#컨설팅</div>
+            <div class="tag" data-label="기획">#기획</div>
+            <div class="tag" data-label="영업">#영업</div>
+            <div class="tag" data-label="교환학생">#교환학생</div>
+            <div class="tag" data-label="인턴십">#인턴십</div>
+            <div class="tag" data-label="블록체인">#블록체인</div>
+            <div class="tag" data-label="게임개발">#게임개발</div>
+            <div class="tag" data-label="모바일앱">#모바일앱</div>
+            <div class="tag" data-label="웹개발">#웹개발</div>
+            <div class="tag" data-label="머신러닝">#머신러닝</div>
+            <div class="tag" data-label="정보보안">#정보보안</div>
+            <div class="tag" data-label="대학원">#대학원</div>
+            <div class="tag" data-label="공모전">#공모전</div>
+            <div class="tag" data-label="부트캠프">#부트캠프</div>
+            <div class="tag" data-label="동아리">#동아리</div>
         </div>
         <div class="comment">
-            <div>🎯 <span><strong>선택된 관심사 : </strong>0/4</span></div> <!--선택개수만큼 바뀌는 거 구현해야 함-->
-            <div>정확한 매칭을 위해 관심사 4개를 모두 선택해주세요.</div>
+            <div>🎯 <span id="tag-count">선택된 관심사 : 0/4</span></div> <!--선택개수만큼 바뀌는 거 구현해야 함-->
+            <div id="tag-comment">정확한 매칭을 위해 관심사 4개를 모두 선택해주세요.</div>
         </div>
     </div>
 </div>
+<hr class="border">
+<div id="footer">
+    <button>
+        <a href="#">다음으로 넘어가기</a>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+        </svg>
+    </button>
+</div>
+
+<script>
+  const MAX_SELECTION = 4;
+  const tags = document.querySelectorAll('.tag');
+  const tagCountText = document.getElementById('tag-count');
+  const tagComment = document.getElementById('tag-comment');
+
+  // 선택 개수 업데이트 함수
+  function updateCount() {
+    const selectedCount = document.querySelectorAll('.tag.selected').length;
+    tagCountText.textContent = `선택된 관심사: ${selectedCount}/${MAX_SELECTION}`;
+
+    // 모든 태그 상태 업데이트
+    tags.forEach(tag => {
+      const isAlreadySelected = tag.classList.contains('selected');
+
+      if (selectedCount >= MAX_SELECTION && !isAlreadySelected) {
+        tag.classList.add('disabled');
+        tag.style.pointerEvents = 'none'; // 클릭 불가
+        tag.style.opacity = '0.5';
+        tag.style.color = '#64748b';
+
+        tagComment.innerHTML = '✅ 완성! 정확한 매칭을 위해 4개를 모두 선택해주셨어요.'
+      } else {
+        tag.classList.remove('disabled');
+        tag.style.pointerEvents = 'auto';
+        tag.style.opacity = '1';
+        tag.style.color = ''; // 기본 색상으로 복원
+      }
+    });
+  }
+
+  tags.forEach(tag => {
+    tag.addEventListener('click', () => {
+      const isSelected = tag.classList.contains('selected');
+
+      if (!isSelected) {
+        const selectedCount = document.querySelectorAll('.tag.selected').length;
+        if (selectedCount >= MAX_SELECTION) {
+          return; // 이미 4개 선택되어 있으면 무시
+        }
+      }
+
+      tag.classList.toggle('selected');
+      const nowSelected = tag.classList.contains('selected');
+      tag.innerHTML = nowSelected
+        ? `✨ #${tag.dataset.label}`
+        : `#${tag.dataset.label}`;
+
+      updateCount(); // 선택 개수 및 상태 업데이트
+    });
+  });
+
+  updateCount(); // 초기 상태
+</script>
 {% endblock %}

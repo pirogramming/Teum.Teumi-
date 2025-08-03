@@ -111,7 +111,6 @@ def kakao_callback(request):
         kakao_account = profile_json.get("kakao_account", {})
         profile = kakao_account.get("profile", {})
         nickname = profile.get("nickname")
-        avatar_url = profile.get("profile_image_url")
         email = kakao_account.get("email")
 
         if not email:       # 메일이 없으면 예외 처리
@@ -128,10 +127,6 @@ def kakao_callback(request):
                 first_name=nickname or "",
                 login_method=User.LOGIN_KAKAO,
             )
-
-            if avatar_url:      # 프로필 이미지 저장
-                avatar_response = requests.get(avatar_url)
-                user.avatar.save(f"{nickname}-avatar.jpg", ContentFile(avatar_response.content))
 
             user.set_unusable_password()        # 일반 로그인 방지
             user.save()

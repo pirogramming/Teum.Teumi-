@@ -1,0 +1,244 @@
+#header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    margin: 0;
+    padding: 15px;
+    border-top: 0.5px solid rgba(99, 102, 241, 0.1);
+}
+
+#header-div {
+    width: 100%;
+}
+
+#header-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 15px;
+}
+
+svg {
+    width: 0.8rem;
+    height: 0.8rem;
+}
+
+.title {
+    text-align: center;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.progress {
+    display: flex;
+    justify-content: center;
+}
+
+#progress {
+    width: 100%;
+    height: 11px;
+    appearance: none;
+}
+
+#progress::-webkit-progress-bar {
+    background-color: rgba(99, 102, 241, 0.1);
+    border-radius: 1rem;
+}
+
+#progress::-webkit-progress-value {
+    border-radius: 1rem;
+    background-color: #6366f1;
+}
+
+hr {
+    margin: 0;
+    border: 0.5px solid rgba(99, 102, 241, 0.1);
+}
+
+#body {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    margin: 30px 20px;
+    margin-bottom: 0;
+    overflow-y: auto;
+    position: absolute;
+    top: 95px;
+    bottom: 134.5px;
+}
+
+#body > div {
+    width: 100%;
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.icon > div {
+    background-color: #eef2ff;
+    border-radius: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    padding: 18px;
+}
+
+h2 {
+    margin: 0;
+}
+
+.question-container {
+    padding-bottom: 10px;
+}
+
+.question {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.question:nth-of-type(2) {
+    color: #64748b;
+}
+
+.section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.selectbox {
+    color: 	#64748b;
+    width: 100%;
+    background-color: #f8fafc;
+    padding: 10px;
+    border-radius: 1rem;
+    border: 0.5px solid rgba(99, 102, 241, 0.1);
+}
+
+option:first-of-type {
+    display: none;
+    color: #64748b;
+}
+
+.tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.tag {
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 1rem;
+    padding: 12px;
+    text-align: center;
+    margin: 5px;
+    transition: transform 0.3s ease-out;
+}
+
+.tag:hover {
+    background-color: #eef2ff;
+    border: 1px solid #6366f1;
+    transform: scale(1.05);
+}
+
+.tag.selected {
+  background-color: #6366f1;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+}
+
+.focus:focus {
+    border: 1px solid #3730a3;
+    outline: 3px solid rgba(99, 102, 241, 0.1);
+}
+
+#tag-count {
+    color: #a855f7;
+    background-color: #eef2ff;
+    width: 100%;
+    text-align: center;
+    border-radius: 1rem;
+    padding: 10px;
+}
+
+#info-comment {
+    color: #60a5fa;
+    background-color: #F4F7FE;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    padding: 15px;
+    border-radius: 1rem;
+}
+
+#footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    bottom: 0;
+    border-top: 0.5px solid rgba(99, 102, 241, 0.1);
+}
+
+#detail-start {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 1rem;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px;
+    margin: 15px;
+}
+
+#detail-start > svg, #detail-start > a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+#default-start {
+    background: #fff;
+    border-radius: 1rem;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    margin: 0 15px 15px;
+}
+
+#default-start > svg, #default-start > a {
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+#default-start:hover {
+    font-weight: 600;
+    background-color: color-mix(in srgb, #fff, black 5%);
+}
