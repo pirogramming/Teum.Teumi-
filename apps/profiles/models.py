@@ -37,7 +37,7 @@ class Department(models.Model):
         return f"{self.school.school_name} - {self.department_name}"
 
 # 프로필 테이블
-class Profile(models.Model):
+class Profile(BaseEntity):
     # 성별과 MBTI 선택지
     GENDER_CHOICES = [
         ('M', '남자'),
