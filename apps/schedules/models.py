@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from apps.core.models import BaseEntity
 
 class DayOfWeek(models.TextChoices):
     MONDAY = "Monday", "월"
