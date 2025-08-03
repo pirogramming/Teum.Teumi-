@@ -26,6 +26,6 @@ class UserInterestCreateSerializer(serializers.Serializer):
                 continue  
         if already_exist:
             raise ValidationError(
-                {"detail": f"이미 등록된 관심사입니다: {', '.join(already_exist)}"}
+                {"error": f"이미 등록된 관심사입니다: {', '.join(already_exist)}"}
             )
         return created_interests

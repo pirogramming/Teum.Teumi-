@@ -70,7 +70,8 @@ def kakao_login(request):
     except (KakaoException, SocialLoginException) as error:
         print(f"[kakao_login error] {error}")
         messages.error(request, str(error))
-        return JsonResponse({'error': '로그인 실패'}, status=400)
+        return JsonResponse({'error': '로그인 실패'}, status=400, json_dumps_params={'ensure_ascii': False})
+
 
 @csrf_exempt
 def kakao_callback(request):

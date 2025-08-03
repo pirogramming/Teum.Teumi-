@@ -26,6 +26,6 @@ urlpatterns = [
     # path('schedules/', include('apps.schedules.urls')),
     # path('matches/', include('matches.urls')),
     # path('reviews/', include('reviews.urls')),
-    # path('chats/', include('chats.urls')),
+    path('chats/', include('apps.chats.urls',  namespace="chats")),
     path('interests/', include('apps.interests.urls')),
 ]
