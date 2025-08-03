@@ -14,11 +14,11 @@
             </svg>
             <div>
                 <div class="title"><strong>나만의 프로필 만들기</strong></div>
-                <div><span class="progress-text">✨ 3/5단계 - 차근차근 함께해요</span></div>
+                <div><span class="progress-text">✨ 4/5단계 - 차근차근 함께해요</span></div>
             </div>
             <div></div>
         </div>
-        <div class="progress"><progress id="progress" value="3" min="0" max="5"></progress></div>
+        <div class="progress"><progress id="progress" value="4" min="0" max="5"></progress></div>
     </div>
 </div><hr class="border">
 <div id="body">
@@ -26,34 +26,42 @@
         <div class="icon">
             <div>😊</div>
         </div>
-        <div class="question"><h2>나를 소개해주세요</h2></div>
-        <div>친구들이 나를 더 잘 알 수 있도록 도와주세요</div>
+        <div class="question-container">
+            <div class="question"><h2>나를 소개해주세요</h2></div>
+            <div class="question">친구들이 나를 더 잘 알 수 있도록 도와주세요</div>
+        </div>
         <div class="section">
             <div class="section-text">✨ <strong>닉네임(필수)</strong></div>
-            <input type="text" placeholder="다른 친구들에게 보여질 친근한 닉네임을 지어주세요">
+            <input type="text" class="selectbox" placeholder="다른 친구들에게 보여질 친근한 닉네임을 지어주세요">
         </div>
-        <div id="section" class="section">  <!--display: grid-->
-            <div>
+        <div id="section"> 
+            <div class="section">
                 <div class="select-text">🧠 <strong>MBTI(필수)</strong></div>
-                <select name="mbti" id="mbti">
+                <select name="mbti" id="mbti" class="selectbox" required>
+                    <option selected disabled value="">MBTI</option>
                     {% for major in majors %}
                     <option value="{{ major }}">{{ major }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div>
+            <div class="section">
                 <div class="select-text">🙋 <strong>성별(필수)</strong></div>
-                <select name="gender" id="gender">
+                <select name="gender" id="gender" class="selectbox" required>
+                    <option selected disabled value="">성별</option>
                     <option value="male">남성</option>
                     <option value="female">여성</option>
                 </select>
             </div>
         </div>
-        <div>
-            <span>0/50자</span>     <!--텍스트 개수에 따라 바뀌는 기능 구현 필요-->
-            <span>📝 조금 더 써주세요</span>
+        <div class="section">
+            <div class="section-text">💬 <strong>자기소개 (필수, 최소 50자)</strong></div>
+            <textarea class="selectbox" rows="7" id="introduce" name="introduce" placeholder="나는 어떤 사람인지, 어떤 이야기를 나누고 싶은지 자유롭게 적어주세요."></textarea>
         </div>
-        <div>✍️ 자세히 쓸수록 매칭 정확도가 올라가요. 부담 없이, 자유롭게 적어보세요!</div>
+        <div class="textarea-flex">
+            <div id="text-count" class="small-text">0/50자</div>     <!--텍스트 개수에 따라 바뀌는 기능 구현 필요-->
+            <span id="text-comment">📝 조금 더 써주세요</span>
+        </div>
+        <div class="small-text">✍️ 자세히 쓸수록 매칭 정확도가 올라가요. 부담 없이, 자유롭게 적어보세요!</div>
     </div>
 </div>
 <hr class="border">
@@ -65,4 +73,25 @@
         </svg>
     </button>
 </div>
+
+<script>
+    const MIN_TEXT = 50;
+    const textarea = document.getElementById('introduce');
+    const textCount = document.getElementById('text-count');
+    const message = document.getElementById('text-comment');
+
+    textarea.addEventListener('input', () => {
+        const length = textarea.value.length;
+
+        textCount.textContent = `${length}/${MIN_TEXT}자`;
+
+        if (length >= 50) {
+        message.innerHTML = '✅ 완성!';
+        } else {
+        message.innerHTML = '📝 조금 더 써주세요';
+        }
+    });
+</script>
+
+
 {% endblock %}

@@ -105,51 +105,65 @@ h2 {
     color: #64748b;
 }
 
-.tag-container {
+.section-container {
+    width: 100%;
     display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.tag {
-    font-size: 0.9rem;
-    font-weight: 500;
-    border: 1px solid rgba(99, 102, 241, 0.1);
+.section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+#section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.selectbox {
+    color: 	#64748b;
+    width: 100%;
+    background-color: #f8fafc;
+    padding: 10px;
     border-radius: 1rem;
-    padding: 12px;
-    text-align: center;
-    margin: 5px;
-    transition: transform 0.3s ease-out;
+    border: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
-.tag:hover {
-    background-color: #eef2ff;
-    border: 1px solid #6366f1;
-    transform: scale(1.05);
-}
-
-.tag.selected {
-  background-color: #6366f1;
-  color: #fff;
-  border: none;
-  font-weight: 600;
-}
-
-.comment {
-    background-color: #f1f5f9;
-    border-radius: 1rem;
-    padding: 15px;
-    text-align: center;
-}
-
-.comment > div > span {
-    color: #6366f1;
-    font-weight: 500;
-}
-
-.comment > div:nth-of-type(2) {
-    font-size: 0.8rem;
+option:first-of-type {
+    display: none;
     color: #64748b;
+}
+
+input:focus, textarea:focus {
+    border: 1px solid #3730a3;
+    outline: 3px solid rgba(99, 102, 241, 0.1);
+}
+
+textarea {
+    resize: none;
+}
+
+.textarea-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 3px 0;
+}
+
+.small-text {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.textarea-flex > span {
+    font-size: 0.75rem;
+    color: #6366f1;;
 }
 
 #footer {
