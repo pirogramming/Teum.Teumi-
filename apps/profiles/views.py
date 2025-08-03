@@ -27,7 +27,13 @@ class SchoolProfileAPIView(APIView):
 
 #관심사 태그 등록
 class InterestTagAPIView(APIView):
-    pass
+    def post(self, request):
+        serializer = InterestSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "관심사가 성공적으로 저장되었습니다."}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 #공강시간 등록
 class FreeTimeAPIView(APIView):
