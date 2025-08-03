@@ -68,9 +68,9 @@ hr {
     flex: 1;
     display: flex;
     justify-content: center;
-    margin: 30px 20px;
+    padding: 30px 20px;
     margin-bottom: 0;
-    overflow-y: auto;
+    
     position: absolute;
     top: 95px;
     bottom: 80px;
@@ -122,14 +122,14 @@ h2 {
     padding: 15px 20px;
 }
 
-.timetable > div:first-of-type {  
+/* .timetable > div:first-of-type {  
     display: grid;
     grid-template-columns: 80px repeat(7, 1fr);
     align-items: center;
     overflow-x: auto;
     overflow-y: hidden;
     margin: 30px 0;
-}
+} */
 
 .day, .cell {
     margin: 3px;

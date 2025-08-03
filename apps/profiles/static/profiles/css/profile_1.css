@@ -59,21 +59,21 @@ svg {
     background-color: #6366f1;
 }
 
-hr {
-    margin: 0;
-    border: 0.5px solid rgba(99, 102, 241, 0.1);
-}
-
 #body {
+    width: 100%;
     flex: 1;
     display: flex;
     justify-content: center;
-    margin: 30px 20px;
+    padding: 30px 20px;
     margin-bottom: 0;
     overflow-y: auto;
     position: absolute;
     top: 95px;
     bottom: 80px;
+}
+
+#body > div {
+    width: 100%;
 }
 
 .icon {
