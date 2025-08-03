@@ -124,3 +124,9 @@ button {
 .footer > p:last-of-type {
     font-weight: 400;
 }
+
+@media (min-width: 768px) {
+  .body {
+    width: 100%;
+  }
+}
