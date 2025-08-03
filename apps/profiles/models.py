@@ -2,6 +2,7 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from apps.core.models import BaseEntity
 
 # 학교 테이블
 class School(models.Model):
@@ -91,7 +92,7 @@ class ConversationStyle(models.TextChoices):
     def __str__(self):
         return self.label
 
-class AdditionalInfo(models.Model):
+class AdditionalInfo(BaseEntity):
     # 추가 정보 기본키
     additional_info_id = models.BigAutoField(primary_key=True)
 
@@ -103,9 +104,6 @@ class AdditionalInfo(models.Model):
     activity_location = models.CharField(max_length=100, null=True, blank=True)
     personality_keyword = models.ManyToManyField(Personality, blank=True)
     goal_or_concern = models.TextField(null=True, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.profile.nickname or self.profile.user.username}의 추가 정보"
