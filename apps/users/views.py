@@ -22,6 +22,14 @@ import os
 from .models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .models import User
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from .serializers import UserInterestCreateSerializer
+
+
 load_dotenv()
 
 GOOGLE_CALLBACK_URI = settings.GOOGLE_CALLBACK_URI
@@ -62,7 +70,8 @@ def kakao_login(request):
     except (KakaoException, SocialLoginException) as error:
         print(f"[kakao_login error] {error}")
         messages.error(request, str(error))
-        return JsonResponse({'error': '로그인 실패'}, status=400)
+        return JsonResponse({'error': '로그인 실패'}, status=400, json_dumps_params={'ensure_ascii': False})
+
 
 @csrf_exempt
 def kakao_callback(request):
@@ -269,3 +278,20 @@ class GoogleLoginFinishView(APIView):
 def user_logout(request):   # 로그아웃
     logout(request)
     return redirect("/")
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_user_interest(request):  #관심사 등록
+    serializer = UserInterestCreateSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        created_interests = serializer.save()
+
+        return Response([
+            {
+                "user": user_interest.user.id,
+                "interest": user_interest.interest.id
+            } for user_interest in created_interests
+        ], status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

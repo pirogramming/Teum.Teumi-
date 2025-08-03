@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from apps.core.models import BaseEntity
+from apps.interests.models import Interest
 # Create your models here.
 
 class User(AbstractUser, BaseEntity):
@@ -22,3 +23,11 @@ class User(AbstractUser, BaseEntity):
     )
 
     avatar = models.ImageField(upload_to="avatars", blank=True, null=True)  # 이미지
+
+class UserInterest(BaseEntity):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_interests')
+    interest = models.ForeignKey(Interest, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'interest')
+
