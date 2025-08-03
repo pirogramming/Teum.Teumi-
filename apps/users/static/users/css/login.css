@@ -2,12 +2,19 @@
     box-sizing: border-box;
 }
 
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
 body {
-    color: #57564F;
-    background-color: #FAF9EE;
-    font-size: 16px;
-    margin: 95px;
-    text-align: center;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px;
 }
 
 .header {
@@ -23,30 +30,43 @@ body {
 
 .header-logo > div {
     background-color: white;
-    width: 50px;
-    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
-    font-size: 1.2rem;
+    border-radius: 1rem;
+    font-size: 1.5rem;
+    padding: 15px;
+}
+
+.header-comment {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.header-explain {
+    font-weight: 300;
 }
 
 .body {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-bottom: 30px;
 }
 
 .body > div {
+    width: 100%;
     background-color: white;
     padding: 20px;
     border-radius: 20px;
-    width: 500px;
+}
+
+#login-logo {
+    margin-bottom: 15px;
 }
 
 .login-logo {
-    margin: 10px 0;
+    margin: 5px 5px 10px;
 }
 
 button {
@@ -57,9 +77,11 @@ button {
 
 .login {
     border-radius: 12px;
+    padding: 15px 20px;
 }
 
 .login > a {
+    font-weight: 500;
     text-decoration: none;
     color: black;
     border-radius: 12px;
@@ -67,7 +89,6 @@ button {
 
 #kakao {
     background-color: #FAE100;
-    padding: 10px 20px;
 }
 
 #kakao:hover {
@@ -76,7 +97,6 @@ button {
 
 #google {
     background-color: #F6F6F6;
-    padding: 10px 20px;
 }
 
 #google:hover {
@@ -85,4 +105,22 @@ button {
 
 .strong {
     text-decoration: underline;
+}
+
+.footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer > p {
+    font-size: 0.8rem;
+    font-weight: 300;
+    text-align: center;
+    margin: 10px;
+}
+
+.footer > p:last-of-type {
+    font-weight: 400;
 }
