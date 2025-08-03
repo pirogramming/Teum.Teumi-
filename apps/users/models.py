@@ -22,8 +22,6 @@ class User(AbstractUser, BaseEntity):
         max_length=6, choices=LOGIN_CHOICES, default=LOGIN_EMAIL
     )
 
-    avatar = models.ImageField(upload_to="avatars", blank=True, null=True)  # 이미지
-
 class UserInterest(BaseEntity):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_interests')
     interest = models.ForeignKey(Interest, on_delete=models.CASCADE)
