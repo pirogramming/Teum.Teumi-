@@ -1,27 +1,43 @@
-{% extends 'base.html' %}
+{% extends 'profiles/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'profiles/css/profile_5.css' %}">
+{% endblock %}
+
 {% block content %}
 <div id="header">
-    <div>
-        <div><strong>나만의 프로필 만들기</strong></div>
-        <div><span>✨ 5/5단계 - 차근차근 함께해요</span></div>
-        <div><progress id="progress" value="5" min="0" max="5"></progress></div>
+    <div id="header-div">
+        <div id="header-grid">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+            </svg>
+            <div>
+                <div class="title"><strong>나만의 프로필 만들기</strong></div>
+                <div><span class="progress-text">✨ 5/5단계 - 차근차근 함께해요</span></div>
+            </div>
+            <div></div>
+        </div>
+        <div class="progress"><progress id="progress" value="5" min="0" max="5"></progress></div>
     </div>
-</div>
+</div><hr class="border">
 <div id="body">
     <div>
-        <div>
+        <div class="icon">
             <div>🌟</div>
         </div>
-        <div class="question">더 자세한 프로필을 완성해보세요</div>
-        <div>더 정확한 매칭을 위해 모든 항목을 작성해주세요</div>
+        <div class="question-container">
+            <div class="question"><h2>더 자세한 프로필을 완성해보세요</h2></div>
+            <div class="question">더 정확한 매칭을 위해 모든 항목을 작성해주세요</div>
+        </div>
         <div class="section">
             <div class="section-text">✍️ <strong>나의 경험과 활동</strong></div>
-            <input type="text" placeholder="예 : UX 해커톤 2회 참가, 스타트업 인턴 경험 있어요">
+            <input class="selectbox focus" type="text" placeholder="예 : UX 해커톤 2회 참가, 스타트업 인턴 경험 있어요">
         </div>
-        <div id="section" class="section">  <!--display: grid-->
+        <div class="section">
             <div class="select-text">🧠 <strong>어떤 대화를 좋아하세요?</strong></div>
-            <select name="communication" id="communication" required>
-                <option selected disabled value="">선호하는 대화 스타일을 선택해주세요</option>     <!--display:none 처리-->
+            <select class="selectbox" name="communication" id="communication" required>
+                <option selected disabled value="">선호하는 대화 스타일을 선택해주세요</option>
                 <option value="comfortable">☕ 가볍고 편한 대화</option>
                 <option value="career">🎯 깊은 진로 이야기</option>
                 <option value="advice">💼 전문적인 조언</option>
@@ -30,28 +46,87 @@
         </div>
         <div class="section">
             <div class="section-text">📍 <strong>주로 어디서 활동하세요?</strong></div>
-            <input type="text" placeholder="예 : 혜화 캠퍼스 위주로 활동해요, 기숙사 생활 중이에요">
+            <input class="selectbox focus" type="text" placeholder="예 : 혜화 캠퍼스 위주로 활동해요, 기숙사 생활 중이에요">
         </div>
-        <div class="keywords">
-            <div>🤹 <strong>나의 성격 키워드 (3개 선택)</strong></div>
-            {% for in %} {% endfor %}
-            <div>선택된 키워드 : 0/3</div>      <!--선택개수만큼 구현-->
+        <div class="tag-container">
+            <div>🤹 <strong>나의 성격 키워드 (3개 선택)</strong>
+                <div class="tag-container">
+                    <div class="tag" data-label="차분함">#논리적</div>
+                    <div class="tag" data-label="논리적">#차분함</div>
+                    <div class="tag" data-label="분석적">#분석적</div>
+                    <div class="tag" data-label="센스있는">#센스있는</div>
+                    <div class="tag" data-label="리더십있는">#리더십있는</div>
+                    <div class="tag" data-label="적극적">#적극적</div>
+                </div>
+            </div>
+            <div id="tag-count">선택된 키워드 : 0/3</div>      <!--선택개수만큼 구현-->
         </div>
         <div class="section">
             <div class="section-text">📌 <strong>현재 나의 목표나 고민</strong></div>
-            <input type="text" placeholder="예 : 디자인 포트폴리오 준비 중이에요, 진로 고민이 많아요">
+            <input class="selectbox focus" type="text" placeholder="예 : 디자인 포트폴리오 준비 중이에요, 진로 고민이 많아요">
         </div>
-        <div>🎉 모든 항목을 작성하면 더 정확한 매칭을 받을 수 있어요!</div>
+        <div id="info-comment">🎉 모든 항목을 작성하면 더 정확한 매칭을 받을 수 있어요!</div>
     </div>
 </div>
+<hr class="border">
 <div id="footer">
-    <div>
-        <button>
-            <a href="#">다음으로 넘어가기</a>
-        </button>
-        <button>
-            <a href="#">기본 정보로만 시작하기</a>
-        </button>
-    </div>
+    <button id="detail-start">
+        <a href="#">🎉 프로필 완성하고 새로운 만남 시작하기</a>
+    </button>
+    <button id="default-start">
+        <a href="#">기본 정보로만 시작하기</a>
+    </button>
 </div>
+
+<script>
+    const MAX_SELECTION = 3;
+    const tags = document.querySelectorAll('.tag');
+    const tagCountText = document.getElementById('tag-count');
+
+    // 선택 개수 업데이트 함수
+    function updateCount() {
+        const selectedCount = document.querySelectorAll('.tag.selected').length;
+        tagCountText.textContent = `선택된 키워드: ${selectedCount}/${MAX_SELECTION}`;
+
+        // 모든 태그 상태 업데이트
+        tags.forEach(tag => {
+        const isAlreadySelected = tag.classList.contains('selected');
+
+        if (selectedCount >= MAX_SELECTION && !isAlreadySelected) {
+            tag.classList.add('disabled');
+            tag.style.pointerEvents = 'none'; // 클릭 불가
+            tag.style.opacity = '0.5';
+            tag.style.color = '#64748b';
+        } else {
+            tag.classList.remove('disabled');
+            tag.style.pointerEvents = 'auto';
+            tag.style.opacity = '1';
+            tag.style.color = ''; // 기본 색상으로 복원
+        }
+        });
+    }
+
+    tags.forEach(tag => {
+        tag.addEventListener('click', () => {
+        const isSelected = tag.classList.contains('selected');
+
+        if (!isSelected) {
+            const selectedCount = document.querySelectorAll('.tag.selected').length;
+            if (selectedCount >= MAX_SELECTION) {
+            return; // 이미 4개 선택되어 있으면 무시
+            }
+        }
+
+        tag.classList.toggle('selected');
+        const nowSelected = tag.classList.contains('selected');
+        tag.innerHTML = nowSelected
+            ? `✨ #${tag.dataset.label}`
+            : `#${tag.dataset.label}`;
+
+        updateCount(); // 선택 개수 및 상태 업데이트
+        });
+    });
+
+    updateCount(); // 초기 상태
+</script>
 {% endblock %}

@@ -105,6 +105,28 @@ h2 {
     color: #64748b;
 }
 
+.section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.selectbox {
+    color: 	#64748b;
+    width: 100%;
+    background-color: #f8fafc;
+    padding: 10px;
+    border-radius: 1rem;
+    border: 0.5px solid rgba(99, 102, 241, 0.1);
+}
+
+option:first-of-type {
+    display: none;
+    color: #64748b;
+}
+
 .tag-container {
     display: flex;
     flex-wrap: wrap;
@@ -135,21 +157,28 @@ h2 {
   font-weight: 600;
 }
 
-.comment {
-    background-color: #f1f5f9;
-    border-radius: 1rem;
-    padding: 15px;
+.focus:focus {
+    border: 1px solid #3730a3;
+    outline: 3px solid rgba(99, 102, 241, 0.1);
+}
+
+#tag-count {
+    color: #a855f7;
+    background-color: #eef2ff;
+    width: 100%;
     text-align: center;
+    border-radius: 1rem;
+    padding: 10px;
 }
 
-.comment > div > span {
-    color: #6366f1;
+#info-comment {
+    color: #60a5fa;
+    background-color: #F4F7FE;
+    font-size: 0.9rem;
     font-weight: 500;
-}
-
-.comment > div:nth-of-type(2) {
-    font-size: 0.8rem;
-    color: #64748b;
+    text-align: center;
+    padding: 15px;
+    border-radius: 1rem;
 }
 
 #footer {
@@ -160,7 +189,7 @@ h2 {
     bottom: 0;
 }
 
-button {
+#detail-start {
     background: linear-gradient(135deg, #6366f1, #a855f7);
     border-radius: 1rem;
     border: none;
@@ -172,8 +201,31 @@ button {
     margin: 15px;
 }
 
-button > svg, button > a {
+#detail-start > svg, #detail-start > a {
     color: #fff;
     text-decoration: none;
     font-weight: 500;
+}
+
+#default-start {
+    background: #fff;
+    border-radius: 1rem;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    margin: 0 15px 15px;
+}
+
+#default-start > svg, #default-start > a {
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+#default-start:hover {
+    font-weight: 600;
+    background-color: color-mix(in srgb, #fff, black 5%);
 }
