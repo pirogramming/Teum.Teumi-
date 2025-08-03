@@ -70,7 +70,7 @@
 </div>
 <hr class="border">
 <div id="footer">
-    <button>
+    <button type="submit" id="next-button" disabled>
         <a href="#">다음으로 넘어가기</a>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
@@ -79,57 +79,62 @@
 </div>
 
 <script>
-  const MAX_SELECTION = 4;
-  const tags = document.querySelectorAll('.tag');
-  const tagCountText = document.getElementById('tag-count');
-  const tagComment = document.getElementById('tag-comment');
+    const MAX_SELECTION = 4;
+    const tags = document.querySelectorAll('.tag');
+    const tagCountText = document.getElementById('tag-count');
+    const tagComment = document.getElementById('tag-comment');
+    const nextButton = document.getElementById('next-button');
 
-  // 선택 개수 업데이트 함수
-  function updateCount() {
-    const selectedCount = document.querySelectorAll('.tag.selected').length;
-    tagCountText.textContent = `선택된 관심사: ${selectedCount}/${MAX_SELECTION}`;
-
-    // 모든 태그 상태 업데이트
-    tags.forEach(tag => {
-      const isAlreadySelected = tag.classList.contains('selected');
-
-      if (selectedCount >= MAX_SELECTION && !isAlreadySelected) {
-        tag.classList.add('disabled');
-        tag.style.pointerEvents = 'none'; // 클릭 불가
-        tag.style.opacity = '0.5';
-        tag.style.color = '#64748b';
-
-        tagComment.innerHTML = '✅ 완성! 정확한 매칭을 위해 4개를 모두 선택해주셨어요.'
-      } else {
-        tag.classList.remove('disabled');
-        tag.style.pointerEvents = 'auto';
-        tag.style.opacity = '1';
-        tag.style.color = ''; // 기본 색상으로 복원
-      }
-    });
-  }
-
-  tags.forEach(tag => {
-    tag.addEventListener('click', () => {
-      const isSelected = tag.classList.contains('selected');
-
-      if (!isSelected) {
+    // 선택 개수 업데이트 함수
+    function updateCount() {
         const selectedCount = document.querySelectorAll('.tag.selected').length;
-        if (selectedCount >= MAX_SELECTION) {
-          return; // 이미 4개 선택되어 있으면 무시
+        tagCountText.textContent = `선택된 관심사: ${selectedCount}/${MAX_SELECTION}`;
+
+        // 모든 태그 상태 업데이트
+        tags.forEach(tag => {
+        const isAlreadySelected = tag.classList.contains('selected');
+
+        if (selectedCount >= MAX_SELECTION && !isAlreadySelected) {
+            tag.classList.add('disabled');
+            tag.style.pointerEvents = 'none'; // 클릭 불가
+            tag.style.opacity = '0.5';
+            tag.style.color = '#64748b';
+            nextButton.disabled = false;
+            nextButton.style.pointerEvents = 'auto';
+
+            tagComment.innerHTML = '✅ 완성! 정확한 매칭을 위해 4개를 모두 선택해주셨어요.'
+        } else {
+            tag.classList.remove('disabled');
+            tag.style.pointerEvents = 'auto';
+            tag.style.opacity = '1';
+            tag.style.color = ''; // 기본 색상으로 복원
+            nextButton.disabled = true;
+            nextButton.style.pointerEvents = 'none';
         }
-      }
+        });
+    }
 
-      tag.classList.toggle('selected');
-      const nowSelected = tag.classList.contains('selected');
-      tag.innerHTML = nowSelected
-        ? `✨ #${tag.dataset.label}`
-        : `#${tag.dataset.label}`;
+    tags.forEach(tag => {
+        tag.addEventListener('click', () => {
+        const isSelected = tag.classList.contains('selected');
 
-      updateCount(); // 선택 개수 및 상태 업데이트
+        if (!isSelected) {
+            const selectedCount = document.querySelectorAll('.tag.selected').length;
+            if (selectedCount >= MAX_SELECTION) {
+            return; // 이미 4개 선택되어 있으면 무시
+            }
+        }
+
+        tag.classList.toggle('selected');
+        const nowSelected = tag.classList.contains('selected');
+        tag.innerHTML = nowSelected
+            ? `✨ #${tag.dataset.label}`
+            : `#${tag.dataset.label}`;
+
+        updateCount(); // 선택 개수 및 상태 업데이트
+        });
     });
-  });
 
-  updateCount(); // 초기 상태
+    updateCount(); // 초기 상태
 </script>
 {% endblock %}

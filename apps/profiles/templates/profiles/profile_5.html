@@ -69,26 +69,31 @@
     </div>
 </div>
 <div id="footer">
-    <button id="detail-start">
-        <a href="#">🎉 프로필 완성하고 새로운 만남 시작하기</a>
-    </button>
-    <button id="default-start">
-        <a href="#">기본 정보로만 시작하기</a>
-    </button>
+    <form id="detail-start" action="#" method="post" class="next-button">
+        <button type="submit" disabled>🎉 프로필 완성하고 새로운 만남 시작하기</button>
+    </form>
+    <form id="default-start" action="#" method="post">
+        <button type="submit">기본 정보로만 시작하기</button>
+    </form>
 </div>
 
 <script>
     const MAX_SELECTION = 3;
     const tags = document.querySelectorAll('.tag');
     const tagCountText = document.getElementById('tag-count');
+    const experienceInput = document.querySelectorAll('.selectbox[type="text"]')[0]; // 경험과 활동
+    const communicationSelect = document.getElementById('communication');
+    const areaInput = document.querySelectorAll('.selectbox[type="text"]')[1]; // 활동 지역
+    const goalInput = document.querySelectorAll('.selectbox[type="text"]')[2]; // 목표나 고민
+    const detailStartForm = document.querySelector('#detail-start button');
+    const form = document.getElementById('detail-start');
+    const button = form.querySelector('button');
 
-    // 선택 개수 업데이트 함수
-    function updateCount() {
+    function updateCount() {        // 선택 개수 업데이트
         const selectedCount = document.querySelectorAll('.tag.selected').length;
         tagCountText.textContent = `선택된 키워드: ${selectedCount}/${MAX_SELECTION}`;
 
-        // 모든 태그 상태 업데이트
-        tags.forEach(tag => {
+        tags.forEach(tag => {       // 모든 태그 상태 업데이트
         const isAlreadySelected = tag.classList.contains('selected');
 
         if (selectedCount >= MAX_SELECTION && !isAlreadySelected) {
@@ -103,6 +108,32 @@
             tag.style.color = ''; // 기본 색상으로 복원
         }
         });
+
+        validateForm(); // 항목 상태 확인
+    }
+
+    function validateForm() {
+    const isExperienceFilled = experienceInput.value.trim() !== '';
+    const isCommunicationSelected = communicationSelect.value !== '';
+    const isAreaFilled = areaInput.value.trim() !== '';
+    const isGoalFilled = goalInput.value.trim() !== '';
+    const selectedTagCount = document.querySelectorAll('.tag.selected').length === MAX_SELECTION;
+
+    const isValid =
+        isExperienceFilled &&
+        isCommunicationSelected &&
+        isAreaFilled &&
+        isGoalFilled &&
+        selectedTagCount;
+
+    detailStartForm.disabled = !isValid;
+
+    // form의 클래스도 같이 갱신
+    if (!isValid) {
+        form.classList.add('disabled');
+    } else {
+        form.classList.remove('disabled');
+    }
     }
 
     tags.forEach(tag => {
@@ -126,6 +157,13 @@
         });
     });
 
-    updateCount(); // 초기 상태
+    experienceInput.addEventListener('input', validateForm);
+    communicationSelect.addEventListener('change', validateForm);
+    areaInput.addEventListener('input', validateForm);
+    goalInput.addEventListener('input', validateForm);
+
+    // 초기 상태 점검
+    updateCount();
+    validateForm();
 </script>
 {% endblock %}

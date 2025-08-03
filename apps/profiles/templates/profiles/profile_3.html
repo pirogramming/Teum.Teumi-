@@ -274,7 +274,7 @@
     </div>
 </div>
 <div id="footer">
-    <button>
+    <button type="submit" id="next-button" disabled>
         <a href="#">다음으로 넘어가기</a>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
@@ -283,11 +283,21 @@
 </div>
 
 <script>
-  const cells = document.querySelectorAll('.cell');
-  cells.forEach(cell => {
-    cell.addEventListener('click', () => {
-      cell.classList.toggle('selected');
+    const cells = document.querySelectorAll('.cell');
+    const nextButton = document.getElementById('next-button');
+
+    function updateButtonState() {
+        const anySelected = document.querySelector('.cell.selected') !== null;  // 아무 셀이나 선택되었을 경우 true
+        nextButton.disabled = !anySelected;     // 기본값 : true
+    }
+
+    cells.forEach(cell => {
+        cell.addEventListener('click', () => {
+        cell.classList.toggle('selected');
+        updateButtonState();
+        });
     });
-  });
+
+    updateButtonState();    // 초기 상태에서도 검사 (혹시 미리 선택된 게 있을 경우)
 </script>
 {% endblock %}

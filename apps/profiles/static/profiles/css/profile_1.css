@@ -76,10 +76,6 @@ hr {
     bottom: 80px;
 }
 
-#body > div {
-    width: 100%;
-}
-
 .icon {
     display: flex;
     align-items: center;
@@ -175,4 +171,11 @@ button > svg, button > a {
     color: #fff;
     text-decoration: none;
     font-weight: 500;
+}
+
+#next-button:disabled {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
+    color: #fff;
+    cursor: not-allowed;
+    pointer-events: none;
 }

@@ -66,7 +66,7 @@
 </div>
 <hr class="border">
 <div id="footer">
-    <button>
+    <button type="submit" id="next-button" disabled>
         <a href="#">다음으로 넘어가기</a>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
@@ -76,22 +76,46 @@
 
 <script>
     const MIN_TEXT = 50;
+
+    const nicknameInput = document.querySelector('input[type="text"]');
+    const mbtiSelect = document.getElementById('mbti');
+    const genderSelect = document.getElementById('gender');
     const textarea = document.getElementById('introduce');
     const textCount = document.getElementById('text-count');
     const message = document.getElementById('text-comment');
+    const nextButton = document.getElementById('next-button');
 
-    textarea.addEventListener('input', () => {
+    function updateButtonState() {
+        const isNicknameFilled = nicknameInput.value.trim() !== '';
+        const isMbtiSelected = mbtiSelect.value !== '';
+        const isGenderSelected = genderSelect.value !== '';
+        const isTextareaLongEnough = textarea.value.length >= MIN_TEXT;
+
+        // 버튼 활성화 조건 검사
+        if (isNicknameFilled && isMbtiSelected && isGenderSelected && isTextareaLongEnough) {
+            nextButton.disabled = false;
+        } else {
+            nextButton.disabled = true;
+        }
+    }
+
+    textarea.addEventListener('input', () => {      // 자기소개 실시간 글자 수 표시 및 메시지 처리
         const length = textarea.value.length;
-
         textCount.textContent = `${length}/${MIN_TEXT}자`;
 
-        if (length >= 50) {
-        message.innerHTML = '✅ 완성!';
+        if (length >= MIN_TEXT) {
+            message.innerHTML = '✅ 완성!';
         } else {
-        message.innerHTML = '📝 조금 더 써주세요';
+            message.innerHTML = '📝 조금 더 써주세요';
         }
+
+        updateButtonState();
     });
+
+    nicknameInput.addEventListener('input', updateButtonState);
+    mbtiSelect.addEventListener('change', updateButtonState);
+    genderSelect.addEventListener('change', updateButtonState);
+
+    updateButtonState();        // 페이지 로딩 시 상태 점검
 </script>
-
-
 {% endblock %}

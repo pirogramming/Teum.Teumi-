@@ -81,11 +81,36 @@
 </div>
 <hr class="border">
 <div id="footer">
-        <button>
+        <button type="submit" id="next-button" disabled>
             <a href="#">다음으로 넘어가기</a>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
             </svg>
         </button>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const selects = document.querySelectorAll('select');
+    const nextButton = document.getElementById('next-button');
+
+    function checkAllSelected() {
+      for (let select of selects) {
+        if (select.value === '' || select.value === null) {
+          nextButton.disabled = true;
+          return;
+        }
+      }
+      nextButton.disabled = false;
+    }
+
+    // 각 select 요소에 이벤트 리스너 추가
+    selects.forEach(select => {
+      select.addEventListener('change', checkAllSelected);
+    });
+
+    // 초기 상태 확인
+    checkAllSelected();
+  });
+</script>
 {% endblock %}

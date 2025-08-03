@@ -1,3 +1,7 @@
+:root {
+    --button: linear-gradient(135deg, #6366f1, #a855f7);
+}
+
 #header {
     position: fixed;
     top: 0;
@@ -68,7 +72,7 @@ hr {
     flex: 1;
     display: flex;
     justify-content: center;
-    margin: 30px 20px;
+    padding: 30px 20px;
     margin-bottom: 0;
     overflow-y: auto;
     position: absolute;
@@ -132,6 +136,7 @@ h2 {
 }
 
 .tag:hover {
+    cursor: pointer;
     background-color: #eef2ff;
     border: 1px solid #6366f1;
     transform: scale(1.05);
@@ -189,4 +194,10 @@ button > svg, button > a {
     color: #fff;
     text-decoration: none;
     font-weight: 500;
+}
+
+#next-button:disabled {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
+    color: #fff;
+    cursor: not-allowed;
 }

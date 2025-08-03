@@ -68,7 +68,7 @@ hr {
     flex: 1;
     display: flex;
     justify-content: center;
-    margin: 30px 20px;
+    padding: 30px 20px;
     margin-bottom: 0;
     overflow-y: auto;
     position: absolute;
@@ -214,10 +214,12 @@ option:first-of-type {
     margin: 15px;
 }
 
-#detail-start > svg, #detail-start > a {
+#detail-start > button {
     color: #fff;
     text-decoration: none;
     font-weight: 500;
+    border: none;
+    background: none;
 }
 
 #default-start {
@@ -232,13 +234,22 @@ option:first-of-type {
     margin: 0 15px 15px;
 }
 
-#default-start > svg, #default-start > a {
+#default-start > button {
     color: #64748b;
     text-decoration: none;
     font-weight: 500;
+    border: none;
+    background: none;
 }
 
 #default-start:hover {
     font-weight: 600;
     background-color: color-mix(in srgb, #fff, black 5%);
+}
+
+#detail-start.disabled {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
+    color: #fff;
+    cursor: not-allowed;
+    pointer-events: none;
 }
