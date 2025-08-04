@@ -6,6 +6,7 @@ app_name = 'users'
 
 urlpatterns = [
     # path('login/', user_login, name='login'),
+    path('mypage/', mypage, name='mypage'),
     path('login/kakao/', kakao_login, name='kakao-login'),
     path('login/kakao/callback/', kakao_callback, name='kakao-callback'),
     path('login/google/', google_login, name='google-login'),

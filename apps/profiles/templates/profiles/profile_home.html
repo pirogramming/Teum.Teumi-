@@ -57,7 +57,7 @@
                             <p class="user-intro">{{ profile.introduction|truncatewords:15 }}</p>
                             
                             <div class="user-interests">
-                                {% for interest in profile.interests %}
+                                {% for interest in profile.user_interests %}
                                 <span class="interest-badge">#{{ interest.name }}</span>
                                 {% endfor %}
                             </div>
@@ -105,8 +105,8 @@
                     <h3 class="profile-name">{{ profile.nickname }}</h3>
                     <p class="profile-info">{{ profile.age }}세 • {{ profile.department.department_name|default:"학과" }}</p>
                     <div class="profile-interest">
-                        {% if profile.interests %}
-                            <span class="interest-badge">#{{ profile.interests.0.name }}</span>
+                                                    {% if profile.user_interests %}
+                            <span class="interest-badge">#{{ profile.user_interests.0.name }}</span>
                         {% else %}
                             <span class="interest-badge">#관심사</span>
                         {% endif %}
@@ -178,7 +178,7 @@
         function goToMyPage() {
             // 마이페이지로 이동
             console.log('마이페이지로 이동');
-            // window.location.href = '/mypage/';
+            window.location.href = '/users/mypage/';
         }
 
         function goToProfileDetail(userId) {
@@ -195,14 +195,14 @@
 
         function goToBrowse() {
             // 친구 찾기 페이지로 이동
-            console.log('친구 찾기 페이지로 이동');
-            // window.location.href = '/browse/';
+            console.log('친구 찾기 페이지로 이동 - 준비중');
+            alert('친구 찾기 기능은 준비 중입니다!');
         }
 
         function goToMatching() {
             // 매칭 현황 페이지로 이동
-            console.log('매칭 현황 페이지로 이동');
-            // window.location.href = '/matching/';
+            console.log('매칭 현황 페이지로 이동 - 준비중');
+            alert('매칭 기능은 준비 중입니다!');
         }
 
         // 하단 네비게이션 페이지 전환 함수
@@ -225,20 +225,20 @@
                     // 이미 홈 페이지에 있으므로 아무것도 하지 않음
                     break;
                 case 'browse':
-                    console.log('탐색 페이지로 이동');
-                    // window.location.href = '/browse/';
+                    console.log('탐색 페이지로 이동 - 준비중');
+                    alert('탐색 기능은 준비 중입니다!');
                     break;
                 case 'chat-list':
-                    console.log('대화 목록 페이지로 이동');
-                    window.location.href = '/chats/';
+                    console.log('대화 목록 페이지로 이동 - 준비중');
+                    alert('채팅 기능은 준비 중입니다!');
                     break;
                 case 'matching':
-                    console.log('매칭 페이지로 이동');
-                    // window.location.href = '/matching/';
+                    console.log('매칭 페이지로 이동 - 준비중');
+                    alert('매칭 기능은 준비 중입니다!');
                     break;
                 case 'mypage':
                     console.log('마이페이지로 이동');
-                    // window.location.href = '/mypage/';
+                    window.location.href = '/users/mypage/';
                     break;
             }
         }

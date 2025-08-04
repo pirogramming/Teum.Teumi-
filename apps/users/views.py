@@ -273,5 +273,56 @@ def user_logout(request):   # 로그아웃
     logout(request)
     return redirect("/")
 
-
-
+# 마이페이지 뷰
+def mypage(request):
+    """마이페이지를 렌더링하는 뷰"""
+    
+    if not request.user.is_authenticated:
+        return redirect('/users/login/')
+    
+    # 프로필 관련 모델 import
+    from apps.profiles.models import Profile, AdditionalInfo, Personality
+    from apps.interests.models import Interest
+    
+    try:
+        # 현재 사용자의 프로필 가져오기
+        profile = Profile.objects.select_related('user', 'school', 'department').get(user=request.user)
+    except Profile.DoesNotExist:
+        # 프로필이 없으면 새로 생성
+        profile = Profile.objects.create(
+            user=request.user,
+            is_active=True
+        )
+    
+    # 사용자 관심사 가져오기 (UserInterest 모델이 users 앱에 있으므로)
+    from .models import UserInterest
+    user_interests = UserInterest.objects.filter(user=request.user).select_related('interest')
+    selected_interests = [ui.interest for ui in user_interests]
+    
+    # 모든 관심사 가져오기
+    available_interests = Interest.objects.all()
+    
+    # 추가 정보 가져오기
+    try:
+        additional_info = AdditionalInfo.objects.get(profile=profile)
+        personality_keywords = additional_info.personality_keyword.all()
+        selected_personalities = list(personality_keywords)
+    except AdditionalInfo.DoesNotExist:
+        additional_info = None
+        personality_keywords = []
+        selected_personalities = []
+    
+    # 모든 성격 키워드 가져오기
+    available_personalities = Personality.objects.all()
+    
+    context = {
+        'user': request.user,
+        'user_interests': user_interests,
+        'selected_interests': selected_interests,
+        'available_interests': available_interests,
+        'personality_keywords': personality_keywords,
+        'selected_personalities': selected_personalities,
+        'available_personalities': available_personalities,
+    }
+    
+    return render(request, 'users/mypage.html', context)

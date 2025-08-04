@@ -86,8 +86,8 @@ def profile_home(request):
     
     # 각 추천 프로필에 추가 정보 붙이기
     for profile in recommendations:
-        # 사용자 관심사 가져오기
-        profile.interests = Interest.objects.filter(
+        # 사용자 관심사 가져오기 (임시 속성으로 저장)
+        profile.user_interests = Interest.objects.filter(
             userinterest__user=profile.user
         )[:4]  # 최대 4개만
         
@@ -98,7 +98,7 @@ def profile_home(request):
         profile.matching_score = random.randint(75, 95)
         
         # 공통 관심사 (더미 데이터)
-        profile.common_interests = list(profile.interests)[:2]
+        profile.common_interests = list(profile.user_interests)[:2]
     
     # 인기 프로필 (프로필이 완성도가 높은 순으로 정렬)
     popular_profiles = all_profiles.filter(
@@ -109,7 +109,7 @@ def profile_home(request):
     
     # 인기 프로필에도 추가 정보 붙이기
     for profile in popular_profiles:
-        profile.interests = Interest.objects.filter(
+        profile.user_interests = Interest.objects.filter(
             userinterest__user=profile.user
         )[:1]  # 첫 번째 관심사만
         profile.average_rating = round(random.uniform(4.0, 4.8), 1)
@@ -119,7 +119,7 @@ def profile_home(request):
         'popular_profiles': popular_profiles,
     }
     
-    return render(request, 'profiles/profile.home.html', context)
+    return render(request, 'profiles/profile_home.html', context)
 
 # 프로필 상세 페이지 뷰
 def profile_detail(request, profile_id):
