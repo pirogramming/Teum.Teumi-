@@ -23,9 +23,9 @@ urlpatterns = [
     path('', user_login, name='home'), 
     path("users/", include("apps.users.urls", namespace="users")),
     path('profiles/', include('apps.profiles.urls')),
-    # path('schedules/', include('apps.schedules.urls')),
-    # path('matches/', include('matches.urls')),
-    # path('reviews/', include('reviews.urls')),
+    path('schedules/', include('apps.schedules.urls')),
+    path('matches/', include('apps.matches.urls')),
+    path('reviews/', include('apps.reviews.urls')),
     path('chats/', include('apps.chats.urls',  namespace="chats")),
     path('interests/', include('apps.interests.urls')),
 ]
