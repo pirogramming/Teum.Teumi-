@@ -25,9 +25,33 @@ body {
 }
 
 #circle-1 {
-    width: 100px;
-    height: 100px;
-    top: 50px;
+    width: 80px;
+    height: 80px;
+    top: 60px;
+    left: 30px;
+    animation: bubble 3s infinite alternate ease-in-out;
+}
+
+#circle-2 {
+    width: 20px;
+    height: 20px;
+    top: 80px;
+    right: 50px;
+    animation: bubble 2s infinite alternate-reverse ease-in-out;
+}
+
+#circle-3 {
+    width: 70px;
+    height: 70px;
+    top: 90px;
+    right: 30px;
+    animation: bubble 2s infinite alternate ease-in-out;
+}
+
+#circle-4 {
+    width: 80px;
+    height: 80px;
+    bottom: 60px;
     left: 30px;
     animation: bubble 2s infinite alternate ease-in-out;
 }
@@ -151,6 +175,6 @@ button {
 		transform: translateY(0);
 	}
 	to {
-		transform: translateY(-30px);
+		transform: translateY(-10px);
 	}
 }
