@@ -1,4 +1,4 @@
-# profiles/serializers.py
+# profiles/ProfileSerializer.py
 # 프로필 5단계의 요청 데이터를 검증할 시리얼라이저
 from rest_framework import serializers
 from django.core.validators import MinLengthValidator, MaxLengthValidator
@@ -6,6 +6,13 @@ from .models import School, Department, Profile, Personality, AdditionalInfo, Pr
 from apps.interests.models import Interest
 from apps.schedules.models import FreeTime, DayOfWeek
 from datetime import time
+
+
+# 프로필 간단 시리얼라이저
+class ProfileSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['id', 'nickname', 'mbti']
 
 # 프로필 1단계 시리얼라이저
 class SchoolProfileSerializer(serializers.Serializer):
