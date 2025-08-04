@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from matches.models import Match
-from profiles.models import Profile
-from schedules.models import FreeTime
-from reviews.models import Review   
+from apps.matches.models import Matching
+from apps.profiles.models import Profile
+from apps.schedules.models import FreeTime
+from apps.reviews.models import Review 
 
 User = get_user_model()
 
@@ -18,7 +18,7 @@ def filter_candidates(user):
     all_profiles = Profile.objects.exclude(user=user)
 
     # 이미 매칭된 사람 제외
-    matched_users = Match.objects.filter(
+    matched_users = Matching.objects.filter(
         Q(sender=user) | Q(receiver=user)
     ).values_list('sender_id', 'receiver_id')
 
