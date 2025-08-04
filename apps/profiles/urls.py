@@ -14,10 +14,7 @@ from .views import (
     profile_step4,
     profile_step5,
 )
-<<<<<<< HEAD
-=======
 app_name = 'profiles'
->>>>>>> 14e4f1ebf7a39731be06b076a544d1b3ee1cb184
 
 urlpatterns = [
   
