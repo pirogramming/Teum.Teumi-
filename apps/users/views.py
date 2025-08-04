@@ -46,7 +46,7 @@ def user_login(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('profiles:profile')
+            return redirect('profile-home')
     else:
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})

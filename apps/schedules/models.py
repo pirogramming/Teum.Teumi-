@@ -8,6 +8,8 @@ class DayOfWeek(models.TextChoices):
     WEDNESDAY = "Wednesday", "수"
     THURSDAY = "Thursday", "목"
     FRIDAY = "Friday", "금"
+    SATURDAY = "Saturday", "토"
+    SUNDAY = "Sunday", "일"
 
 class FreeTime(BaseEntity):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="free_times")
