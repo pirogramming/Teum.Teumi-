@@ -212,14 +212,20 @@ h2 {
     left: 0;
     width: 100%;
     background-color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     bottom: 0;
     border-top: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
+#footer > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+}
+
 button {
+    width: 100%;
     background: linear-gradient(135deg, #6366f1, #a855f7);
     border-radius: 1rem;
     border: none;
@@ -228,12 +234,10 @@ button {
     justify-content: center;
     gap: 10px;
     padding: 15px;
-    margin: 15px;
 }
 
-button > svg, button > a {
+button > svg, button {
     color: #fff;
-    text-decoration: none;
     font-weight: 500;
 }
 

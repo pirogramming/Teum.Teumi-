@@ -9,7 +9,7 @@
     background-color: #fff;
     margin: 0;
     padding: 15px;
-    border-top: 0.5px solid rgba(99, 102, 241, 0.1);
+    border-bottom: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
 #header-div {
@@ -151,19 +151,24 @@ option:first-of-type {
 
 #footer {
     position: fixed;
-    bottom: 0;
     left: 0;
     width: 100%;
     background-color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     bottom: 0;
     border-top: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
-button {
+#footer > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     padding: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 15px 0;
     background: linear-gradient(135deg, #6366f1, #a855f7);
     border-radius: 1rem;
     border: none;
@@ -171,13 +176,12 @@ button {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin: 15px;
+    font-weight: 500;
 }
 
-button > svg, button > a {
+button > svg, button {
     color: #fff;
     text-decoration: none;
-    font-weight: 500;
 }
 
 #next-button:disabled {
