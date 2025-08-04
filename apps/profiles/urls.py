@@ -6,6 +6,8 @@ from .views import (
     InterestTagAPIView,
     BasicInfoAPIView,
     AddtionalInfoAPIView,
+    profile_home,
+    profile_detail,
     profile_step1,
     profile_step2,
     profile_step3,
@@ -15,6 +17,11 @@ from .views import (
 app_name = 'profiles'
 
 urlpatterns = [
+  
+    #홈화면,프로필정보 상세페이지
+    path('profile/', profile_home, name='profile-home'),
+    path('profile/<int:profile_id>/', profile_detail, name='profile-detail'),
+
     # API 엔드포인트
     path('api/school/', SchoolProfileAPIView.as_view(), name='school'),
     path('api/free_time/', FreeTimeAPIView.as_view(), name='free-time'),
@@ -32,3 +39,4 @@ urlpatterns = [
     # 기타 API
     path('api/majors/', views.get_majors_by_school, name='get_majors_by_school'),
 ]
+

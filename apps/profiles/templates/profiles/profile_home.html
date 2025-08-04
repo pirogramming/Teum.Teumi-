@@ -1,0 +1,278 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+    <link rel="stylesheet" href="{% static 'profiles/css/home.css' %}" />
+    <title>틈틈이 - 홈</title>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="gradient-text">틈틈이</h1>
+                <p class="header-subtitle">오늘도 새로운 만남이 기다리고 있어요 ☕</p>
+            </div>
+            <div class="header-right">
+                <div class="avatar" onclick="goToMyPage()">
+                    <div class="avatar-fallback">나</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- AI Recommendations Section -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-icon">✨</div>
+                <div class="section-title">
+                    <h2>당신을 위한 특별한 추천</h2>
+                    <p>AI가 찾아드린 의미있는 만남이에요</p>
+                </div>
+            </div>
+
+            <div class="recommendations-container">
+                {% for profile in recommendations %}
+                <div class="user-card">
+                    <div class="user-info">
+                        <div class="user-avatar" onclick="goToProfileDetail({{ profile.profile_id }})" style="cursor: pointer;">
+                            <div class="avatar-fallback">{{ profile.nickname|slice:":1"|upper }}</div>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-header">
+                                <div class="user-name" onclick="goToProfileDetail({{ profile.profile_id }})" style="cursor: pointer;">
+                                    <h3>{{ profile.nickname }} ({{ profile.age }}세)</h3>
+                                    <p>{{ profile.school.school_name }} {{ profile.department.department_name }} {{ profile.grade }}</p>
+                                </div>
+                                <div class="user-rating">
+                                    <span class="star">⭐</span>
+                                    <span>{{ profile.average_rating|floatformat:1 }}</span>
+                                </div>
+                            </div>
+                            <p class="user-intro">{{ profile.introduction|truncatewords:15 }}</p>
+                            
+                            <div class="user-interests">
+                                {% for interest in profile.user_interests %}
+                                <span class="interest-badge">#{{ interest.name }}</span>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="match-info">
+                                <p class="match-text">
+                                    <span class="brain-icon">🧠</span>
+                                    💡 {{ profile.matching_score }}% 매칭 + {{ profile.common_interests|length }}개 공통 관심사!
+                                </p>
+                            </div>
+                            
+                            <div class="action-button">
+                                <button class="chat-button" onclick="goToChat({{ profile.profile_id }})">
+                                    <span>☕</span>
+                                    이 분과 대화해볼래요
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <p>아직 추천할 프로필이 없습니다. 더 많은 사용자가 가입하면 멋진 추천을 받을 수 있어요!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Popular Profiles Section -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-icon">🔥</div>
+                <div class="section-title">
+                    <h2>요즘 인기 있는 친구들</h2>
+                    <p>많은 사람들이 만나고 싶어하는 분들이에요</p>
+                </div>
+            </div>
+            
+            <div class="popular-profiles-grid">
+                {% for profile in popular_profiles %}
+                <div class="profile-card" onclick="goToProfileDetail({{ profile.profile_id }})">
+                    <div class="profile-avatar">
+                        <div class="avatar-fallback">{{ profile.nickname|slice:":1"|upper }}</div>
+                    </div>
+                    <h3 class="profile-name">{{ profile.nickname }}</h3>
+                    <p class="profile-info">{{ profile.age }}세 • {{ profile.department.department_name|default:"학과" }}</p>
+                    <div class="profile-interest">
+                                                    {% if profile.user_interests %}
+                            <span class="interest-badge">#{{ profile.user_interests.0.name }}</span>
+                        {% else %}
+                            <span class="interest-badge">#관심사</span>
+                        {% endif %}
+                    </div>
+                    <div class="profile-rating">
+                        <span class="star">⭐</span>
+                        <span>{{ profile.average_rating|floatformat:1 }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <p>아직 인기 프로필이 없습니다.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Quick Actions Section -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-icon">🚀</div>
+                <div class="section-title">
+                    <h2>바로 시작하기</h2>
+                    <p>원하는 방식으로 새로운 만남을 찾아보세요</p>
+                </div>
+            </div>
+            
+            <div class="quick-actions-grid">
+                <button class="action-card" onclick="goToBrowse()">
+                    <div class="action-icon">🔍</div>
+                    <span class="action-text">친구 찾아보기</span>
+                </button>
+                <button class="action-card" onclick="goToMatching()">
+                    <div class="action-icon">👥</div>
+                    <span class="action-text">내 매칭 현황</span>
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-container">
+            <button class="nav-item active" onclick="setCurrentPage('home')">
+                <div class="nav-emoji">🏠</div>
+                <span class="nav-label">홈</span>
+            </button>
+            <button class="nav-item" onclick="setCurrentPage('browse')">
+                <div class="nav-emoji">🔍</div>
+                <span class="nav-label">탐색</span>
+            </button>
+            <button class="nav-item" onclick="setCurrentPage('chat-list')">
+                <div class="nav-emoji">💬</div>
+                <span class="nav-label">대화</span>
+            </button>
+            <button class="nav-item" onclick="setCurrentPage('matching')">
+                <div class="nav-emoji">🤝</div>
+                <span class="nav-label">매칭</span>
+            </button>
+            <button class="nav-item" onclick="setCurrentPage('mypage')">
+                <div class="nav-emoji">👤</div>
+                <span class="nav-label">마이</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 네비게이션 함수들 - 나중에 실제 페이지로 연결
+        function goToMyPage() {
+            // 마이페이지로 이동
+            console.log('마이페이지로 이동');
+            window.location.href = '/users/mypage/';
+        }
+
+        function goToProfileDetail(userId) {
+            // 프로필 상세 페이지로 이동
+            console.log('프로필 상세 페이지로 이동, User ID:', userId);
+            window.location.href = `/profiles/profile/${userId}/`;
+        }
+
+        function goToChat(userId) {
+            // 프로필 상세 페이지로 이동 (대화 신청을 위해)
+            console.log('프로필 상세 페이지로 이동, User ID:', userId);
+            window.location.href = `/profiles/profile/${userId}/`;
+        }
+
+        function goToBrowse() {
+            // 친구 찾기 페이지로 이동
+            console.log('친구 찾기 페이지로 이동 - 준비중');
+            alert('친구 찾기 기능은 준비 중입니다!');
+        }
+
+        function goToMatching() {
+            // 매칭 현황 페이지로 이동
+            console.log('매칭 현황 페이지로 이동 - 준비중');
+            alert('매칭 기능은 준비 중입니다!');
+        }
+
+        // 하단 네비게이션 페이지 전환 함수
+        function setCurrentPage(page) {
+            // 모든 네비게이션 아이템에서 active 클래스 제거
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 클릭된 아이템에 active 클래스 추가
+            const clickedItem = event.target.closest('.nav-item');
+            if (clickedItem) {
+                clickedItem.classList.add('active');
+            }
+            
+            // 페이지별 처리
+            switch(page) {
+                case 'home':
+                    console.log('홈 페이지');
+                    // 이미 홈 페이지에 있으므로 아무것도 하지 않음
+                    break;
+                case 'browse':
+                    console.log('탐색 페이지로 이동 - 준비중');
+                    alert('탐색 기능은 준비 중입니다!');
+                    break;
+                case 'chat-list':
+                    console.log('대화 목록 페이지로 이동 - 준비중');
+                    alert('채팅 기능은 준비 중입니다!');
+                    break;
+                case 'matching':
+                    console.log('매칭 페이지로 이동 - 준비중');
+                    alert('매칭 기능은 준비 중입니다!');
+                    break;
+                case 'mypage':
+                    console.log('마이페이지로 이동');
+                    window.location.href = '/users/mypage/';
+                    break;
+            }
+        }
+
+        // 나중에 서버에서 데이터를 받아와서 동적으로 렌더링하는 함수
+        function loadRecommendations() {
+            // fetch('/api/recommendations/')
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         // 데이터를 받아와서 DOM을 업데이트
+            //         updateRecommendations(data);
+            //     })
+            //     .catch(error => {
+            //         console.error('추천 데이터 로드 실패:', error);
+            //     });
+        }
+
+        function loadPopularProfiles() {
+            // fetch('/api/popular-profiles/')
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         // 데이터를 받아와서 DOM을 업데이트
+            //         updatePopularProfiles(data);
+            //     })
+            //     .catch(error => {
+            //         console.error('인기 프로필 로드 실패:', error);
+            //     });
+        }
+
+        // 페이지 로드 시 데이터 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            // loadRecommendations();
+            // loadPopularProfiles();
+        });
+    </script>
+</body>
+</html> 

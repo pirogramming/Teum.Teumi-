@@ -1,9 +1,18 @@
+# 안쓰는 모듈 
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Q, Count, Avg
+from django.http import Http404
 from django.shortcuts import redirect
 from django.shortcuts import render
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
+# 필요한 모듈 import
+from .models import Profile, School, Department, AdditionalInfo
+from apps.users.models import User, UserInterest
+from apps.interests.models import Interest
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -298,6 +307,56 @@ class AddtionalInfoAPIView(APIView):
             return Response({"message": "추가 정보가 성공적으로 저장되었습니다."}, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+# 프로필 홈 페이지 뷰
+
+# 프로필 상세 페이지 뷰
+def profile_detail(request, profile_id):
+    """프로필 상세 페이지를 렌더링하는 뷰"""
+    
+    try:
+        profile = get_object_or_404(
+            Profile.objects.select_related('user', 'school', 'department'),
+            profile_id=profile_id,
+            is_active=True
+        )
+    except Http404:
+        raise Http404("프로필을 찾을 수 없습니다.")
+    
+    # 사용자 관심사 가져오기
+    interests = Interest.objects.filter(userinterest__user=profile.user)
+    
+    # 추가 정보 가져오기
+    try:
+        additional_info = AdditionalInfo.objects.get(profile=profile)
+        # 성격 키워드 가져오기
+        personality_keywords = additional_info.personality_keyword.all()
+    except AdditionalInfo.DoesNotExist:
+        additional_info = None
+        personality_keywords = []
+    
+    # AI 추천 대화 주제 생성 (더미 데이터)
+    conversation_recommendations = []
+    if profile.department:
+        conversation_recommendations.append({
+            'icon': '💼',
+            'text': f'{profile.department.department_name} 전공과 관련된 진로 방향성 논의하기'
+        })
+    
+    if interests.exists():
+        first_interest = interests.first()
+        conversation_recommendations.append({
+            'icon': '📚',
+            'text': f'{first_interest.name} 분야의 실무 경험과 인사이트 공유하기'
+        })
+    
+    conversation_recommendations.append({
+        'icon': '🎯',
+        'text': '목표 달성을 위한 조언과 경험 나누기'
+    })
+    
+    # render에서 context변수 수정
+    return render(request, 'profiles/profile_detail.html', context)
     
     def patch(self, request):
         """기존 추가 정보 수정"""
@@ -317,4 +376,3 @@ class AddtionalInfoAPIView(APIView):
                 return self.post(request)
         except Profile.DoesNotExist:
             return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
-        

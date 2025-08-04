@@ -1,0 +1,438 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+    <link rel="stylesheet" href="{% static 'profiles/css/detail.css' %}" />
+    <title>프로필 상세보기 - 틈틈이</title>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <button class="back-button" onclick="goBack()">
+                <span class="chevron-left">‹</span>
+            </button>
+            <div class="header-title">
+                <h1>프로필 상세보기</h1>
+                <p>🌟 새로운 인연을 만나보세요</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Profile Header -->
+        <div class="profile-header-card">
+            <div class="profile-avatar">
+                <div class="avatar-fallback">{{ profile.nickname|slice:":1"|upper }}</div>
+            </div>
+            <h2 class="profile-name">{{ profile.nickname }}</h2>
+            <p class="profile-info">
+                {% if profile.school %}{{ profile.school.school_name }}{% endif %}
+                {% if profile.department %}{{ profile.department.department_name }}{% endif %}
+                {% if profile.grade %}{{ profile.grade }}{% endif %}
+            </p>
+            
+            <div class="profile-badges">
+                {% if profile.mbti %}
+                <span class="badge mbti-badge">🧠 {{ profile.mbti }}</span>
+                {% endif %}
+                {% if profile.gender %}
+                <span class="badge gender-badge">🙋 {% if profile.gender == 'M' %}남성{% else %}여성{% endif %}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Self Introduction -->
+        <div class="content-card">
+            <h3 class="section-title">
+                <span class="section-icon">💬</span>
+                자기소개
+            </h3>
+            <p class="section-content">
+                {% if profile.introduction %}
+                    {{ profile.introduction }}
+                {% else %}
+                    아직 자기소개가 작성되지 않았습니다.
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- AI Recommended Conversations -->
+        <div class="content-card">
+            <h3 class="section-title">
+                <span class="section-icon">💡</span>
+                이런 대화를 추천해요 (AI 추천)
+            </h3>
+            <div class="recommendations-list">
+                {% for recommendation in conversation_recommendations %}
+                <div class="recommendation-item">
+                    <span class="recommendation-icon">{{ recommendation.icon }}</span>
+                    <p>{{ recommendation.text }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Interests -->
+        <div class="content-card">
+            <h3 class="section-title">
+                <span class="section-icon">🌱</span>
+                관심 분야
+            </h3>
+            <div class="interests-list">
+                {% for interest in interests %}
+                <span class="interest-badge">#{{ interest.name }}</span>
+                {% empty %}
+                <p>아직 관심사가 등록되지 않았습니다.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- More Details Button -->
+        <div class="content-card">
+            <button class="detail-button" onclick="showDetailModal()">
+                <span class="button-icon">👁</span>
+                더 자세한 프로필 보기
+                <span class="button-arrow">▼</span>
+            </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="chat-button" onclick="showApplicationModal()">
+                <span>☕</span>
+                이 분과 대화해볼래요
+            </button>
+            <button class="like-button" onclick="toggleLike()">
+                <span class="heart-icon">♥</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Application Modal -->
+    <div id="applicationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span>💬</span>
+                    대화 신청
+                </h3>
+                <p class="modal-description">
+                    {{ profile.nickname }}님에게 만남을 신청해보세요. 
+                    어떤 이야기를 나누고 싶은지 정성스럽게 적어주세요.
+                </p>
+            </div>
+            <div class="modal-body">
+                <textarea 
+                    id="applicationReason" 
+                    placeholder="안녕하세요! 저는 ○○에 관심이 많아서 ○○님과 이야기를 나누고 싶어요. 특히 ○○에 대해 더 알고 싶고, 제 경험도 공유하고 싶습니다."
+                    class="application-textarea"
+                ></textarea>
+                <p class="textarea-hint">
+                    💡 구체적이고 진솔한 메시지일수록 수락 확률이 높아져요!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-button" onclick="hideApplicationModal()">취소</button>
+                <button class="submit-button" onclick="submitApplication()">
+                    <span>💌</span>
+                    신청하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content detail-modal">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span>👀</span>
+                    상세 프로필
+                </h3>
+                <p class="modal-description">
+                    {{ profile.nickname }}님의 더 자세한 정보를 확인해보세요
+                </p>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-button active" onclick="switchTab('schedule')">
+                    <span class="tab-icon">📅</span>
+                    시간표
+                </button>
+                <button class="tab-button" onclick="switchTab('experience')">
+                    <span class="tab-icon">🎯</span>
+                    경험 & 목표
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Schedule Tab -->
+                <div id="scheduleTab" class="tab-panel active">
+                    <h4 class="tab-title">📅 만날 수 있는 시간</h4>
+                    <div class="schedule-container">
+                        <div class="schedule-grid">
+                            <!-- Schedule will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Experience Tab -->
+                <div id="experienceTab" class="tab-panel">
+                    <div class="experience-section">
+                        <h4 class="section-subtitle">
+                            <span>✨</span>
+                            경험과 활동
+                        </h4>
+                        
+                        <div class="experience-item">
+                            <h5>나의 경험</h5>
+                            <p>
+                                {% if additional_info.experience %}
+                                    {{ additional_info.experience }}
+                                {% else %}
+                                    아직 경험이 등록되지 않았습니다.
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="experience-item">
+                            <h5>선호하는 대화 스타일</h5>
+                            <p>
+                                {% if additional_info.conversation_style %}
+                                    {% if additional_info.conversation_style == 'casual' %}수다형 - 가볍고 편안한 대화를 좋아해요
+                                    {% elif additional_info.conversation_style == 'deep' %}깊은대화형 - 진지하고 의미 있는 대화를 선호해요
+                                    {% elif additional_info.conversation_style == 'humor' %}유머형 - 재미있고 유쾌한 대화를 좋아해요
+                                    {% elif additional_info.conversation_style == 'debate' %}토론형 - 논리적이고 분석적인 대화를 선호해요
+                                    {% else %}{{ additional_info.conversation_style }}
+                                    {% endif %}
+                                {% else %}
+                                    아직 대화 스타일이 등록되지 않았습니다.
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="experience-item">
+                            <h5>주요 활동 위치</h5>
+                            <p>
+                                {% if additional_info.activity_location %}
+                                    {{ additional_info.activity_location }}
+                                {% else %}
+                                    아직 활동 위치가 등록되지 않았습니다.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="goals-section">
+                        <h4 class="section-subtitle">
+                            <span>🎯</span>
+                            목표와 성격
+                        </h4>
+                        
+                        <div class="experience-item">
+                            <h5>현재 목표나 고민</h5>
+                            <p>
+                                {% if additional_info.goal_or_concern %}
+                                    {{ additional_info.goal_or_concern }}
+                                {% else %}
+                                    아직 목표나 고민이 등록되지 않았습니다.
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="experience-item">
+                            <h5>성격 키워드</h5>
+                            <div class="personality-tags">
+                                {% for keyword in personality_keywords %}
+                                <span class="personality-badge">#{{ keyword.keyword }}</span>
+                                {% empty %}
+                                <p>아직 성격 키워드가 등록되지 않았습니다.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="experience-item">
+                            <h5>학업 정보</h5>
+                            <div class="academic-info">
+                                {% if profile.school %}<p><strong>대학교:</strong> {{ profile.school.school_name }}</p>{% endif %}
+                                {% if profile.department %}<p><strong>학과:</strong> {{ profile.department.department_name }}</p>{% endif %}
+                                {% if profile.grade %}<p><strong>학년:</strong> {{ profile.grade }}</p>{% endif %}
+                                {% if profile.age %}<p><strong>나이:</strong> {{ profile.age }}세</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="connection-points">
+                        <h5>🌟 연결 포인트</h5>
+                        <p>💡 {{ matching_score }}% 매칭률 + {{ common_interests_count }}개의 공통 관심사로 연결될 수 있어요!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="close-button" onclick="hideDetailModal()">
+                    <span>▲</span>
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 실제 프로필 데이터
+        const profileData = {
+            nickname: '{{ profile.nickname|escapejs }}',
+            university: '{% if profile.school %}{{ profile.school.school_name|escapejs }}{% endif %}',
+            department: '{% if profile.department %}{{ profile.department.department_name|escapejs }}{% endif %}',
+            year: '{{ profile.grade|escapejs }}',
+            interests: [
+                {% for interest in interests %}'{{ interest.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            mbti: '{{ profile.mbti|escapejs }}',
+            gender: '{% if profile.gender == "M" %}남성{% elif profile.gender == "F" %}여성{% endif %}',
+            introduction: '{{ profile.introduction|escapejs }}',
+            schedule: {{ schedule|safe }},
+            experience: '{% if additional_info.experience %}{{ additional_info.experience|escapejs }}{% endif %}',
+            talkStyle: '{% if additional_info.conversation_style %}{{ additional_info.get_conversation_style_display|escapejs }}{% endif %}',
+            location: '{% if additional_info.activity_location %}{{ additional_info.activity_location|escapejs }}{% endif %}',
+            personality: [
+                {% for keyword in personality_keywords %}'{{ keyword.keyword|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            currentGoal: '{% if additional_info.goal_or_concern %}{{ additional_info.goal_or_concern|escapejs }}{% endif %}'
+        };
+
+        // Navigation functions
+        function goBack() {
+            console.log('뒤로 가기');
+            window.history.back();
+        }
+
+        function showApplicationModal() {
+            document.getElementById('applicationModal').style.display = 'flex';
+        }
+
+        function hideApplicationModal() {
+            document.getElementById('applicationModal').style.display = 'none';
+        }
+
+        function showDetailModal() {
+            document.getElementById('detailModal').style.display = 'flex';
+            renderSchedule();
+        }
+
+        function hideDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        function switchTab(tabName) {
+            // Hide all tab panels
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            tabPanels.forEach(panel => panel.classList.remove('active'));
+
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+
+            // Show selected tab panel
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            if (tabName === 'schedule') {
+                renderSchedule();
+            }
+        }
+
+        function renderSchedule() {
+            const scheduleGrid = document.querySelector('.schedule-grid');
+            if (!scheduleGrid) return;
+
+            const days = ['월', '화', '수', '목', '금', '토', '일'];
+            const timeSlots = [];
+            
+            // Generate time slots from 9:00 to 21:00
+            for (let hour = 9; hour <= 20; hour++) {
+                timeSlots.push(`${hour}:00`);
+                timeSlots.push(`${hour}:30`);
+            }
+            timeSlots.push('21:00');
+
+            let scheduleHTML = `
+                <div class="schedule-header">
+                    <div class="time-label"></div>
+                    ${days.map(day => `<div class="day-label">${day}</div>`).join('')}
+                </div>
+            `;
+
+            timeSlots.forEach((time, hourIndex) => {
+                scheduleHTML += `
+                    <div class="schedule-row">
+                        <div class="time-label">${time}</div>
+                        ${days.map((day, dayIndex) => {
+                            const isAvailable = profileData.schedule[dayIndex] && profileData.schedule[dayIndex][hourIndex];
+                            return `<div class="schedule-cell ${isAvailable ? 'available' : ''}"></div>`;
+                        }).join('')}
+                    </div>
+                `;
+            });
+
+            scheduleGrid.innerHTML = scheduleHTML;
+        }
+
+        function submitApplication() {
+            const reason = document.getElementById('applicationReason').value.trim();
+            if (!reason) {
+                alert('대화 신청 이유를 입력해주세요.');
+                return;
+            }
+
+            console.log('대화 신청:', reason);
+            hideApplicationModal();
+            document.getElementById('applicationReason').value = '';
+            
+            // 채팅 기능은 아직 준비중입니다
+            alert('대화 신청이 전송되었습니다! 채팅 기능은 곧 준비될 예정입니다.');
+            // window.location.href = '/chats/';
+            
+            // 나중에 실제 API 호출
+            // fetch('/api/match-request/', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ reason: reason })
+            // });
+        }
+
+        function toggleLike() {
+            const heartIcon = document.querySelector('.heart-icon');
+            heartIcon.classList.toggle('liked');
+            console.log('좋아요 토글');
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const applicationModal = document.getElementById('applicationModal');
+            const detailModal = document.getElementById('detailModal');
+            
+            if (event.target === applicationModal) {
+                hideApplicationModal();
+            }
+            if (event.target === detailModal) {
+                hideDetailModal();
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('프로필 상세 페이지 로드됨');
+        });
+    </script>
+</body>
+</html>

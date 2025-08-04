@@ -21,12 +21,12 @@ import requests
 import os
 from .models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from .models import User
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+# 프로필 관련 모델 import
+from apps.profiles.models import Profile, AdditionalInfo, Personality
+from apps.interests.models import Interest
 
 
 load_dotenv()
@@ -41,19 +41,24 @@ class KakaoException(Exception):
     pass
 
 def user_login(request):
-    # 이미 로그인된 사용자는 프로필 페이지로 리다이렉트
-    if request.user.is_authenticated:
-        return redirect('profiles:profile_step1')
-    
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('profiles:profile_step1')
+# 이미 로그인된 사용자는 프로필 페이지로 리다이렉트, 프로필도 작성되었다면 홈화면으로 리다이렉트
+# TODO: 프로필 모델에 is_completed필드(boolean) 추가
+if request.user.is_authenticated:
+    if hasattr(request.user, 'profile') and request.user.profile.is_completed:
+        return redirect('profile-home')
     else:
-        form = AuthenticationForm()
-    return render(request, 'users/login.html', {'form': form})
+        return redirect('profiles:profile_step1')
+
+if request.method == 'POST':
+    form = AuthenticationForm(request, data=request.POST)
+    if form.is_valid():
+        user = form.get_user()
+        login(request, user)
+        return redirect('profiles:profile_step1')
+else:
+    form = AuthenticationForm()
+
+return render(request, 'users/login.html', {'form': form})
 
 def kakao_login(request):
     try:
@@ -291,4 +296,46 @@ class GoogleLoginFinishView(APIView):
 def user_logout(request):   # 로그아웃
     logout(request)
     return redirect("/")
-
+  
+# 마이페이지 뷰
+def mypage(request):
+    """마이페이지를 렌더링하는 뷰"""
+    
+    if not request.user.is_authenticated:
+        return redirect('/users/login/')
+    
+    profile = Profile.objects.select_related('user', 'school', 'department').get(user=request.user)
+    
+    # 사용자 관심사 가져오기 (UserInterest 모델이 users 앱에 있으므로)
+    # TODO: userinterest모델은 유저앱에 없기에 수정
+    from .models import UserInterest
+    user_interests = UserInterest.objects.filter(user=request.user).select_related('interest')
+    selected_interests = [ui.interest for ui in user_interests]
+    
+    # 모든 관심사 가져오기
+    available_interests = Interest.objects.all()
+    
+    # 추가 정보 가져오기
+    try:
+        additional_info = AdditionalInfo.objects.get(profile=profile)
+        personality_keywords = additional_info.personality_keyword.all()
+        selected_personalities = list(personality_keywords)
+    except AdditionalInfo.DoesNotExist:
+        additional_info = None
+        personality_keywords = []
+        selected_personalities = []
+    
+    # 모든 성격 키워드 가져오기
+    available_personalities = Personality.objects.all()
+    
+    context = {
+        'user': request.user,
+        'user_interests': user_interests,
+        'selected_interests': selected_interests,
+        'available_interests': available_interests,
+        'personality_keywords': personality_keywords,
+        'selected_personalities': selected_personalities,
+        'available_personalities': available_personalities,
+    }
+    
+    return render(request, 'users/mypage.html', context)
