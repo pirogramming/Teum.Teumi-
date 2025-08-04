@@ -27,14 +27,22 @@
         <!-- Profile Header -->
         <div class="profile-header-card">
             <div class="profile-avatar">
-                <div class="avatar-fallback">창</div>
+                <div class="avatar-fallback">{{ profile.nickname|slice:":1"|upper }}</div>
             </div>
-            <h2 class="profile-name">창업왕철수</h2>
-            <p class="profile-info">동국대학교 경영학과 3학년</p>
+            <h2 class="profile-name">{{ profile.nickname }}</h2>
+            <p class="profile-info">
+                {% if profile.school %}{{ profile.school.school_name }}{% endif %}
+                {% if profile.department %}{{ profile.department.department_name }}{% endif %}
+                {% if profile.grade %}{{ profile.grade }}{% endif %}
+            </p>
             
             <div class="profile-badges">
-                <span class="badge mbti-badge">🧠 ENFP</span>
-                <span class="badge gender-badge">🙋 남성</span>
+                {% if profile.mbti %}
+                <span class="badge mbti-badge">🧠 {{ profile.mbti }}</span>
+                {% endif %}
+                {% if profile.gender %}
+                <span class="badge gender-badge">🙋 {% if profile.gender == 'M' %}남성{% else %}여성{% endif %}</span>
+                {% endif %}
             </div>
         </div>
 
@@ -45,7 +53,11 @@
                 자기소개
             </h3>
             <p class="section-content">
-                스타트업에 관심이 많고, 창업 아이디어를 나누고 싶어요! 함께 성장할 수 있는 분과 가벼운 대화를 나누며 서로 배워가고 싶습니다.
+                {% if profile.introduction %}
+                    {{ profile.introduction }}
+                {% else %}
+                    아직 자기소개가 작성되지 않았습니다.
+                {% endif %}
             </p>
         </div>
 
@@ -56,18 +68,12 @@
                 이런 대화를 추천해요 (AI 추천)
             </h3>
             <div class="recommendations-list">
+                {% for recommendation in conversation_recommendations %}
                 <div class="recommendation-item">
-                    <span class="recommendation-icon">💼</span>
-                    <p>창업 분야의 실무 경험과 인사이트 공유하기</p>
+                    <span class="recommendation-icon">{{ recommendation.icon }}</span>
+                    <p>{{ recommendation.text }}</p>
                 </div>
-                <div class="recommendation-item">
-                    <span class="recommendation-icon">📚</span>
-                    <p>경영학과 전공과 관련된 진로 방향성 논의하기</p>
-                </div>
-                <div class="recommendation-item">
-                    <span class="recommendation-icon">🎯</span>
-                    <p>목표 달성을 위한 조언과 경험 나누기</p>
-                </div>
+                {% endfor %}
             </div>
         </div>
 
@@ -78,10 +84,11 @@
                 관심 분야
             </h3>
             <div class="interests-list">
-                <span class="interest-badge">#창업</span>
-                <span class="interest-badge">#마케팅</span>
-                <span class="interest-badge">#스타트업</span>
-                <span class="interest-badge">#투자</span>
+                {% for interest in interests %}
+                <span class="interest-badge">#{{ interest.name }}</span>
+                {% empty %}
+                <p>아직 관심사가 등록되지 않았습니다.</p>
+                {% endfor %}
             </div>
         </div>
 
@@ -115,7 +122,7 @@
                     대화 신청
                 </h3>
                 <p class="modal-description">
-                    창업왕철수님에게 만남을 신청해보세요. 
+                    {{ profile.nickname }}님에게 만남을 신청해보세요. 
                     어떤 이야기를 나누고 싶은지 정성스럽게 적어주세요.
                 </p>
             </div>
@@ -148,7 +155,7 @@
                     상세 프로필
                 </h3>
                 <p class="modal-description">
-                    창업왕철수님의 더 자세한 정보를 확인해보세요
+                    {{ profile.nickname }}님의 더 자세한 정보를 확인해보세요
                 </p>
             </div>
             
@@ -186,17 +193,40 @@
                         
                         <div class="experience-item">
                             <h5>나의 경험</h5>
-                            <p>대학교 창업동아리에서 2년간 활동하며 3개의 프로젝트를 진행했습니다. 특히 온라인 쇼핑몰 창업 경험이 있고, 현재는 IT 스타트업에서 마케팅 인턴으로 일하고 있어요.</p>
+                            <p>
+                                {% if additional_info.experience %}
+                                    {{ additional_info.experience }}
+                                {% else %}
+                                    아직 경험이 등록되지 않았습니다.
+                                {% endif %}
+                            </p>
                         </div>
 
                         <div class="experience-item">
                             <h5>선호하는 대화 스타일</h5>
-                            <p>경청을 중요하게 생각하고, 서로의 경험을 나누며 함께 성장하는 대화를 좋아해요. 진솔하고 깊이 있는 이야기를 나누는 것을 선호합니다.</p>
+                            <p>
+                                {% if additional_info.conversation_style %}
+                                    {% if additional_info.conversation_style == 'casual' %}수다형 - 가볍고 편안한 대화를 좋아해요
+                                    {% elif additional_info.conversation_style == 'deep' %}깊은대화형 - 진지하고 의미 있는 대화를 선호해요
+                                    {% elif additional_info.conversation_style == 'humor' %}유머형 - 재미있고 유쾌한 대화를 좋아해요
+                                    {% elif additional_info.conversation_style == 'debate' %}토론형 - 논리적이고 분석적인 대화를 선호해요
+                                    {% else %}{{ additional_info.conversation_style }}
+                                    {% endif %}
+                                {% else %}
+                                    아직 대화 스타일이 등록되지 않았습니다.
+                                {% endif %}
+                            </p>
                         </div>
 
                         <div class="experience-item">
                             <h5>주요 활동 위치</h5>
-                            <p>동국대학교 중앙도서관, 학교 카페, 근처 스터디카페</p>
+                            <p>
+                                {% if additional_info.activity_location %}
+                                    {{ additional_info.activity_location }}
+                                {% else %}
+                                    아직 활동 위치가 등록되지 않았습니다.
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
 
@@ -208,32 +238,40 @@
                         
                         <div class="experience-item">
                             <h5>현재 목표나 고민</h5>
-                            <p>올해 안에 나만의 창업 아이템을 찾고 MVP를 만들어보는 것이 목표입니다. 그리고 다양한 사람들과 네트워킹하며 인사이트를 얻고 싶어요.</p>
+                            <p>
+                                {% if additional_info.goal_or_concern %}
+                                    {{ additional_info.goal_or_concern }}
+                                {% else %}
+                                    아직 목표나 고민이 등록되지 않았습니다.
+                                {% endif %}
+                            </p>
                         </div>
 
                         <div class="experience-item">
                             <h5>성격 키워드</h5>
                             <div class="personality-tags">
-                                <span class="personality-badge">#적극적</span>
-                                <span class="personality-badge">#호기심많은</span>
-                                <span class="personality-badge">#협력적</span>
-                                <span class="personality-badge">#책임감있는</span>
+                                {% for keyword in personality_keywords %}
+                                <span class="personality-badge">#{{ keyword.keyword }}</span>
+                                {% empty %}
+                                <p>아직 성격 키워드가 등록되지 않았습니다.</p>
+                                {% endfor %}
                             </div>
                         </div>
 
                         <div class="experience-item">
                             <h5>학업 정보</h5>
                             <div class="academic-info">
-                                <p><strong>대학교:</strong> 동국대학교</p>
-                                <p><strong>학과:</strong> 경영학과</p>
-                                <p><strong>학년:</strong> 3학년</p>
+                                {% if profile.school %}<p><strong>대학교:</strong> {{ profile.school.school_name }}</p>{% endif %}
+                                {% if profile.department %}<p><strong>학과:</strong> {{ profile.department.department_name }}</p>{% endif %}
+                                {% if profile.grade %}<p><strong>학년:</strong> {{ profile.grade }}</p>{% endif %}
+                                {% if profile.age %}<p><strong>나이:</strong> {{ profile.age }}세</p>{% endif %}
                             </div>
                         </div>
                     </div>
 
                     <div class="connection-points">
                         <h5>🌟 연결 포인트</h5>
-                        <p>💡 4개의 공통 관심사와 4개의 성격 키워드로 연결될 수 있어요!</p>
+                        <p>💡 {{ matching_score }}% 매칭률 + {{ common_interests_count }}개의 공통 관심사로 연결될 수 있어요!</p>
                     </div>
                 </div>
             </div>
@@ -248,37 +286,26 @@
     </div>
 
     <script>
-        // Mock data for the profile
+        // 실제 프로필 데이터
         const profileData = {
-            nickname: '창업왕철수',
-            university: '동국대학교',
-            department: '경영학과',
-            year: '3학년',
-            interests: ['창업', '마케팅', '스타트업', '투자'],
-            mbti: 'ENFP',
-            gender: '남성',
-            introduction: '스타트업에 관심이 많고, 창업 아이디어를 나누고 싶어요! 함께 성장할 수 있는 분과 가벼운 대화를 나누며 서로 배워가고 싶습니다.',
-            schedule: [
-                // 월요일 - 9:00-21:00 range (25 slots)
-                [false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-                // 화요일
-                [false, false, false, false, false, false, false, false, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-                // 수요일
-                [false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-                // 목요일
-                [false, false, false, false, false, false, false, false, false, false, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false],
-                // 금요일
-                [false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false],
-                // 토요일
-                [false, false, false, false, false, false, false, false, false, false, false, false, true, true, true, true, false, false, false, false, false, false, false, false, false],
-                // 일요일
-                [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, true, false, false, false, false, false, false]
+            nickname: '{{ profile.nickname|escapejs }}',
+            university: '{% if profile.school %}{{ profile.school.school_name|escapejs }}{% endif %}',
+            department: '{% if profile.department %}{{ profile.department.department_name|escapejs }}{% endif %}',
+            year: '{{ profile.grade|escapejs }}',
+            interests: [
+                {% for interest in interests %}'{{ interest.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}
             ],
-            experience: '대학교 창업동아리에서 2년간 활동하며 3개의 프로젝트를 진행했습니다. 특히 온라인 쇼핑몰 창업 경험이 있고, 현재는 IT 스타트업에서 마케팅 인턴으로 일하고 있어요.',
-            talkStyle: '경청을 중요하게 생각하고, 서로의 경험을 나누며 함께 성장하는 대화를 좋아해요. 진솔하고 깊이 있는 이야기를 나누는 것을 선호합니다.',
-            location: '동국대학교 중앙도서관, 학교 카페, 근처 스터디카페',
-            personality: ['적극적', '호기심많은', '협력적', '책임감있는'],
-            currentGoal: '올해 안에 나만의 창업 아이템을 찾고 MVP를 만들어보는 것이 목표입니다. 그리고 다양한 사람들과 네트워킹하며 인사이트를 얻고 싶어요.'
+            mbti: '{{ profile.mbti|escapejs }}',
+            gender: '{% if profile.gender == "M" %}남성{% elif profile.gender == "F" %}여성{% endif %}',
+            introduction: '{{ profile.introduction|escapejs }}',
+            schedule: {{ schedule|safe }},
+            experience: '{% if additional_info.experience %}{{ additional_info.experience|escapejs }}{% endif %}',
+            talkStyle: '{% if additional_info.conversation_style %}{{ additional_info.get_conversation_style_display|escapejs }}{% endif %}',
+            location: '{% if additional_info.activity_location %}{{ additional_info.activity_location|escapejs }}{% endif %}',
+            personality: [
+                {% for keyword in personality_keywords %}'{{ keyword.keyword|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            currentGoal: '{% if additional_info.goal_or_concern %}{{ additional_info.goal_or_concern|escapejs }}{% endif %}'
         };
 
         // Navigation functions

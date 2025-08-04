@@ -40,45 +40,47 @@
                 {% for profile in recommendations %}
                 <div class="user-card">
                     <div class="user-info">
-                        <div class="user-avatar" onclick="goToProfileDetail({{ profile.id }})" style="cursor: pointer;">
-                            <div class="avatar-fallback">{{ profile.nickname|slice:":1" }}</div>
+                        <div class="user-avatar" onclick="goToProfileDetail({{ profile.profile_id }})" style="cursor: pointer;">
+                            <div class="avatar-fallback">{{ profile.nickname|slice:":1"|upper }}</div>
                         </div>
                         <div class="user-details">
                             <div class="user-header">
-                                <div class="user-name" onclick="goToProfileDetail({{ profile.id }})" style="cursor: pointer;">
-                                    <h3>{{ profile.nickname }} ({{ profile.age }})</h3>
-                                    <p>{{ profile.department }} {{ profile.year }}</p>
+                                <div class="user-name" onclick="goToProfileDetail({{ profile.profile_id }})" style="cursor: pointer;">
+                                    <h3>{{ profile.nickname }} ({{ profile.age }}세)</h3>
+                                    <p>{{ profile.school.school_name }} {{ profile.department.department_name }} {{ profile.grade }}</p>
                                 </div>
                                 <div class="user-rating">
                                     <span class="star">⭐</span>
                                     <span>{{ profile.average_rating|floatformat:1 }}</span>
                                 </div>
                             </div>
-                            <p class="user-intro">{{ profile.introduction|truncatewords:30 }}</p>
+                            <p class="user-intro">{{ profile.introduction|truncatewords:15 }}</p>
                             
                             <div class="user-interests">
-                                {% for interest in profile.interests.all %}
+                                {% for interest in profile.interests %}
                                 <span class="interest-badge">#{{ interest.name }}</span>
                                 {% endfor %}
                             </div>
                             
-                            {% if matching_score %}
                             <div class="match-info">
                                 <p class="match-text">
                                     <span class="brain-icon">🧠</span>
-                                    💡 {{ matching_score }}% 매칭 + {{ common_interests|length }}개 공통 관심사!
+                                    💡 {{ profile.matching_score }}% 매칭 + {{ profile.common_interests|length }}개 공통 관심사!
                                 </p>
                             </div>
-                            {% endif %}
                             
                             <div class="action-button">
-                                <button class="chat-button" onclick="goToChat({{ profile.id }})">
+                                <button class="chat-button" onclick="goToChat({{ profile.profile_id }})">
                                     <span>☕</span>
                                     이 분과 대화해볼래요
                                 </button>
                             </div>
                         </div>
                     </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <p>아직 추천할 프로필이 없습니다. 더 많은 사용자가 가입하면 멋진 추천을 받을 수 있어요!</p>
                 </div>
                 {% endfor %}
             </div>
@@ -96,19 +98,27 @@
             
             <div class="popular-profiles-grid">
                 {% for profile in popular_profiles %}
-                <div class="profile-card" onclick="goToProfileDetail({{ profile.id }})">
+                <div class="profile-card" onclick="goToProfileDetail({{ profile.profile_id }})">
                     <div class="profile-avatar">
-                        <div class="avatar-fallback">{{ profile.nickname|slice:":1" }}</div>
+                        <div class="avatar-fallback">{{ profile.nickname|slice:":1"|upper }}</div>
                     </div>
                     <h3 class="profile-name">{{ profile.nickname }}</h3>
-                    <p class="profile-info">{{ profile.age }}세 • {{ profile.department }}</p>
+                    <p class="profile-info">{{ profile.age }}세 • {{ profile.department.department_name|default:"학과" }}</p>
                     <div class="profile-interest">
-                        <span class="interest-badge">#{{ profile.interests.0|default:"관심사" }}</span>
+                        {% if profile.interests %}
+                            <span class="interest-badge">#{{ profile.interests.0.name }}</span>
+                        {% else %}
+                            <span class="interest-badge">#관심사</span>
+                        {% endif %}
                     </div>
                     <div class="profile-rating">
                         <span class="star">⭐</span>
                         <span>{{ profile.average_rating|floatformat:1 }}</span>
                     </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <p>아직 인기 프로필이 없습니다.</p>
                 </div>
                 {% endfor %}
             </div>

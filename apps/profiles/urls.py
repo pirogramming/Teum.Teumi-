@@ -5,9 +5,13 @@ from .views import (
     InterestTagAPIView,
     BasicInfoAPIView,
     AddtionalInfoAPIView,
+    profile_home,
+    profile_detail,
 )
 
 urlpatterns = [
+    path('profile/', profile_home, name='profile-home'),
+    path('profile/<int:profile_id>/', profile_detail, name='profile-detail'),
     path('school', SchoolProfileAPIView.as_view(), name='school-profile'),
     path('free_time', FreeTimeAPIView.as_view(), name='free-time'),
     path('interests', InterestTagAPIView.as_view(), name='interest-tag'),
