@@ -21,12 +21,12 @@ import requests
 import os
 from .models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from .models import User
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+# 프로필 관련 모델 import
+from apps.profiles.models import Profile, AdditionalInfo, Personality
+from apps.interests.models import Interest
 
 
 load_dotenv()
@@ -41,20 +41,30 @@ class KakaoException(Exception):
     pass
 
 def user_login(request):
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('profile-home')
+# 이미 로그인된 사용자는 프로필 페이지로 리다이렉트, 프로필도 작성되었다면 홈화면으로 리다이렉트
+# TODO: 프로필 모델에 is_completed필드(boolean) 추가
+if request.user.is_authenticated:
+    if hasattr(request.user, 'profile') and request.user.profile.is_completed:
+        return redirect('profile-home')
     else:
-        form = AuthenticationForm()
-    return render(request, 'users/login.html', {'form': form})
+        return redirect('profiles:profile_step1')
+
+if request.method == 'POST':
+    form = AuthenticationForm(request, data=request.POST)
+    if form.is_valid():
+        user = form.get_user()
+        login(request, user)
+        return redirect('profiles:profile_step1')
+else:
+    form = AuthenticationForm()
+
+return render(request, 'users/login.html', {'form': form})
 
 def kakao_login(request):
     try:
+        # 이미 로그인된 사용자는 프로필 페이지로 리다이렉트
         if request.user.is_authenticated:
-            raise SocialLoginException("User already logged in")
+            return redirect('profiles:profile_step1')
 
         client_id = os.environ.get("KAKAO_ID")
         redirect_uri = "http://127.0.0.1:8000/users/login/kakao/callback/"
@@ -66,27 +76,27 @@ def kakao_login(request):
             f"https://kauth.kakao.com/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
         )
 
-    except (KakaoException, SocialLoginException) as error:
+    except KakaoException as error:
         print(f"[kakao_login error] {error}")
         messages.error(request, str(error))
-        return JsonResponse({'error': '로그인 실패'}, status=400, json_dumps_params={'ensure_ascii': False})
-
+        return redirect('/')
 
 @csrf_exempt
 def kakao_callback(request):
     try:
-        if request.user.is_authenticated:       # 이미 로그인한 상태라면
-            raise SocialLoginException("User already logged in")
+        # 이미 로그인된 사용자는 프로필 페이지로 리다이렉트
+        if request.user.is_authenticated:
+            return redirect('profiles:profile_step1')
 
         code = request.GET.get("code")
-        if not code:        # 카카오에서 제공한 인가 코드가 없다면 실패 처리
+        if not code:
             raise KakaoException("Authorization code not provided")
 
-        client_id = os.environ.get("KAKAO_ID")      # .env 파일에서 가져오기
+        client_id = os.environ.get("KAKAO_ID")
         client_secret = os.environ.get("KAKAO_SECRET")
         redirect_uri = "http://127.0.0.1:8000/users/login/kakao/callback/"
 
-        token_response = requests.post(     # 카카오에게 엑세스 토큰 요청
+        token_response = requests.post(
             "https://kauth.kakao.com/oauth/token",
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             data={
@@ -99,10 +109,10 @@ def kakao_callback(request):
         )
 
         token_json = token_response.json()
-        if "error" in token_json:       # 정상적으로 토큰을 받지 못했다면 예외 처리
+        if "error" in token_json:
             raise KakaoException("Failed to get access token")
 
-        access_token = token_json.get("access_token")       # 엑세스 토큰을 이용해 사용자 정보를 가져옴
+        access_token = token_json.get("access_token")
         headers = {"Authorization": f"Bearer {access_token}"}
         profile_request = requests.get("https://kapi.kakao.com/v2/user/me", headers=headers)
         profile_json = profile_request.json()
@@ -112,38 +122,43 @@ def kakao_callback(request):
         nickname = profile.get("nickname")
         email = kakao_account.get("email")
 
-        if not email:       # 메일이 없으면 예외 처리
+        if not email:
             raise KakaoException("Kakao did not return email")
 
         user = User.objects.filter(email=email).first()
-        if user:        # 같은 이메일로 가입한 유저가 있다면, 카카오로 가입한 것인지 확인
+        if user:
             if user.login_method != User.LOGIN_KAKAO:
                 raise KakaoException(f"Please login with: {user.login_method}")
         else:
-            user = User.objects.create_user(        # 유저 생성
+            user = User.objects.create_user(
                 email=email,
                 username=email,
                 first_name=nickname or "",
                 login_method=User.LOGIN_KAKAO,
             )
-
-            user.set_unusable_password()        # 일반 로그인 방지
+            user.set_unusable_password()
             user.save()
 
+        # 로그인 처리 및 세션 설정
         login(request, user)
-
+        request.session.set_expiry(0)  # 브라우저 세션 유지
+        
+        # JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
-        return JsonResponse({
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'user_email': user.email
-        })
+        
+        # 성공적으로 로그인 후 프로필 페이지로 리다이렉트
+        return redirect('profiles:profile_step1')
 
-    except (KakaoException, SocialLoginException) as error:
-        return JsonResponse({'error': str(error)}, status=400)
-
+    except KakaoException as error:
+        print(f"[kakao_callback error] {error}")
+        messages.error(request, str(error))
+        return redirect('/')
 
 def google_login(request):
+    # 이미 로그인된 사용자는 프로필 페이지로 리다이렉트
+    if request.user.is_authenticated:
+        return redirect('profiles:profile_step1')
+        
     scope = "https://www.googleapis.com/auth/userinfo.email"
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     return redirect(
@@ -151,11 +166,15 @@ def google_login(request):
     )
 
 def google_callback(request):
+    # 이미 로그인된 사용자는 프로필 페이지로 리다이렉트
+    if request.user.is_authenticated:
+        return redirect('profiles:profile_step1')
+        
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("SOCIAL_AUTH_GOOGLE_SECRET")
     code = request.GET.get('code')
 
-    token_req = requests.post(      # 엑세스 토큰 받아옴
+    token_req = requests.post(
         "https://oauth2.googleapis.com/token",
         headers={"Content-Type": "application/x-www-form-urlencoded"},
         data={
@@ -168,38 +187,42 @@ def google_callback(request):
     )
 
     token_json = token_req.json()
-    if "error" in token_json:       # 실패 시 오류 메시지 리턴
-        return JsonResponse({"err_msg": f"Google token error: {token_json['error_description']}"}, status=400)
+    if "error" in token_json:
+        messages.error(request, f"Google token error: {token_json['error_description']}")
+        return redirect('/')
 
     access_token = token_json.get("access_token")
 
-    email_req = requests.get(       # 사용자 정보 요청
+    email_req = requests.get(
         "https://www.googleapis.com/oauth2/v1/userinfo",
         params={'access_token': access_token}
     )
 
     if email_req.status_code != 200:
-        return JsonResponse({'err_msg': 'Failed to fetch user info'}, status=400)
+        messages.error(request, 'Failed to fetch user info')
+        return redirect('/')
 
-    email_info = email_req.json()       # 사용자 정보 받아옴
+    email_info = email_req.json()
     email = email_info.get('email')
     name = email_info.get('name', '')
     picture = email_info.get('picture', '')
 
     if not email:
-        return JsonResponse({'err_msg': 'Email not found in response'}, status=400)
+        messages.error(request, 'Email not found in response')
+        return redirect('/')
 
-    user = None     # 유저 객체 미리 선언
+    user = None
 
     try:
         user = User.objects.get(email=email)
         social_user = SocialAccount.objects.get(user=user)
 
-        if social_user.provider != 'google':        # 구글 이메일이 아닌 경우 오류
-            return JsonResponse({'err_msg': 'No matching social type'}, status=400)
+        if social_user.provider != 'google':
+            messages.error(request, 'No matching social type')
+            return redirect('/')
 
     except User.DoesNotExist:
-        user = User.objects.create_user(        # 유저 생성
+        user = User.objects.create_user(
             email=email,
             username=email,
             first_name=name,
@@ -211,16 +234,17 @@ def google_callback(request):
         SocialAccount.objects.create(user=user, provider='google', uid=email_info.get('id'))
 
     except SocialAccount.DoesNotExist:
-        return JsonResponse({'err_msg': 'Email exists but not social user'}, status=400)
+        messages.error(request, 'Email exists but not social user')
+        return redirect('/')
 
-    refresh = RefreshToken.for_user(user)   # JWT 발급
-    django_login(request, user)     # 로그인 처리
+    # 로그인 처리 및 세션 설정
+    django_login(request, user)
+    request.session.set_expiry(0)  # 브라우저 세션 유지
+    
+    # JWT 토큰 생성
+    refresh = RefreshToken.for_user(user)
 
-    return JsonResponse({
-        'access': str(refresh.access_token),
-        'refresh': str(refresh),
-        'user_email': user.email,
-    })
+    return redirect('profiles:profile_step1')
 
 class GoogleLoginFinishView(APIView):
     def post(self, request):
@@ -272,7 +296,7 @@ class GoogleLoginFinishView(APIView):
 def user_logout(request):   # 로그아웃
     logout(request)
     return redirect("/")
-
+  
 # 마이페이지 뷰
 def mypage(request):
     """마이페이지를 렌더링하는 뷰"""
@@ -280,21 +304,10 @@ def mypage(request):
     if not request.user.is_authenticated:
         return redirect('/users/login/')
     
-    # 프로필 관련 모델 import
-    from apps.profiles.models import Profile, AdditionalInfo, Personality
-    from apps.interests.models import Interest
-    
-    try:
-        # 현재 사용자의 프로필 가져오기
-        profile = Profile.objects.select_related('user', 'school', 'department').get(user=request.user)
-    except Profile.DoesNotExist:
-        # 프로필이 없으면 새로 생성
-        profile = Profile.objects.create(
-            user=request.user,
-            is_active=True
-        )
+    profile = Profile.objects.select_related('user', 'school', 'department').get(user=request.user)
     
     # 사용자 관심사 가져오기 (UserInterest 모델이 users 앱에 있으므로)
+    # TODO: userinterest모델은 유저앱에 없기에 수정
     from .models import UserInterest
     user_interests = UserInterest.objects.filter(user=request.user).select_related('interest')
     selected_interests = [ui.interest for ui in user_interests]

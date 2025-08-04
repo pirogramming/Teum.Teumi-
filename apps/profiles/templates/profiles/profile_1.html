@@ -20,7 +20,9 @@
         </div>
         <div class="progress"><progress id="progress" value="1" min="0" max="5"></progress></div>
     </div>
-</div><hr class="border">
+</div>
+<form method="POST" action="#" id="profile-form">
+{% csrf_token %}
 <div id="body">
     <div>
         <div class="icon">
@@ -33,7 +35,7 @@
         <div class="section-container">
             <div class="section">
                 <div class="select-text">🏫 <strong>대학교</strong></div>
-                <select name="university" id="university" class="selectbox" required>
+                <select name="school_name" id="university" class="selectbox" required>
                     <option selected disabled value="">다니고 계신 대학교를 선택해주세요</option>
                     {% for uni in universities %}
                     <option value="{{ uni }}">{{ uni }}</option>
@@ -42,27 +44,24 @@
             </div>
             <div class="section">
                 <div class="select-text">📚 <strong>학과</strong></div>
-                <select name="major" id="major" class="selectbox" required>
+                <select name="department" id="major" class="selectbox" required>
                     <option selected disabled value="">전공하시는 학과를 선택해주세요</option>
-                    {% for major in majors %}
-                    <option value="{{ major }}">{{ major }}</option>
-                    {% endfor %}
                 </select>
             </div>
             <div class="section">
                 <div class="select-text">🎯 <strong>학년</strong></div>
                 <select name="grade" id="grade" class="selectbox" required>
                     <option selected disabled value="">현재 학년을 선택해주세요</option>
-                    <option value="first-grade">1학년</option>
-                    <option value="second-grade">2학년</option>
-                    <option value="third-grade">3학년</option>
-                    <option value="fourth-grade">4학년</option>
-                    <option value="grad-student">대학원생</option>
+                    <option value="1 학년">1학년</option>
+                    <option value="2 학년">2학년</option>
+                    <option value="3 학년">3학년</option>
+                    <option value="4 학년">4학년</option>
+                    <option value="대학원생">대학원생</option>
                 </select>
             </div>
             <div class="section">
                 <div class="select-text">🌱 <strong>나이</strong></div>
-                <select name="major" id="age" class="selectbox" required>
+                <select name="age" id="age" class="selectbox" required>
                     <option selected disabled value="">현재 나이를 선택해주세요</option>
                     <option value="20">20</option>
                     <option value="21">21</option>
@@ -79,13 +78,100 @@
         </div>
     </div>
 </div>
-<hr class="border">
 <div id="footer">
-        <button>
-            <a href="#">다음으로 넘어가기</a>
+    <div>
+        <button type="submit" id="next-button" disabled>
+            다음으로 넘어가기
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
             </svg>
         </button>
+    </div>
 </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const universitySelect = document.getElementById('university');
+    const majorSelect = document.getElementById('major');
+    const gradeSelect = document.getElementById('grade');
+    const ageSelect = document.getElementById('age');
+    const nextButton = document.getElementById('next-button');
+    const profileForm = document.getElementById('profile-form');
+
+    // 학교 선택 시 학과 목록 업데이트
+    universitySelect.addEventListener('change', function() {
+        const schoolName = this.value;
+        if (schoolName) {
+            fetch(`/profiles/api/majors/?school_name=${encodeURIComponent(schoolName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    majorSelect.innerHTML = '<option selected disabled value="">전공하시는 학과를 선택해주세요</option>';
+                    data.majors.forEach(major => {
+                        const option = document.createElement('option');
+                        option.value = major;
+                        option.textContent = major;
+                        majorSelect.appendChild(option);
+                    });
+                    checkAllSelected();
+                })
+                .catch(error => {
+                    console.error('학과 목록 불러오기 실패:', error);
+                });
+        }
+    });
+
+    function checkAllSelected() {
+        const allSelected = universitySelect.value && 
+                          majorSelect.value && 
+                          gradeSelect.value && 
+                          ageSelect.value;
+        nextButton.disabled = !allSelected;
+    }
+
+    // 각 select 요소에 이벤트 리스너 추가
+    [universitySelect, majorSelect, gradeSelect, ageSelect].forEach(select => {
+        select.addEventListener('change', checkAllSelected);
+    });
+
+    // 폼 제출 처리
+    profileForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            school_name: universitySelect.value,
+            department: majorSelect.value,
+            grade: gradeSelect.value,
+            age: parseInt(ageSelect.value)
+        };
+
+        try {
+            const response = await fetch('/profiles/api/school/', {
+                method: 'POST',
+                credentials: 'include',  // 세션 쿠키 포함
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert('학교 정보가 성공적으로 저장되었습니다!');
+                window.location.href = '/profiles/step2/';
+            } else {
+                const error = await response.json();
+                alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(error));
+            }
+        } catch (error) {
+            console.error('저장 실패:', error);
+            alert('저장 중 오류가 발생했습니다.');
+        }
+    });
+
+    // 초기 상태 확인
+    checkAllSelected();
+});
+</script>
 {% endblock %}

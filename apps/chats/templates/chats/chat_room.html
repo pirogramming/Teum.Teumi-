@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>채팅방</title>
+  <link rel="stylesheet" href="{% static 'chats/css/chat_room.css' %}">
+</head>
+<body>
+  <h2>채팅방</h2>
+  <div id="chat-log"></div>
+  <input type="text" id="chat-input" placeholder="메시지 입력" />
+  <button id="send-btn">전송</button>
+
+  <script>
+    const ROOM_ID = "{{ room_id }}";
+  </script>
+  <script src="{% static 'chats/js/chat_room.js' %}"></script>
+</body>
+</html>

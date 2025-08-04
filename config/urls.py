@@ -16,11 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from apps.users.views import user_login
+from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+
+def home_view(request):
+    if request.user.is_authenticated:
+        return redirect('profiles:profile_step1')
+    else:
+        return redirect('users:login')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', user_login, name='home'), 
+    path('', home_view, name='home'), 
     path("users/", include("apps.users.urls", namespace="users")),
     path('profiles/', include('apps.profiles.urls')),
     path('schedules/', include('apps.schedules.urls')),
