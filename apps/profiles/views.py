@@ -1,12 +1,181 @@
+from django.shortcuts import redirect
 from django.shortcuts import render
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.http import JsonResponse
+
+from .models import School, Department, Profile, Personality
 
 # 필요한 모듈 import
-from .models import Profile
+
+#소셜 로그인후 프로필 1단계 보여주는 뷰
+@login_required
+def profile_step1(request):
+    # 사용자의 현재 진행 단계 확인
+    try:
+        profile = Profile.objects.get(user=request.user)
+        current_step = profile.current_step
+        
+        # 현재 단계가 step1보다 나중이면 해당 단계로 리다이렉트
+        if current_step != 'step1':
+            step_mapping = {
+                'step2': 'profiles:profile_step2',
+                'step3': 'profiles:profile_step3', 
+                'step4': 'profiles:profile_step4',
+                'step5': 'profiles:profile_step5',
+                'completed': 'home'  # 완료되면 홈으로
+            }
+            if current_step in step_mapping:
+                return redirect(step_mapping[current_step])
+    except Profile.DoesNotExist:
+        pass  # 프로필이 없으면 step1 진행
+    
+    universities = School.objects.all()
+    return render(request, 'profiles/profile_1.html', {
+        'universities': universities,
+    })
+
+# 학교에 맞는 학과명 보여주는 뷰
+@login_required
+def get_majors_by_school(request):
+    school_name = request.GET.get('school_name')
+    try:
+        school = School.objects.get(school_name=school_name)
+        majors = Department.objects.filter(school=school).values_list('department_name', flat=True)
+        return JsonResponse({'majors': list(majors)})
+    except School.DoesNotExist:
+        return JsonResponse({'majors': []})
+
+# 프로필 1단계 후 2단계 보여주는 뷰
+@login_required
+def profile_step2(request):
+    # 사용자의 현재 진행 단계 확인
+    try:
+        profile = Profile.objects.get(user=request.user)
+        current_step = profile.current_step
+        
+        # step1을 완료하지 않았으면 step1으로 리다이렉트
+        if current_step == 'step1':
+            return redirect('profiles:profile_step1')
+        
+        # 현재 단계가 step2보다 나중이면 해당 단계로 리다이렉트
+        if current_step not in ['step1', 'step2']:
+            step_mapping = {
+                'step3': 'profiles:profile_step3', 
+                'step4': 'profiles:profile_step4',
+                'step5': 'profiles:profile_step5',
+                'completed': 'home'
+            }
+            if current_step in step_mapping:
+                return redirect(step_mapping[current_step])
+    except Profile.DoesNotExist:
+        return redirect('profiles:profile_step1')  # 프로필이 없으면 step1으로
+    
+    from apps.interests.models import Interest
+    interests = Interest.objects.all()
+    
+    return render(request, 'profiles/profile_2.html', {
+        'interests': interests,
+    })
+
+@login_required
+def profile_step3(request):
+    # 사용자의 현재 진행 단계 확인
+    try:
+        profile = Profile.objects.get(user=request.user)
+        current_step = profile.current_step
+        
+        # 이전 단계들을 완료하지 않았으면 해당 단계로 리다이렉트
+        if current_step in ['step1', 'step2']:
+            step_mapping = {
+                'step1': 'profiles:profile_step1',
+                'step2': 'profiles:profile_step2'
+            }
+            return redirect(step_mapping[current_step])
+        
+        # 현재 단계가 step3보다 나중이면 해당 단계로 리다이렉트
+        if current_step not in ['step1', 'step2', 'step3']:
+            step_mapping = {
+                'step4': 'profiles:profile_step4',
+                'step5': 'profiles:profile_step5',
+                'completed': 'home'
+            }
+            if current_step in step_mapping:
+                return redirect(step_mapping[current_step])
+    except Profile.DoesNotExist:
+        return redirect('profiles:profile_step1')
+    
+    return render(request, 'profiles/profile_3.html')
+
+@login_required
+def profile_step4(request):
+    # 사용자의 현재 진행 단계 확인
+    try:
+        profile = Profile.objects.get(user=request.user)
+        current_step = profile.current_step
+        
+        # 이전 단계들을 완료하지 않았으면 해당 단계로 리다이렉트
+        if current_step in ['step1', 'step2', 'step3']:
+            step_mapping = {
+                'step1': 'profiles:profile_step1',
+                'step2': 'profiles:profile_step2',
+                'step3': 'profiles:profile_step3'
+            }
+            return redirect(step_mapping[current_step])
+        
+        # 현재 단계가 step4보다 나중이면 해당 단계로 리다이렉트
+        if current_step not in ['step1', 'step2', 'step3', 'step4']:
+            step_mapping = {
+                'step5': 'profiles:profile_step5',
+                'completed': 'home'
+            }
+            if current_step in step_mapping:
+                return redirect(step_mapping[current_step])
+    except Profile.DoesNotExist:
+        return redirect('profiles:profile_step1')
+    
+    return render(request, 'profiles/profile_4.html')
+
+@login_required
+def profile_step5(request):
+    # 사용자의 현재 진행 단계 확인
+    try:
+        profile = Profile.objects.get(user=request.user)
+        current_step = profile.current_step
+        
+        # 이전 단계들을 완료하지 않았으면 해당 단계로 리다이렉트
+        if current_step in ['step1', 'step2', 'step3', 'step4']:
+            step_mapping = {
+                'step1': 'profiles:profile_step1',
+                'step2': 'profiles:profile_step2',
+                'step3': 'profiles:profile_step3',
+                'step4': 'profiles:profile_step4'
+            }
+            return redirect(step_mapping[current_step])
+        
+        # 완료된 경우 홈으로 리다이렉트
+        if current_step == 'completed':
+            return redirect('home')
+    except Profile.DoesNotExist:
+        return redirect('profiles:profile_step1')
+    
+    try:
+        profile = Profile.objects.get(user=request.user)
+        additional_info = getattr(profile, 'additional_info', None)
+    except Profile.DoesNotExist:
+        additional_info = None
+    personality_keywords = list(Personality.objects.values_list('keyword', flat=True))
+    return render(request, 'profiles/profile_5.html', {
+        'additional_info': additional_info,
+        'personality_keywords': personality_keywords,
+    })
+
+# 프로필 5단계 후 홈화면 보여주는 뷰
 
 # 프로필 5단계의 요청 데이터를 검증할 시리얼라이저
 from .ProfileSerializer import SchoolProfileSerializer, FreeTimeListSerializer, InterestSerializer, BasicInfoSerializer, AddtionalInfoSerializer
@@ -23,7 +192,19 @@ class SchoolProfileAPIView(APIView):
 
 #관심사 태그 등록
 class InterestTagAPIView(APIView):
-    def post(self, request):
+    def get(self, request):
+        """기존 관심사 조회"""
+        try:
+            profile = Profile.objects.get(user=request.user)
+            interests = profile.interests.all()
+            data = {
+                'interest_ids': list(interests.values_list('interest_id', flat=True))
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except Profile.DoesNotExist:
+            return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    def patch(self, request):
         serializer = InterestSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
@@ -33,6 +214,26 @@ class InterestTagAPIView(APIView):
 
 #공강시간 등록
 class FreeTimeAPIView(APIView):
+    def get(self, request):
+        """기존 공강시간 조회"""
+        try:
+            from apps.schedules.models import FreeTime
+            free_times = FreeTime.objects.filter(user=request.user)
+            
+            data = {
+                'free_times': [
+                    {
+                        'day_of_week': free_time.day_of_week,
+                        'start_time': free_time.start_time.strftime('%H:%M'),
+                        'end_time': free_time.end_time.strftime('%H:%M'),
+                    }
+                    for free_time in free_times
+                ]
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
     def post(self, request):
         serializer = FreeTimeListSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -43,6 +244,20 @@ class FreeTimeAPIView(APIView):
         
 # Basic Info (Nickname, MBTI, 성별, 자기소개) 등록
 class BasicInfoAPIView(APIView):
+    def get(self, request):
+        """기존 기본 정보 조회"""
+        try:
+            profile = Profile.objects.get(user=request.user)
+            data = {
+                'nickname': profile.nickname,
+                'mbti': profile.mbti,
+                'gender': profile.gender,
+                'introduction': profile.introduction,
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except Profile.DoesNotExist:
+            return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    
     def patch(self, request):
         profile = get_object_or_404(Profile, user=request.user)
         serializer = BasicInfoSerializer(profile, data=request.data, partial=True, context={'request': request})
@@ -54,7 +269,28 @@ class BasicInfoAPIView(APIView):
 
 # Additional Info 등록
 class AddtionalInfoAPIView(APIView):
+    def get(self, request):
+        """기존 추가 정보 조회"""
+        try:
+            profile = Profile.objects.get(user=request.user)
+            additional_info = getattr(profile, 'additional_info', None)
+            
+            if additional_info:
+                data = {
+                    'experience': additional_info.experience,
+                    'conversation_style': additional_info.conversation_style,
+                    'activity_location': additional_info.activity_location,
+                    'personality_keywords': list(additional_info.personality_keyword.values_list('keyword', flat=True)),
+                    'goal_or_concern': additional_info.goal_or_concern,
+                }
+                return Response(data, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': '추가 정보가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        except Profile.DoesNotExist:
+            return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    
     def post(self, request):
+        """새로운 추가 정보 생성"""
         profile = get_object_or_404(Profile, user=request.user)
         serializer = AddtionalInfoSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -62,4 +298,23 @@ class AddtionalInfoAPIView(APIView):
             return Response({"message": "추가 정보가 성공적으로 저장되었습니다."}, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request):
+        """기존 추가 정보 수정"""
+        try:
+            profile = Profile.objects.get(user=request.user)
+            additional_info = getattr(profile, 'additional_info', None)
+            
+            if additional_info:
+                serializer = AddtionalInfoSerializer(additional_info, data=request.data, partial=True, context={'request': request})
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({"message": "추가 정보가 성공적으로 수정되었습니다."}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                # 추가 정보가 없으면 새로 생성
+                return self.post(request)
+        except Profile.DoesNotExist:
+            return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
         
