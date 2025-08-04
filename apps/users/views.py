@@ -25,10 +25,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 # 프로필 관련 모델 import
-from apps.profiles.models import Profile, AdditionalInfo, Personality
+from apps.profiles.models import Profile, AdditionalInfo, Personality,ProfileInterest
 from apps.interests.models import Interest
 
-
+# 환경 변수 로드
 load_dotenv()
 
 GOOGLE_CALLBACK_URI = settings.GOOGLE_CALLBACK_URI
@@ -41,24 +41,22 @@ class KakaoException(Exception):
     pass
 
 def user_login(request):
-# 이미 로그인된 사용자는 프로필 페이지로 리다이렉트, 프로필도 작성되었다면 홈화면으로 리다이렉트
-# TODO: 프로필 모델에 is_completed필드(boolean) 추가
-if request.user.is_authenticated:
-    if hasattr(request.user, 'profile') and request.user.profile.is_completed:
-        return redirect('profile-home')
+    # 이미 로그인된 사용자는 프로필 페이지로 리다이렉트, 프로필도 작성되었다면 홈화면으로 리다이렉트
+    if request.user.is_authenticated:
+        if hasattr(request.user, 'profile') and request.user.profile.is_completed:
+            return redirect('profile-home')
+        else:
+            return redirect('profiles:profile_step1')
+
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('profiles:profile_step1')
     else:
-        return redirect('profiles:profile_step1')
-
-if request.method == 'POST':
-    form = AuthenticationForm(request, data=request.POST)
-    if form.is_valid():
-        user = form.get_user()
-        login(request, user)
-        return redirect('profiles:profile_step1')
-else:
-    form = AuthenticationForm()
-
-return render(request, 'users/login.html', {'form': form})
+        form = AuthenticationForm()
+    return render(request, 'users/login.html', {'form': form})
 
 def kakao_login(request):
     try:
@@ -306,10 +304,8 @@ def mypage(request):
     
     profile = Profile.objects.select_related('user', 'school', 'department').get(user=request.user)
     
-    # 사용자 관심사 가져오기 (UserInterest 모델이 users 앱에 있으므로)
-    # TODO: userinterest모델은 유저앱에 없기에 수정
-    from .models import UserInterest
-    user_interests = UserInterest.objects.filter(user=request.user).select_related('interest')
+    # 사용자 관심사 가져오기
+    user_interests = ProfileInterest.objects.filter(user=request.user).select_related('interest')
     selected_interests = [ui.interest for ui in user_interests]
     
     # 모든 관심사 가져오기

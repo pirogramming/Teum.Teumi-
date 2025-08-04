@@ -11,7 +11,7 @@ from rest_framework import status
 
 # 필요한 모듈 import
 from .models import Profile, School, Department, AdditionalInfo
-from apps.users.models import User, UserInterest
+from apps.users.models import User
 from apps.interests.models import Interest
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -19,6 +19,8 @@ from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 
 from .models import School, Department, Profile, Personality
+
+from apps.matches.services.recommend import recommend_top_n
 
 # 필요한 모듈 import
 
@@ -304,11 +306,39 @@ class AddtionalInfoAPIView(APIView):
         serializer = AddtionalInfoSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(profile=profile)
+            profile.current_step = 'completed'
+            profile.save()
             return Response({"message": "추가 정보가 성공적으로 저장되었습니다."}, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 # 프로필 홈 페이지 뷰
+def profile_home(request):
+    """프로필 홈 페이지를 렌더링하는 뷰"""
+    try:
+        profile = Profile.objects.get(user=request.user)
+    except Profile.DoesNotExist:
+        # 프로필이 없으면 step1로 리다이렉트
+        return redirect('profiles:profile_step1')
+    
+    # 프로필이 비활성화 상태면 홈으로 리다이렉트
+    if not profile.is_active:
+        return redirect('home')
+    
+    # 프로필이 완료되지 않았다면 단계별 페이지로 리다이렉트
+    if not profile.current_step == 'completed':
+        # 현재 단계에 따라 적절한 페이지로 리다이렉트
+        step_mapping = {
+            'step1': 'profiles:profile_step1',
+            'step2': 'profiles:profile_step2',
+            'step3': 'profiles:profile_step3',
+            'step4': 'profiles:profile_step4',
+            'step5': 'profiles:profile_step5'
+        }
+        return redirect(step_mapping.get(profile.current_step, 'profiles:profile_step1'))
+    
+    # 프로필이 완료된 경우 홈 페이지 렌더링
+    return render(request, 'profiles/profile_home.html', {'profile': profile})
 
 # 프로필 상세 페이지 뷰
 def profile_detail(request, profile_id):
@@ -334,7 +364,7 @@ def profile_detail(request, profile_id):
     except AdditionalInfo.DoesNotExist:
         additional_info = None
         personality_keywords = []
-    
+
     # AI 추천 대화 주제 생성 (더미 데이터)
     conversation_recommendations = []
     if profile.department:
@@ -355,24 +385,34 @@ def profile_detail(request, profile_id):
         'text': '목표 달성을 위한 조언과 경험 나누기'
     })
     
-    # render에서 context변수 수정
+    # 추천 매칭 대상 가져오기(상위 3명)
+    top_matches = recommend_top_n(request.user)[:3]
+    
+    context = {
+        'profile': profile,
+        'interests': interests,
+        'additional_info': additional_info,
+        'personality_keywords': personality_keywords,
+        'conversation_recommendations': conversation_recommendations,
+        'top_matches': top_matches,
+    }
     return render(request, 'profiles/profile_detail.html', context)
     
-    def patch(self, request):
-        """기존 추가 정보 수정"""
-        try:
-            profile = Profile.objects.get(user=request.user)
-            additional_info = getattr(profile, 'additional_info', None)
-            
-            if additional_info:
-                serializer = AddtionalInfoSerializer(additional_info, data=request.data, partial=True, context={'request': request})
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response({"message": "추가 정보가 성공적으로 수정되었습니다."}, status=status.HTTP_200_OK)
-                else:
-                    return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+def patch(self, request):
+    """기존 추가 정보 수정"""
+    try:
+        profile = Profile.objects.get(user=request.user)
+        additional_info = getattr(profile, 'additional_info', None)
+        
+        if additional_info:
+            serializer = AddtionalInfoSerializer(additional_info, data=request.data, partial=True, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "추가 정보가 성공적으로 수정되었습니다."}, status=status.HTTP_200_OK)
             else:
-                # 추가 정보가 없으면 새로 생성
-                return self.post(request)
-        except Profile.DoesNotExist:
-            return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # 추가 정보가 없으면 새로 생성
+            return self.post(request)
+    except Profile.DoesNotExist:
+        return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
