@@ -9,7 +9,7 @@
     background-color: #fff;
     margin: 0;
     padding: 15px;
-    border-top: 0.5px solid rgba(99, 102, 241, 0.1);
+    border-bottom: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
 #header-div {
@@ -59,16 +59,12 @@ svg {
     background-color: #6366f1;
 }
 
-hr {
-    margin: 0;
-    border: 0.5px solid rgba(99, 102, 241, 0.1);
-}
-
-#body {
+form {
+    width: 100%;
     flex: 1;
     display: flex;
     justify-content: center;
-    margin: 30px 20px;
+    padding: 30px 20px;
     margin-bottom: 0;
     overflow-y: auto;
     position: absolute;
@@ -76,7 +72,7 @@ hr {
     bottom: 80px;
 }
 
-#body > div {
+#body  {
     width: 100%;
 }
 
@@ -140,6 +136,12 @@ h2 {
     padding: 8px;
     border-radius: 1rem;
     border: 0.5px solid rgba(99, 102, 241, 0.1);
+    outline: none
+}
+
+.selectbox:focus {
+    border: 1px solid #3730a3;
+    outline: 3px solid rgba(99, 102, 241, 0.1);
 }
 
 option:first-of-type {
@@ -149,18 +151,24 @@ option:first-of-type {
 
 #footer {
     position: fixed;
-    bottom: 0;
     left: 0;
     width: 100%;
     background-color: #fff;
-    display: flex;
-    flex-direction: column;
     bottom: 0;
     border-top: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
-button {
+#footer > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     padding: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 15px 0;
     background: linear-gradient(135deg, #6366f1, #a855f7);
     border-radius: 1rem;
     border: none;
@@ -168,11 +176,23 @@ button {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin: 15px;
+    font-weight: 500;
 }
 
-button > svg, button > a {
+button > svg, button {
     color: #fff;
     text-decoration: none;
-    font-weight: 500;
+}
+
+#next-button:disabled {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
+    color: #fff;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+@media (min-width: 780px) {
+    #header-div, #body, #next-button {
+        width: 500px;
+    }
 }

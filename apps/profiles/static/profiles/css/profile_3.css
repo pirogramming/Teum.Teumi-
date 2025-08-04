@@ -64,20 +64,20 @@ hr {
     border: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
-#body {
+form {
+    width: 100%;
     flex: 1;
     display: flex;
     justify-content: center;
-    margin: 30px 20px;
+    padding: 30px 20px;
     margin-bottom: 0;
-    overflow-y: auto;
     position: absolute;
     top: 95px;
     bottom: 80px;
     overflow-x: hidden;
 }
 
-#body > div {
+#body {
     width: 100%;
 }
 
@@ -123,18 +123,29 @@ h2 {
 }
 
 .timetable > div:first-of-type {  
-    display: grid;
-    grid-template-columns: 80px repeat(7, 1fr);
+    display: flex;
+    flex-direction: column;
     align-items: center;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: none;
     margin: 30px 0;
+}
+
+#day, #time {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    align-items: center;
+    width: 100%;
+}
+
+#time {
+    overflow-y: auto;
+    overflow-x: none;
 }
 
 .day, .cell {
     margin: 3px;
     text-align: center;
-    padding: 15px;
 }
 
 .day {
@@ -142,6 +153,7 @@ h2 {
     border-radius: 1.5rem;
     font-weight: 500;
     margin-bottom: 10px;
+    padding: 15px;
 }
 
 .day:first-of-type {
@@ -152,19 +164,22 @@ h2 {
 .time-label {
   text-align: center;
   color: #64748b;
-  padding: 8px 0;
+  padding: 8px 10px;
 }
 
 .cell {
+    color: transparent;
     border-radius: 20px;
     background-color: #f3f4f6;
     transition: background-color 0.2s;
     transition: transform 0.3s ease-in-out;
+    padding: 5px 15px;
 }
 
 .cell:hover {
     background-color: color-mix(in srgb, #f3f4f6, black 5%);
     transform: scale(1.05);
+    cursor: pointer;
 }
 
 .cell.selected {
@@ -197,13 +212,20 @@ h2 {
     left: 0;
     width: 100%;
     background-color: #fff;
-    display: flex;
-    flex-direction: column;
     bottom: 0;
     border-top: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
+#footer > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+}
+
 button {
+    width: 100%;
     background: linear-gradient(135deg, #6366f1, #a855f7);
     border-radius: 1rem;
     border: none;
@@ -212,11 +234,22 @@ button {
     justify-content: center;
     gap: 10px;
     padding: 15px;
-    margin: 15px;
 }
 
-button > svg, button > a {
+button > svg, button {
     color: #fff;
-    text-decoration: none;
     font-weight: 500;
+}
+
+#next-button:disabled {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
+    color: #fff;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+@media (min-width: 780px) {
+    #header-div, #body, #next-button {
+        width: 500px;
+    }
 }
