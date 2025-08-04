@@ -40,7 +40,7 @@ function sendMessage() {
 }
 
 // 이전 채팅 내역 불러오기
-fetch(`http://localhost:8000/chats/rooms/${roomId}/messages/`, {
+fetch(`http://127.0.0.1:8000/chats/rooms/${roomId}/messages/`, {
     headers: {
         Authorization: `Bearer ${token}`
     }
