@@ -81,9 +81,6 @@ class Profile(BaseEntity):
     current_step = models.CharField(max_length=20, choices=STEP_CHOICES, default='step1')
     
     is_active = models.BooleanField(default=True) # 프로필 활성화 여부
-    
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username}의 프로필"

@@ -1,0 +1,560 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+    <link rel="stylesheet" href="{% static 'users/css/mypage.css' %}" />
+    <title>마이페이지 - 틈틈이</title>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="nav-button" onclick="goToHome()">
+                        <span class="chevron-left">‹</span>
+                    </button>
+                    <div class="header-info">
+                        <h1 class="header-title">프로필 편집</h1>
+                        <p class="header-subtitle">✏️ 나만의 프로필을 업데이트해보세요</p>
+                    </div>
+                </div>
+                <button class="nav-button" onclick="goToSettings()">
+                    <span class="settings-icon">⚙️</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Profile Header Card -->
+            <div class="profile-header-card">
+                <div class="profile-avatar">
+                    <div class="avatar-fallback">
+                        {% if user.profile %}{{ user.profile.nickname|slice:":1"|upper|default:"👤" }}{% else %}👤{% endif %}
+                    </div>
+                </div>
+                <h2 class="profile-name">
+                    {% if user.profile %}{{ user.profile.nickname|default:"닉네임 미설정" }}{% else %}닉네임 미설정{% endif %}
+                </h2>
+                <p class="profile-info">
+                    {% if user.profile %}
+                        {% if user.profile.school %}{{ user.profile.school.school_name }}{% endif %}
+                        {% if user.profile.department %}{{ user.profile.department.department_name }}{% endif %}
+                        {% if user.profile.grade %}{{ user.profile.grade }}{% endif %}
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Basic Information Section -->
+            <div class="section-card" data-section="basic">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <span class="section-icon">👤</span>
+                        기본 정보
+                    </h3>
+                    <button class="edit-button" onclick="toggleEditSection('basic')">
+                        <span class="edit-icon">✏️</span>
+                        편집
+                    </button>
+                </div>
+
+                <!-- View Mode -->
+                <div class="view-content" id="basic-view">
+                    <div class="info-row">
+                        <span class="info-label">닉네임</span>
+                        <span class="info-value">
+                            {% if user.profile %}{{ user.profile.nickname|default:"미설정" }}{% else %}미설정{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">MBTI</span>
+                        <span class="info-value">
+                            {% if user.profile %}{{ user.profile.mbti|default:"미설정" }}{% else %}미설정{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">성별</span>
+                        <span class="info-value">
+                            {% if user.profile %}
+                                {% if user.profile.gender == 'M' %}남성
+                                {% elif user.profile.gender == 'F' %}여성
+                                {% else %}미설정{% endif %}
+                            {% else %}미설정{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-block">
+                        <span class="info-label">자기소개</span>
+                        <p class="intro-text">
+                            {% if user.profile %}{{ user.profile.introduction|default:"아직 자기소개를 작성하지 않았어요." }}{% else %}아직 자기소개를 작성하지 않았어요.{% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Edit Mode -->
+                <div class="edit-content hidden" id="basic-edit">
+                    <div class="form-group">
+                        <label class="form-label">닉네임</label>
+                        <input type="text" class="form-input" id="basic-nickname" 
+                               value="{% if user.profile %}{{ user.profile.nickname }}{% endif %}" placeholder="닉네임을 입력하세요">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">MBTI</label>
+                            <select class="form-select" id="basic-mbti">
+                                <option value="">MBTI 선택</option>
+                                <option value="ISTJ" {% if user.profile and user.profile.mbti == 'ISTJ' %}selected{% endif %}>ISTJ</option>
+                                <option value="ISFJ" {% if user.profile and user.profile.mbti == 'ISFJ' %}selected{% endif %}>ISFJ</option>
+                                <option value="INFJ" {% if user.profile and user.profile.mbti == 'INFJ' %}selected{% endif %}>INFJ</option>
+                                <option value="INTJ" {% if user.profile and user.profile.mbti == 'INTJ' %}selected{% endif %}>INTJ</option>
+                                <option value="ISTP" {% if user.profile and user.profile.mbti == 'ISTP' %}selected{% endif %}>ISTP</option>
+                                <option value="ISFP" {% if user.profile and user.profile.mbti == 'ISFP' %}selected{% endif %}>ISFP</option>
+                                <option value="INFP" {% if user.profile and user.profile.mbti == 'INFP' %}selected{% endif %}>INFP</option>
+                                <option value="INTP" {% if user.profile and user.profile.mbti == 'INTP' %}selected{% endif %}>INTP</option>
+                                <option value="ESTP" {% if user.profile and user.profile.mbti == 'ESTP' %}selected{% endif %}>ESTP</option>
+                                <option value="ESFP" {% if user.profile and user.profile.mbti == 'ESFP' %}selected{% endif %}>ESFP</option>
+                                <option value="ENFP" {% if user.profile and user.profile.mbti == 'ENFP' %}selected{% endif %}>ENFP</option>
+                                <option value="ENTP" {% if user.profile and user.profile.mbti == 'ENTP' %}selected{% endif %}>ENTP</option>
+                                <option value="ESTJ" {% if user.profile and user.profile.mbti == 'ESTJ' %}selected{% endif %}>ESTJ</option>
+                                <option value="ESFJ" {% if user.profile and user.profile.mbti == 'ESFJ' %}selected{% endif %}>ESFJ</option>
+                                <option value="ENFJ" {% if user.profile and user.profile.mbti == 'ENFJ' %}selected{% endif %}>ENFJ</option>
+                                <option value="ENTJ" {% if user.profile and user.profile.mbti == 'ENTJ' %}selected{% endif %}>ENTJ</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">성별</label>
+                            <select class="form-select" id="basic-gender">
+                                <option value="">성별 선택</option>
+                                <option value="M" {% if user.profile and user.profile.gender == 'M' %}selected{% endif %}>남성</option>
+                                <option value="F" {% if user.profile and user.profile.gender == 'F' %}selected{% endif %}>여성</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">자기소개</label>
+                        <textarea class="form-textarea" id="basic-introduction" 
+                                  placeholder="자기소개를 작성해보세요">{% if user.profile %}{{ user.profile.introduction }}{% endif %}</textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button class="save-button" onclick="saveSection('basic')">
+                            <span>💾</span> 저장
+                        </button>
+                        <button class="cancel-button" onclick="cancelEdit('basic')">취소</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interests Section -->
+            <div class="section-card" data-section="interests">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <span class="section-icon">❤️</span>
+                        관심 분야
+                    </h3>
+                    <button class="edit-button" onclick="toggleEditSection('interests')">
+                        <span class="edit-icon">✏️</span>
+                        편집
+                    </button>
+                </div>
+
+                <!-- View Mode -->
+                <div class="view-content" id="interests-view">
+                    <div class="interests-list">
+                        {% for interest in user_interests %}
+                        <span class="interest-badge">#{{ interest.interest.name }}</span>
+                        {% empty %}
+                        <p class="empty-text">아직 관심사를 설정하지 않았어요.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Edit Mode -->
+                <div class="edit-content hidden" id="interests-edit">
+                    <div class="interests-selector">
+                        <div class="interest-grid">
+                            {% for interest in available_interests %}
+                            <label class="interest-item">
+                                <input type="checkbox" name="interests" value="{{ interest.id }}" 
+                                       {% if interest in selected_interests %}checked{% endif %}>
+                                <span class="interest-label">#{{ interest.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <div class="selection-counter">
+                            <p class="counter-text">선택된 관심사: <span id="interest-count">0</span>/4</p>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="save-button" onclick="saveSection('interests')">
+                            <span>💾</span> 저장
+                        </button>
+                        <button class="cancel-button" onclick="cancelEdit('interests')">취소</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Section -->
+            <div class="section-card" data-section="schedule">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <span class="section-icon">📅</span>
+                        만날 수 있는 시간
+                    </h3>
+                    <button class="edit-button" onclick="toggleEditSection('schedule')">
+                        <span class="edit-icon">✏️</span>
+                        편집
+                    </button>
+                </div>
+
+                <!-- View Mode -->
+                <div class="view-content" id="schedule-view">
+                    <div class="schedule-preview">
+                        <p class="schedule-text">📅 시간표를 편집하여 만날 수 있는 시간을 설정해보세요</p>
+                    </div>
+                </div>
+
+                <!-- Edit Mode -->
+                <div class="edit-content hidden" id="schedule-edit">
+                    <div class="schedule-container">
+                        <div class="schedule-header">
+                            <div class="time-cell"></div>
+                            <div class="day-cell">월</div>
+                            <div class="day-cell">화</div>
+                            <div class="day-cell">수</div>
+                            <div class="day-cell">목</div>
+                            <div class="day-cell">금</div>
+                            <div class="day-cell">토</div>
+                            <div class="day-cell">일</div>
+                        </div>
+                        <div class="schedule-grid" id="schedule-grid">
+                            <!-- JavaScript로 동적 생성 -->
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="save-button" onclick="saveSection('schedule')">
+                            <span>💾</span> 저장
+                        </button>
+                        <button class="cancel-button" onclick="cancelEdit('schedule')">취소</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Information Section -->
+            <div class="section-card" data-section="advanced">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <span class="section-icon">🎯</span>
+                        상세 정보
+                    </h3>
+                    <button class="edit-button" onclick="toggleEditSection('advanced')">
+                        <span class="edit-icon">✏️</span>
+                        편집
+                    </button>
+                </div>
+
+                <!-- View Mode -->
+                <div class="view-content" id="advanced-view">
+                    <div class="info-row">
+                        <span class="info-label">경험과 활동</span>
+                        <span class="info-value">
+                            {% if user.profile and user.profile.additional_info %}
+                                {{ user.profile.additional_info.experience|default:"미입력" }}
+                            {% else %}미입력{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">대화 스타일</span>
+                        <span class="info-value">
+                            {% if user.profile and user.profile.additional_info %}
+                                {{ user.profile.additional_info.get_conversation_style_display|default:"미설정" }}
+                            {% else %}미설정{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">활동 위치</span>
+                        <span class="info-value">
+                            {% if user.profile and user.profile.additional_info %}
+                                {{ user.profile.additional_info.activity_location|default:"미입력" }}
+                            {% else %}미입력{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-block">
+                        <span class="info-label">성격 키워드</span>
+                        <div class="personality-tags">
+                            {% for keyword in personality_keywords %}
+                            <span class="personality-badge">#{{ keyword.keyword }}</span>
+                            {% empty %}
+                            <span class="empty-text">미설정</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">현재 목표</span>
+                        <span class="info-value">
+                            {% if user.profile and user.profile.additional_info %}
+                                {{ user.profile.additional_info.goal_or_concern|default:"미입력" }}
+                            {% else %}미입력{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Edit Mode -->
+                <div class="edit-content hidden" id="advanced-edit">
+                    <div class="form-group">
+                        <label class="form-label">경험과 활동</label>
+                        <input type="text" class="form-input" id="advanced-experience" 
+                               value="{% if user.profile and user.profile.additional_info %}{{ user.profile.additional_info.experience }}{% endif %}" 
+                               placeholder="예: UX 해커톤 2회 참가, 스타트업 인턴 경험 있어요">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">선호하는 대화 스타일</label>
+                        <select class="form-select" id="advanced-conversation-style">
+                            <option value="">대화 스타일을 선택해주세요</option>
+                            <option value="casual" {% if user.profile and user.profile.additional_info and user.profile.additional_info.conversation_style == 'casual' %}selected{% endif %}>☕ 수다형</option>
+                            <option value="deep" {% if user.profile and user.profile.additional_info and user.profile.additional_info.conversation_style == 'deep' %}selected{% endif %}>🎯 깊은대화형</option>
+                            <option value="humor" {% if user.profile and user.profile.additional_info and user.profile.additional_info.conversation_style == 'humor' %}selected{% endif %}>😄 유머형</option>
+                            <option value="debate" {% if user.profile and user.profile.additional_info and user.profile.additional_info.conversation_style == 'debate' %}selected{% endif %}>💼 토론형</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">주요 활동 위치</label>
+                        <input type="text" class="form-input" id="advanced-location" 
+                               value="{% if user.profile and user.profile.additional_info %}{{ user.profile.additional_info.activity_location }}{% endif %}" 
+                               placeholder="예: 혜화 캠퍼스 위주로 활동해요">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">성격 키워드 (3개 선택)</label>
+                        <div class="personality-selector">
+                            {% for personality in available_personalities %}
+                            <label class="personality-item">
+                                <input type="checkbox" name="personalities" value="{{ personality.id }}" 
+                                       {% if personality in selected_personalities %}checked{% endif %}>
+                                <span class="personality-label">#{{ personality.keyword }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <div class="selection-counter">
+                            <p class="counter-text">선택된 키워드: <span id="personality-count">0</span>/3</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">현재 목표나 고민</label>
+                        <input type="text" class="form-input" id="advanced-goal" 
+                               value="{% if user.profile and user.profile.additional_info %}{{ user.profile.additional_info.goal_or_concern }}{% endif %}" 
+                               placeholder="예: 디자인 포트폴리오 준비 중이에요">
+                    </div>
+                    <div class="form-actions">
+                        <button class="save-button" onclick="saveSection('advanced')">
+                            <span>💾</span> 저장
+                        </button>
+                        <button class="cancel-button" onclick="cancelEdit('advanced')">취소</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% csrf_token %}
+    <script>
+        // 전역 변수
+        let scheduleData = Array(7).fill(null).map(() => Array(25).fill(false));
+        const timeSlots = [];
+        
+        // 시간 슬롯 생성 (9:00 - 21:00, 30분 단위)
+        for (let hour = 9; hour <= 20; hour++) {
+            timeSlots.push(`${hour}:00`);
+            timeSlots.push(`${hour}:30`);
+        }
+        timeSlots.push('21:00');
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            updateInterestCount();
+            updatePersonalityCount();
+            initializeSchedule();
+        });
+
+        // 네비게이션 함수
+        function goToHome() {
+            window.location.href = '/profiles/profile/';
+        }
+
+        function goToSettings() {
+            console.log('설정 페이지로 이동');
+            alert('설정 기능은 준비 중입니다!');
+        }
+
+        // 편집 모드 토글
+        function toggleEditSection(section) {
+            const viewContent = document.getElementById(`${section}-view`);
+            const editContent = document.getElementById(`${section}-edit`);
+            
+            viewContent.classList.add('hidden');
+            editContent.classList.remove('hidden');
+            
+            if (section === 'schedule') {
+                initializeSchedule();
+            }
+        }
+
+        // 편집 취소
+        function cancelEdit(section) {
+            const viewContent = document.getElementById(`${section}-view`);
+            const editContent = document.getElementById(`${section}-edit`);
+            
+            viewContent.classList.remove('hidden');
+            editContent.classList.add('hidden');
+        }
+
+        // 섹션 저장
+        function saveSection(section) {
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            
+            if (section === 'basic') {
+                formData.append('nickname', document.getElementById('basic-nickname').value);
+                formData.append('mbti', document.getElementById('basic-mbti').value);
+                formData.append('gender', document.getElementById('basic-gender').value);
+                formData.append('introduction', document.getElementById('basic-introduction').value);
+            } else if (section === 'interests') {
+                const selectedInterests = Array.from(document.querySelectorAll('input[name="interests"]:checked'))
+                    .map(input => input.value);
+                formData.append('interests', JSON.stringify(selectedInterests));
+            } else if (section === 'schedule') {
+                formData.append('schedule', JSON.stringify(scheduleData));
+            } else if (section === 'advanced') {
+                formData.append('experience', document.getElementById('advanced-experience').value);
+                formData.append('conversation_style', document.getElementById('advanced-conversation-style').value);
+                formData.append('activity_location', document.getElementById('advanced-location').value);
+                formData.append('goal_or_concern', document.getElementById('advanced-goal').value);
+                
+                const selectedPersonalities = Array.from(document.querySelectorAll('input[name="personalities"]:checked'))
+                    .map(input => input.value);
+                formData.append('personalities', JSON.stringify(selectedPersonalities));
+            }
+
+            // API 호출
+            fetch(`/users/update-${section}/`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('저장되었습니다!');
+                    location.reload();
+                } else {
+                    alert('저장에 실패했습니다: ' + (data.message || '알 수 없는 오류'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('저장 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 관심사 개수 업데이트
+        function updateInterestCount() {
+            const checked = document.querySelectorAll('input[name="interests"]:checked').length;
+            const counter = document.getElementById('interest-count');
+            if (counter) {
+                counter.textContent = checked;
+            }
+            
+            // 4개 초과 선택 방지
+            const checkboxes = document.querySelectorAll('input[name="interests"]');
+            checkboxes.forEach(checkbox => {
+                if (!checkbox.checked && checked >= 4) {
+                    checkbox.disabled = true;
+                    checkbox.parentElement.classList.add('disabled');
+                } else {
+                    checkbox.disabled = false;
+                    checkbox.parentElement.classList.remove('disabled');
+                }
+            });
+        }
+
+        // 성격 키워드 개수 업데이트
+        function updatePersonalityCount() {
+            const checked = document.querySelectorAll('input[name="personalities"]:checked').length;
+            const counter = document.getElementById('personality-count');
+            if (counter) {
+                counter.textContent = checked;
+            }
+            
+            // 3개 초과 선택 방지
+            const checkboxes = document.querySelectorAll('input[name="personalities"]');
+            checkboxes.forEach(checkbox => {
+                if (!checkbox.checked && checked >= 3) {
+                    checkbox.disabled = true;
+                    checkbox.parentElement.classList.add('disabled');
+                } else {
+                    checkbox.disabled = false;
+                    checkbox.parentElement.classList.remove('disabled');
+                }
+            });
+        }
+
+        // 시간표 초기화
+        function initializeSchedule() {
+            const scheduleGrid = document.getElementById('schedule-grid');
+            if (!scheduleGrid) return;
+
+            scheduleGrid.innerHTML = '';
+            
+            timeSlots.forEach((time, timeIndex) => {
+                const row = document.createElement('div');
+                row.className = 'schedule-row';
+                
+                // 시간 라벨
+                const timeCell = document.createElement('div');
+                timeCell.className = 'time-cell';
+                timeCell.textContent = time;
+                row.appendChild(timeCell);
+                
+                // 요일별 셀
+                for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                    const cell = document.createElement('button');
+                    cell.className = 'schedule-cell';
+                    cell.type = 'button';
+                    
+                    // 기존 스케줄 데이터 적용
+                    if (scheduleData[dayIndex] && scheduleData[dayIndex][timeIndex]) {
+                        cell.classList.add('selected');
+                    }
+                    
+                    cell.onclick = () => toggleScheduleCell(dayIndex, timeIndex, cell);
+                    row.appendChild(cell);
+                }
+                
+                scheduleGrid.appendChild(row);
+            });
+        }
+
+        // 시간표 셀 토글
+        function toggleScheduleCell(dayIndex, timeIndex, cell) {
+            // 상태 토글
+            scheduleData[dayIndex][timeIndex] = !scheduleData[dayIndex][timeIndex];
+            
+            // UI 업데이트
+            if (scheduleData[dayIndex][timeIndex]) {
+                cell.classList.add('selected');
+            } else {
+                cell.classList.remove('selected');
+            }
+        }
+
+        // 체크박스 이벤트 리스너
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'interests') {
+                updateInterestCount();
+            } else if (e.target.name === 'personalities') {
+                updatePersonalityCount();
+            }
+        });
+    </script>
+</body>
+</html>

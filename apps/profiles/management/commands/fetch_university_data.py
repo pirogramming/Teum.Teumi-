@@ -20,7 +20,7 @@ class Command(BaseCommand):
             "&numOfRows=100"
             "&type=JSON"
             "&SCSBJT_STTS_NM=기존"
-            "&CTPV_NM=경기도"
+            "&CTPV_NM=서울특별시"
             "&DEG_CRSE_CRS_NM=학사"
             "&SCHL_SE_NM=대학교"
         )
