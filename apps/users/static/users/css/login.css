@@ -15,6 +15,21 @@ body {
     align-items: center;
     justify-content: center;
     margin: 0 20px;
+    position: relative;
+}
+
+.circles {
+    background-color: #f8fafc;
+    border-radius: 50%;
+    position: absolute;
+}
+
+#circle-1 {
+    width: 100px;
+    height: 100px;
+    top: 50px;
+    left: 30px;
+    animation: bubble 2s infinite alternate ease-in-out;
 }
 
 .header {
@@ -129,4 +144,13 @@ button {
   .body {
     width: 100%;
   }
+}
+
+@keyframes bubble {
+	from {
+		transform: translateY(0);
+	}
+	to {
+		transform: translateY(-30px);
+	}
 }
