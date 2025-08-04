@@ -52,6 +52,16 @@ class Profile(BaseEntity):
         ('ISTP', 'ISTP'), ('ISFP', 'ISFP'), ('ESTP', 'ESTP'), ('ESFP', 'ESFP'),
     ]
     
+    # 프로필 진행 단계 선택지
+    STEP_CHOICES = [
+        ('step1', '1단계 - 학교정보'),
+        ('step2', '2단계 - 관심사'),
+        ('step3', '3단계 - 공강시간'),
+        ('step4', '4단계 - 기본정보'),
+        ('step5', '5단계 - 추가정보'),
+        ('completed', '완료'),
+    ]
+    
     # 프로필 기본키
     profile_id = models.BigAutoField(primary_key=True)
 
@@ -67,6 +77,9 @@ class Profile(BaseEntity):
     mbti = models.CharField(max_length=4, choices=MBTI_CHOICES, null=True, blank=True) # MBTI
     introduction = models.TextField(null=True, blank=True) # 자기소개
 
+    # 진행 단계 추적
+    current_step = models.CharField(max_length=20, choices=STEP_CHOICES, default='step1')
+    
     is_active = models.BooleanField(default=True) # 프로필 활성화 여부
     
     created_at = models.DateTimeField(default=timezone.now)
