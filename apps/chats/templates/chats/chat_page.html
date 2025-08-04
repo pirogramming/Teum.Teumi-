@@ -1,0 +1,356 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅 - 틈</title>
+    <link rel="stylesheet" href="{% static 'chats/css/chat_page.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    
+    <div class="chat-container">
+        <!-- Header with Dropdown -->
+        <div class="chat-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="btn-ghost btn-round" onclick="goBack()">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    <div class="user-info">
+                        <div class="avatar">
+                            <span>철</span>
+                        </div>
+                        <div class="user-details">
+                            <h1>창업왕철수</h1>
+                            <p class="status">대화 중...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dropdown">
+                    <button class="btn-ghost btn-round" onclick="toggleDropdown()">
+                        <i data-lucide="more-vertical"></i>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <div class="dropdown-item" onclick="viewProfile()">
+                            <i data-lucide="user"></i>
+                            프로필 보기
+                        </div>
+                        <div class="dropdown-item text-red" onclick="blockUser()">
+                            <i data-lucide="shield"></i>
+                            차단하기 🚫
+                        </div>
+                        <div class="dropdown-item text-red" onclick="reportUser()">
+                            <i data-lucide="flag"></i>
+                            신고하기 ⚠️
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="chat-messages">
+            <div class="message-left">
+                <div class="message-bubble">
+                    <p>안녕하세요! 창업 관련해서 궁금한 게 많아서 연락드렸어요 😊</p>
+                    <span class="message-time">오후 2:30</span>
+                </div>
+            </div>
+            
+            <div class="message-right">
+                <div class="message-bubble gradient-bg">
+                    <p>네, 반가워요! 어떤 부분이 궁금하신가요?</p>
+                    <span class="message-time">오후 2:32</span>
+                </div>
+            </div>
+            
+            <div class="message-left">
+                <div class="message-bubble">
+                    <p>사업 아이템 검증하는 방법이 궁금해요. 어떻게 시작하면 좋을까요?</p>
+                    <span class="message-time">오후 2:35</span>
+                </div>
+            </div>
+
+            <div class="message-right">
+                <div class="message-bubble gradient-bg">
+                    <p>좋은 질문이에요! 먼저 고객 인터뷰부터 시작해보세요. 실제 문제가 있는지 확인하는 게 가장 중요해요 💪</p>
+                    <span class="message-time">오후 2:38</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meeting Complete Button & Input -->
+        <div class="chat-footer">
+            <button class="btn-complete" onclick="showCompleteModal()">
+                <i data-lucide="user-check"></i>
+                📍만남 완료로 표시
+            </button>
+
+            <!-- Message Input -->
+            <div class="message-input">
+                <input type="text" placeholder="메시지를 입력하세요..." class="input-field" id="messageInput">
+                <button class="btn-send gradient-bg" onclick="sendMessage()">
+                    <i data-lucide="send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete Modal -->
+    <div class="modal-overlay" id="completeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✅ 대화 완료 확인</h2>
+                <p>이 대화를 종료하시겠어요?<br>
+                만남이 잘 마무리되었다고 판단되면, 완료 상태로 표시됩니다.<br>
+                완료 후에는 상대방의 매너온도를 평가할 수 있어요.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline" onclick="hideCompleteModal()">취소</button>
+                <button class="btn-green" onclick="completeMeeting()">완료하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evaluation Modal -->
+    <div class="modal-overlay" id="evaluationModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>⭐ 매너온도 남기기</h2>
+                <p>창업왕철수님과의 만남은 어떠셨나요?</p>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Manner Temperature -->
+                <div class="evaluation-section">
+                    <label class="section-label">🌡️ 매너온도 (1-5)</label>
+                    <div class="slider-container">
+                        <input type="range" min="1" max="5" step="0.1" value="4" class="slider" id="temperatureSlider" onchange="updateTemperatureDisplay()">
+                        <div class="slider-labels">
+                            <span>1점</span>
+                            <span class="temperature-value" id="temperatureValue">4.0점</span>
+                            <span>5점</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conversation Attitude -->
+                <div class="evaluation-section">
+                    <label class="section-label">💬 대화 태도 (복수 선택 가능)</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="attitude" value="적극적으로 참여해주셨어요">
+                            <span>적극적으로 참여해주셨어요</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="attitude" value="경청을 잘해주셨어요">
+                            <span>경청을 잘해주셨어요</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="attitude" value="질문을 많이 해주셨어요">
+                            <span>질문을 많이 해주셨어요</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="attitude" value="편안한 분위기를 만들어주셨어요">
+                            <span>편안한 분위기를 만들어주셨어요</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="attitude" value="시간을 잘 지켜주셨어요">
+                            <span>시간을 잘 지켜주셨어요</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Conversation Value -->
+                <div class="evaluation-section">
+                    <label class="section-label">💡 대화에서 얻은 가치 (복수 선택 가능)</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="value" value="새로운 관점을 얻었어요">
+                            <span>새로운 관점을 얻었어요</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="value" value="실용적인 조언을 받았어요">
+                            <span>실용적인 조언을 받았어요</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="value" value="동기부여가 되었어요">
+                            <span>동기부여가 되었어요</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="value" value="재미있는 경험담을 들었어요">
+                            <span>재미있는 경험담을 들었어요</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="value" value="전문적인 지식을 배웠어요">
+                            <span>전문적인 지식을 배웠어요</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Want to Meet Again -->
+                <div class="evaluation-section">
+                    <label class="section-label">🤝 다시 만나고 싶나요?</label>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="meetAgain" value="네, 다시 만나고 싶어요">
+                            <span>네, 다시 만나고 싶어요</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="meetAgain" value="아니요, 한 번으로 충분해요">
+                            <span>아니요, 한 번으로 충분해요</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- One Line Review -->
+                <div class="evaluation-section">
+                    <label class="section-label">✍️ 한 줄 후기 (선택)</label>
+                    <textarea 
+                        placeholder="예: 창업에 대한 열정이 대단하셨어요! 좋은 조언 감사합니다."
+                        class="textarea-field"
+                        id="reviewText"
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-outline" onclick="hideEvaluationModal()">취소</button>
+                <button class="btn-gradient" onclick="submitEvaluation()">
+                    <i data-lucide="heart"></i>
+                    평가 완료
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Dropdown functionality
+        function toggleDropdown() {
+            const dropdown = document.getElementById('dropdownMenu');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('dropdownMenu');
+            const button = event.target.closest('.dropdown button');
+            if (!button && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Modal functions
+        function showCompleteModal() {
+            document.getElementById('completeModal').style.display = 'flex';
+        }
+
+        function hideCompleteModal() {
+            document.getElementById('completeModal').style.display = 'none';
+        }
+
+        function showEvaluationModal() {
+            document.getElementById('evaluationModal').style.display = 'flex';
+        }
+
+        function hideEvaluationModal() {
+            document.getElementById('evaluationModal').style.display = 'none';
+        }
+
+        function completeMeeting() {
+            hideCompleteModal();
+            showEvaluationModal();
+        }
+
+        function submitEvaluation() {
+            // Collect evaluation data
+            const temperature = document.getElementById('temperatureSlider').value;
+            const attitudes = Array.from(document.querySelectorAll('input[name="attitude"]:checked')).map(cb => cb.value);
+            const values = Array.from(document.querySelectorAll('input[name="value"]:checked')).map(cb => cb.value);
+            const meetAgain = document.querySelector('input[name="meetAgain"]:checked')?.value || '';
+            const review = document.getElementById('reviewText').value;
+
+            const evaluationData = {
+                temperature,
+                attitudes,
+                values,
+                meetAgain,
+                review
+            };
+
+            console.log('Evaluation data:', evaluationData);
+            
+            // Here you would send the data to your backend
+            // For now, just hide the modal and redirect
+            hideEvaluationModal();
+            alert('평가가 완료되었습니다!');
+        }
+
+        function updateTemperatureDisplay() {
+            const slider = document.getElementById('temperatureSlider');
+            const display = document.getElementById('temperatureValue');
+            display.textContent = parseFloat(slider.value).toFixed(1) + '점';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                // Add message to chat (simplified)
+                const messagesContainer = document.querySelector('.chat-messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message-right';
+                messageDiv.innerHTML = `
+                    <div class="message-bubble gradient-bg">
+                        <p>${message}</p>
+                        <span class="message-time">방금 전</span>
+                    </div>
+                `;
+                messagesContainer.appendChild(messageDiv);
+                
+                input.value = '';
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        // Send message on Enter key
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Navigation functions
+        function goBack() {
+            // Navigate back to chat list
+            window.history.back();
+        }
+
+        function viewProfile() {
+            // Navigate to profile detail
+            console.log('View profile clicked');
+        }
+
+        function blockUser() {
+            if (confirm('정말로 이 사용자를 차단하시겠습니까?')) {
+                console.log('Block user clicked');
+            }
+        }
+
+        function reportUser() {
+            if (confirm('이 사용자를 신고하시겠습니까?')) {
+                console.log('Report user clicked');
+            }
+        }
+    </script>
+</body>
+</html>
