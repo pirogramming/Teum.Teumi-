@@ -17,7 +17,7 @@ from django.contrib.auth import get_user_model
 from datetime import time
 from apps.profiles.models import Profile, School, Department, AdditionalInfo, Personality
 from apps.interests.models import Interest
-from apps.users.models import UserInterest
+from apps.profiles.models import ProfileInterest
 from apps.schedules.models import FreeTime, DayOfWeek
 
 User = get_user_model()
@@ -309,6 +309,7 @@ def create_test_data():
                 'school': school,
                 'department': department,
                 'introduction': user_data['introduction'],
+                'current_step': 'completed',
                 'is_active': True
             }
         )
@@ -323,6 +324,7 @@ def create_test_data():
             profile.school = school
             profile.department = department
             profile.introduction = user_data['introduction']
+            profile.current_step = 'completed'
             profile.is_active = True
             profile.save()
             print(f"🔄 프로필 업데이트: {profile.nickname}")
@@ -330,11 +332,11 @@ def create_test_data():
             print(f"✅ 프로필 생성: {profile.nickname}")
         
         # 관심사 추가 (2단계)
-        UserInterest.objects.filter(user=user).delete()  # 기존 관심사 삭제
+        ProfileInterest.objects.filter(profile=profile).delete()  # 기존 관심사 삭제
         for interest_name in user_data['interests']:
             interest = interests[interest_name]
-            UserInterest.objects.get_or_create(
-                user=user,
+            ProfileInterest.objects.get_or_create(
+                profile=profile,
                 interest=interest
             )
         print(f"   🌱 관심사 추가: {', '.join(user_data['interests'])}")
