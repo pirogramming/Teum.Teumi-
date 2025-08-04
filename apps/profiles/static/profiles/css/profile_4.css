@@ -64,7 +64,7 @@ hr {
     border: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
-#body {
+form {
     flex: 1;
     display: flex;
     justify-content: center;
@@ -76,7 +76,7 @@ hr {
     bottom: 80px;
 }
 
-#body > div {
+#body {
     width: 100%;
 }
 
@@ -183,6 +183,7 @@ textarea {
     background-color: #fff;
     display: flex;
     flex-direction: column;
+    align-items: center;
     bottom: 0;
     border-top: 0.5px solid rgba(99, 102, 241, 0.1);
 }
@@ -210,4 +211,10 @@ button > svg, button > a {
     color: #fff;
     cursor: not-allowed;
     pointer-events: none;
+}
+
+@media (min-width: 780px) {
+    #header-div, #body, #next-button {
+        width: 500px;
+    }
 }

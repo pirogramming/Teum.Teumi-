@@ -20,7 +20,9 @@
         </div>
         <div class="progress"><progress id="progress" value="4" min="0" max="5"></progress></div>
     </div>
-</div><hr class="border">
+</div>
+<form method="POST" action="#">
+{% csrf_token %}
 <div id="body">
     <div>
         <div class="icon">
@@ -64,7 +66,6 @@
         <div class="small-text">✍️ 자세히 쓸수록 매칭 정확도가 올라가요. 부담 없이, 자유롭게 적어보세요!</div>
     </div>
 </div>
-<hr class="border">
 <div id="footer">
     <button type="submit" id="next-button" disabled>
         <a href="#">다음으로 넘어가기</a>
@@ -73,6 +74,7 @@
         </svg>
     </button>
 </div>
+</form>
 
 <script>
     const MIN_TEXT = 50;

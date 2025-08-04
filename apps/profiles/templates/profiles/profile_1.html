@@ -21,6 +21,8 @@
         <div class="progress"><progress id="progress" value="1" min="0" max="5"></progress></div>
     </div>
 </div>
+<form method="POST" action="#">
+{% csrf_token %}
 <div id="body">
     <div>
         <div class="icon">
@@ -87,6 +89,7 @@
             </svg>
         </button>
 </div>
+</form>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {

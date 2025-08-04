@@ -68,7 +68,7 @@ hr {
     border: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
-#body {
+form {
     flex: 1;
     display: flex;
     justify-content: center;
@@ -80,7 +80,7 @@ hr {
     bottom: 80px;
 }
 
-#body > div {
+#body {
     width: 100%;
 }
 
@@ -174,6 +174,7 @@ h2 {
     background-color: #fff;
     display: flex;
     flex-direction: column;
+    align-items: center;
     bottom: 0;
     border-top: 0.5px solid rgba(99, 102, 241, 0.1);
 }
@@ -200,4 +201,10 @@ button > svg, button > a {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
     color: #fff;
     cursor: not-allowed;
+}
+
+@media (min-width: 780px) {
+    #header-div, #body, #next-button {
+        width: 500px;
+    }
 }

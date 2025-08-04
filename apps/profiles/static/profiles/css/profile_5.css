@@ -64,7 +64,7 @@ hr {
     border: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
-#body {
+form {
     flex: 1;
     display: flex;
     justify-content: center;
@@ -73,10 +73,10 @@ hr {
     overflow-y: auto;
     position: absolute;
     top: 95px;
-    bottom: 134.5px;
+    bottom: 138.5px;
 }
 
-#body > div {
+#body {
     width: 100%;
 }
 
@@ -157,6 +157,7 @@ option:first-of-type {
     background-color: #eef2ff;
     border: 1px solid #6366f1;
     transform: scale(1.05);
+    cursor: pointer;
 }
 
 .tag.selected {
@@ -198,11 +199,14 @@ option:first-of-type {
     background-color: #fff;
     display: flex;
     flex-direction: column;
+    align-items: center;
     bottom: 0;
     border-top: 0.5px solid rgba(99, 102, 241, 0.1);
 }
 
 #detail-start {
+    color: #fff;
+    font-weight: 500;
     background: linear-gradient(135deg, #6366f1, #a855f7);
     border-radius: 1rem;
     border: none;
@@ -214,15 +218,9 @@ option:first-of-type {
     margin: 15px;
 }
 
-#detail-start > button {
-    color: #fff;
-    text-decoration: none;
-    font-weight: 500;
-    border: none;
-    background: none;
-}
-
 #default-start {
+    color: #64748b;
+    font-weight: 500;
     background: #fff;
     border-radius: 1rem;
     border: none;
@@ -234,22 +232,21 @@ option:first-of-type {
     margin: 0 15px 15px;
 }
 
-#default-start > button {
-    color: #64748b;
-    text-decoration: none;
-    font-weight: 500;
-    border: none;
-    background: none;
-}
-
 #default-start:hover {
     font-weight: 600;
     background-color: color-mix(in srgb, #fff, black 5%);
+    cursor: pointer;
 }
 
-#detail-start.disabled {
+#detail-start:disabled {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
     color: #fff;
     cursor: not-allowed;
     pointer-events: none;
+}
+
+@media (min-width: 780px) {
+    #header-div, #body, #detail-start, #default-start {
+        width: 500px;
+    }
 }

@@ -20,7 +20,9 @@
         </div>
         <div class="progress"><progress id="progress" value="2" min="0" max="5"></progress></div>
     </div>
-</div><hr class="border">
+</div>
+<form method="POST" action="#"> {#{% url 'view_name' %}#}
+{% csrf_token %}
 <div id="body">
     <div>
         <div class="icon">
@@ -68,7 +70,6 @@
         </div>
     </div>
 </div>
-<hr class="border">
 <div id="footer">
     <button type="submit" id="next-button" disabled>
         <a href="#">다음으로 넘어가기</a>
@@ -77,6 +78,7 @@
         </svg>
     </button>
 </div>
+</form>
 
 <script>
     const MAX_SELECTION = 4;

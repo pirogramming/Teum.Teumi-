@@ -20,7 +20,9 @@
         </div>
         <div class="progress"><progress id="progress" value="5" min="0" max="5"></progress></div>
     </div>
-</div><hr class="border">
+</div>
+<form method="POST" action="#">
+{% csrf_token %}
 <div id="body">
     <div>
         <div class="icon">
@@ -69,13 +71,10 @@
     </div>
 </div>
 <div id="footer">
-    <form id="detail-start" action="#" method="post" class="next-button">
-        <button type="submit" disabled>🎉 프로필 완성하고 새로운 만남 시작하기</button>
-    </form>
-    <form id="default-start" action="#" method="post">
-        <button type="submit">기본 정보로만 시작하기</button>
-    </form>
+    <button id="detail-start" type="submit" disabled>🎉 프로필 완성하고 새로운 만남 시작하기</button>
+    <button id="default-start" type="submit">기본 정보로만 시작하기</button>
 </div>
+</form>
 
 <script>
     const MAX_SELECTION = 3;
@@ -85,9 +84,7 @@
     const communicationSelect = document.getElementById('communication');
     const areaInput = document.querySelectorAll('.selectbox[type="text"]')[1]; // 활동 지역
     const goalInput = document.querySelectorAll('.selectbox[type="text"]')[2]; // 목표나 고민
-    const detailStartForm = document.querySelector('#detail-start button');
-    const form = document.getElementById('detail-start');
-    const button = form.querySelector('button');
+    const detailStartForm = document.getElementById('detail-start');
 
     function updateCount() {        // 선택 개수 업데이트
         const selectedCount = document.querySelectorAll('.tag.selected').length;
@@ -127,13 +124,6 @@
         selectedTagCount;
 
     detailStartForm.disabled = !isValid;
-
-    // form의 클래스도 같이 갱신
-    if (!isValid) {
-        form.classList.add('disabled');
-    } else {
-        form.classList.remove('disabled');
-    }
     }
 
     tags.forEach(tag => {

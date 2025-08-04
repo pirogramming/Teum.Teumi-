@@ -21,6 +21,8 @@
         <div class="progress"><progress id="progress" value="3" min="0" max="5"></progress></div>
     </div>
 </div>
+<form method="POST" action="#">
+{% csrf_token %}
 <div id="body">
     <div>
         <div class="icon">
@@ -43,230 +45,232 @@
                     <div class="day">일요일</div>
                 </div>
 
-                <div class="time-label">9:00</div>
-                <div class="cell" data-day="mon" data-time="09:00"></div>
-                <div class="cell" data-day="tue" data-time="09:00"></div>
-                <div class="cell" data-day="wed" data-time="09:00"></div>
-                <div class="cell" data-day="thur" data-time="09:00"></div>
-                <div class="cell" data-day="fri" data-time="09:00"></div>
-                <div class="cell" data-day="sat" data-time="09:00"></div>
-                <div class="cell" data-day="sun" data-time="09:00"></div>
+                <div id="time">
+                    <div class="time-label">9:00</div>
+                    <div class="cell" data-day="mon" data-time="09:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="09:00">화요일</div>
+                    <div class="cell" data-day="wed" data-time="09:00">수요일</div>
+                    <div class="cell" data-day="thur" data-time="09:00">목요일</div>
+                    <div class="cell" data-day="fri" data-time="09:00">금요일</div>
+                    <div class="cell" data-day="sat" data-time="09:00">토요일</div>
+                    <div class="cell" data-day="sun" data-time="09:00">일요일</div>
 
-                <div class="time-label">9:30</div>
-                <div class="cell" data-day="mon" data-time="09:30"></div>
-                <div class="cell" data-day="tue" data-time="09:30"></div>
-                <div class="cell" data-day="wed" data-time="09:30"></div>
-                <div class="cell" data-day="thur" data-time="09:30"></div>
-                <div class="cell" data-day="fri" data-time="09:30"></div>
-                <div class="cell" data-day="sat" data-time="09:30"></div>
-                <div class="cell" data-day="sun" data-time="09:30"></div>
+                    <div class="time-label">9:30</div>
+                    <div class="cell" data-day="mon" data-time="09:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="09:30">화요일</div>
+                    <div class="cell" data-day="wed" data-time="09:30">수요일</div>
+                    <div class="cell" data-day="thur" data-time="09:30">목요일</div>
+                    <div class="cell" data-day="fri" data-time="09:30">금요일</div>
+                    <div class="cell" data-day="sat" data-time="09:30">토요일</div>
+                    <div class="cell" data-day="sun" data-time="09:30">일요일</div>
 
-                <div class="time-label">10:00</div>
-                <div class="cell" data-day="mon" data-time="10:00"></div>
-                <div class="cell" data-day="tue" data-time="10:00"></div>
-                <div class="cell" data-day="wed" data-time="10:00"></div>
-                <div class="cell" data-day="thur" data-time="10:00"></div>
-                <div class="cell" data-day="fri" data-time="10:00"></div>
-                <div class="cell" data-day="sat" data-time="10:00"></div>
-                <div class="cell" data-day="sun" data-time="10:00"></div>
+                    <div class="time-label">10:00</div>
+                    <div class="cell" data-day="mon" data-time="10:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="10:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="10:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="10:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="10:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="10:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="10:00">월요일</div>
 
-                <div class="time-label">10:30</div>
-                <div class="cell" data-day="mon" data-time="10:30"></div>
-                <div class="cell" data-day="tue" data-time="10:30"></div>
-                <div class="cell" data-day="wed" data-time="10:30"></div>
-                <div class="cell" data-day="thur" data-time="10:30"></div>
-                <div class="cell" data-day="fri" data-time="10:30"></div>
-                <div class="cell" data-day="sat" data-time="10:30"></div>
-                <div class="cell" data-day="sun" data-time="10:30"></div>
+                    <div class="time-label">10:30</div>
+                    <div class="cell" data-day="mon" data-time="10:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="10:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="10:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="10:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="10:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="10:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="10:30">월요일</div>
 
-                <div class="time-label">11:00</div>
-                <div class="cell" data-day="mon" data-time="11:00"></div>
-                <div class="cell" data-day="tue" data-time="11:00"></div>
-                <div class="cell" data-day="wed" data-time="11:00"></div>
-                <div class="cell" data-day="thur" data-time="11:00"></div>
-                <div class="cell" data-day="fri" data-time="11:00"></div>
-                <div class="cell" data-day="sat" data-time="11:00"></div>
-                <div class="cell" data-day="sun" data-time="11:00"></div>
+                    <div class="time-label">11:00</div>
+                    <div class="cell" data-day="mon" data-time="11:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="11:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="11:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="11:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="11:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="11:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="11:00">월요일</div>
 
                     <div class="time-label">11:30</div>
-                    <div class="cell" data-day="mon" data-time="11:30"></div>
-                    <div class="cell" data-day="tue" data-time="11:30"></div>
-                    <div class="cell" data-day="wed" data-time="11:30"></div>
-                    <div class="cell" data-day="thur" data-time="11:30"></div>
-                    <div class="cell" data-day="fri" data-time="11:30"></div>
-                    <div class="cell" data-day="sat" data-time="11:30"></div>
-                    <div class="cell" data-day="sun" data-time="11:30"></div>
+                    <div class="cell" data-day="mon" data-time="11:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="11:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="11:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="11:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="11:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="11:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="11:30">월요일</div>
 
                     <div class="time-label">12:00</div>
-                    <div class="cell" data-day="mon" data-time="12:00"></div>
-                    <div class="cell" data-day="tue" data-time="12:00"></div>
-                    <div class="cell" data-day="wed" data-time="12:00"></div>
-                    <div class="cell" data-day="thur" data-time="12:00"></div>
-                    <div class="cell" data-day="fri" data-time="12:00"></div>
-                    <div class="cell" data-day="sat" data-time="12:00"></div>
-                    <div class="cell" data-day="sun" data-time="12:00"></div>
+                    <div class="cell" data-day="mon" data-time="12:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="12:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="12:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="12:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="12:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="12:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="12:00">월요일</div>
 
                     <div class="time-label">12:30</div>
-                    <div class="cell" data-day="mon" data-time="12:30"></div>
-                    <div class="cell" data-day="tue" data-time="12:30"></div>
-                    <div class="cell" data-day="wed" data-time="12:30"></div>
-                    <div class="cell" data-day="thur" data-time="12:30"></div>
-                    <div class="cell" data-day="fri" data-time="12:30"></div>
-                    <div class="cell" data-day="sat" data-time="12:30"></div>
-                    <div class="cell" data-day="sun" data-time="12:30"></div>
+                    <div class="cell" data-day="mon" data-time="12:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="12:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="12:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="12:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="12:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="12:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="12:30">월요일</div>
 
                     <div class="time-label">13:00</div>
-                    <div class="cell" data-day="mon" data-time="13:00"></div>
-                    <div class="cell" data-day="tue" data-time="13:00"></div>
-                    <div class="cell" data-day="wed" data-time="13:00"></div>
-                    <div class="cell" data-day="thur" data-time="13:00"></div>
-                    <div class="cell" data-day="fri" data-time="13:00"></div>
-                    <div class="cell" data-day="sat" data-time="13:00"></div>
-                    <div class="cell" data-day="sun" data-time="13:00"></div>
+                    <div class="cell" data-day="mon" data-time="13:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="13:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="13:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="13:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="13:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="13:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="13:00">월요일</div>
 
                     <div class="time-label">13:30</div>
-                    <div class="cell" data-day="mon" data-time="13:30"></div>
-                    <div class="cell" data-day="tue" data-time="13:30"></div>
-                    <div class="cell" data-day="wed" data-time="13:30"></div>
-                    <div class="cell" data-day="thur" data-time="13:30"></div>
-                    <div class="cell" data-day="fri" data-time="13:30"></div>
-                    <div class="cell" data-day="sat" data-time="13:30"></div>
-                    <div class="cell" data-day="sun" data-time="13:30"></div>
+                    <div class="cell" data-day="mon" data-time="13:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="13:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="13:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="13:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="13:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="13:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="13:30">월요일</div>
 
                     <div class="time-label">14:00</div>
-                    <div class="cell" data-day="mon" data-time="14:00"></div>
-                    <div class="cell" data-day="tue" data-time="14:00"></div>
-                    <div class="cell" data-day="wed" data-time="14:00"></div>
-                    <div class="cell" data-day="thur" data-time="14:00"></div>
-                    <div class="cell" data-day="fri" data-time="14:00"></div>
-                    <div class="cell" data-day="sat" data-time="14:00"></div>
-                    <div class="cell" data-day="sun" data-time="14:00"></div>
+                    <div class="cell" data-day="mon" data-time="14:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="14:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="14:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="14:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="14:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="14:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="14:00">월요일</div>
 
                     <div class="time-label">14:30</div>
-                    <div class="cell" data-day="mon" data-time="14:30"></div>
-                    <div class="cell" data-day="tue" data-time="14:30"></div>
-                    <div class="cell" data-day="wed" data-time="14:30"></div>
-                    <div class="cell" data-day="thur" data-time="14:30"></div>
-                    <div class="cell" data-day="fri" data-time="14:30"></div>
-                    <div class="cell" data-day="sat" data-time="14:30"></div>
-                    <div class="cell" data-day="sun" data-time="14:30"></div>
+                    <div class="cell" data-day="mon" data-time="14:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="14:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="14:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="14:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="14:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="14:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="14:30">월요일</div>
 
                     <div class="time-label">15:00</div>
-                    <div class="cell" data-day="mon" data-time="15:00"></div>
-                    <div class="cell" data-day="tue" data-time="15:00"></div>
-                    <div class="cell" data-day="wed" data-time="15:00"></div>
-                    <div class="cell" data-day="thur" data-time="15:00"></div>
-                    <div class="cell" data-day="fri" data-time="15:00"></div>
-                    <div class="cell" data-day="sat" data-time="15:00"></div>
-                    <div class="cell" data-day="sun" data-time="15:00"></div>
+                    <div class="cell" data-day="mon" data-time="15:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="15:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="15:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="15:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="15:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="15:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="15:00">월요일</div>
 
                     <div class="time-label">15:30</div>
-                    <div class="cell" data-day="mon" data-time="15:30"></div>
-                    <div class="cell" data-day="tue" data-time="15:30"></div>
-                    <div class="cell" data-day="wed" data-time="15:30"></div>
-                    <div class="cell" data-day="thur" data-time="15:30"></div>
-                    <div class="cell" data-day="fri" data-time="15:30"></div>
-                    <div class="cell" data-day="sat" data-time="15:30"></div>
-                    <div class="cell" data-day="sun" data-time="15:30"></div>
+                    <div class="cell" data-day="mon" data-time="15:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="15:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="15:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="15:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="15:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="15:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="15:30">월요일</div>
 
                     <div class="time-label">16:00</div>
-                    <div class="cell" data-day="mon" data-time="16:00"></div>
-                    <div class="cell" data-day="tue" data-time="16:00"></div>
-                    <div class="cell" data-day="wed" data-time="16:00"></div>
-                    <div class="cell" data-day="thur" data-time="16:00"></div>
-                    <div class="cell" data-day="fri" data-time="16:00"></div>
-                    <div class="cell" data-day="sat" data-time="16:00"></div>
-                    <div class="cell" data-day="sun" data-time="16:00"></div>
+                    <div class="cell" data-day="mon" data-time="16:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="16:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="16:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="16:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="16:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="16:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="16:00">월요일</div>
 
                     <div class="time-label">16:30</div>
-                    <div class="cell" data-day="mon" data-time="16:30"></div>
-                    <div class="cell" data-day="tue" data-time="16:30"></div>
-                    <div class="cell" data-day="wed" data-time="16:30"></div>
-                    <div class="cell" data-day="thur" data-time="16:30"></div>
-                    <div class="cell" data-day="fri" data-time="16:30"></div>
-                    <div class="cell" data-day="sat" data-time="16:30"></div>
-                    <div class="cell" data-day="sun" data-time="16:30"></div>
+                    <div class="cell" data-day="mon" data-time="16:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="16:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="16:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="16:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="16:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="16:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="16:30">월요일</div>
 
                     <div class="time-label">17:00</div>
-                    <div class="cell" data-day="mon" data-time="17:00"></div>
-                    <div class="cell" data-day="tue" data-time="17:00"></div>
-                    <div class="cell" data-day="wed" data-time="17:00"></div>
-                    <div class="cell" data-day="thur" data-time="17:00"></div>
-                    <div class="cell" data-day="fri" data-time="17:00"></div>
-                    <div class="cell" data-day="sat" data-time="17:00"></div>
-                    <div class="cell" data-day="sun" data-time="17:00"></div>
+                    <div class="cell" data-day="mon" data-time="17:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="17:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="17:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="17:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="17:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="17:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="17:00">월요일</div>
 
                     <div class="time-label">17:30</div>
-                    <div class="cell" data-day="mon" data-time="17:30"></div>
-                    <div class="cell" data-day="tue" data-time="17:30"></div>
-                    <div class="cell" data-day="wed" data-time="17:30"></div>
-                    <div class="cell" data-day="thur" data-time="17:30"></div>
-                    <div class="cell" data-day="fri" data-time="17:30"></div>
-                    <div class="cell" data-day="sat" data-time="17:30"></div>
-                    <div class="cell" data-day="sun" data-time="17:30"></div>
+                    <div class="cell" data-day="mon" data-time="17:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="17:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="17:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="17:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="17:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="17:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="17:30">월요일</div>
 
                     <div class="time-label">18:00</div>
-                    <div class="cell" data-day="mon" data-time="18:00"></div>
-                    <div class="cell" data-day="tue" data-time="18:00"></div>
-                    <div class="cell" data-day="wed" data-time="18:00"></div>
-                    <div class="cell" data-day="thur" data-time="18:00"></div>
-                    <div class="cell" data-day="fri" data-time="18:00"></div>
-                    <div class="cell" data-day="sat" data-time="18:00"></div>
-                    <div class="cell" data-day="sun" data-time="18:00"></div>
+                    <div class="cell" data-day="mon" data-time="18:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="18:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="18:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="18:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="18:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="18:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="18:00">월요일</div>
 
                     <div class="time-label">18:30</div>
-                    <div class="cell" data-day="mon" data-time="18:30"></div>
-                    <div class="cell" data-day="tue" data-time="18:30"></div>
-                    <div class="cell" data-day="wed" data-time="18:30"></div>
-                    <div class="cell" data-day="thur" data-time="18:30"></div>
-                    <div class="cell" data-day="fri" data-time="18:30"></div>
-                    <div class="cell" data-day="sat" data-time="18:30"></div>
-                    <div class="cell" data-day="sun" data-time="18:30"></div>
+                    <div class="cell" data-day="mon" data-time="18:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="18:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="18:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="18:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="18:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="18:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="18:30">월요일</div>
 
                     <div class="time-label">19:00</div>
-                    <div class="cell" data-day="mon" data-time="19:00"></div>
-                    <div class="cell" data-day="tue" data-time="19:00"></div>
-                    <div class="cell" data-day="wed" data-time="19:00"></div>
-                    <div class="cell" data-day="thur" data-time="19:00"></div>
-                    <div class="cell" data-day="fri" data-time="19:00"></div>
-                    <div class="cell" data-day="sat" data-time="19:00"></div>
-                    <div class="cell" data-day="sun" data-time="19:00"></div>
+                    <div class="cell" data-day="mon" data-time="19:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="19:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="19:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="19:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="19:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="19:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="19:00">월요일</div>
 
                     <div class="time-label">19:30</div>
-                    <div class="cell" data-day="mon" data-time="19:30"></div>
-                    <div class="cell" data-day="tue" data-time="19:30"></div>
-                    <div class="cell" data-day="wed" data-time="19:30"></div>
-                    <div class="cell" data-day="thur" data-time="19:30"></div>
-                    <div class="cell" data-day="fri" data-time="19:30"></div>
-                    <div class="cell" data-day="sat" data-time="19:30"></div>
-                    <div class="cell" data-day="sun" data-time="19:30"></div>
+                    <div class="cell" data-day="mon" data-time="19:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="19:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="19:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="19:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="19:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="19:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="19:30">월요일</div>
 
                     <div class="time-label">20:00</div>
-                    <div class="cell" data-day="mon" data-time="20:00"></div>
-                    <div class="cell" data-day="tue" data-time="20:00"></div>
-                    <div class="cell" data-day="wed" data-time="20:00"></div>
-                    <div class="cell" data-day="thur" data-time="20:00"></div>
-                    <div class="cell" data-day="fri" data-time="20:00"></div>
-                    <div class="cell" data-day="sat" data-time="20:00"></div>
-                    <div class="cell" data-day="sun" data-time="20:00"></div>
+                    <div class="cell" data-day="mon" data-time="20:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="20:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="20:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="20:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="20:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="20:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="20:00">월요일</div>
 
                     <div class="time-label">20:30</div>
-                    <div class="cell" data-day="mon" data-time="20:30"></div>
-                    <div class="cell" data-day="tue" data-time="20:30"></div>
-                    <div class="cell" data-day="wed" data-time="20:30"></div>
-                    <div class="cell" data-day="thur" data-time="20:30"></div>
-                    <div class="cell" data-day="fri" data-time="20:30"></div>
-                    <div class="cell" data-day="sat" data-time="20:30"></div>
-                    <div class="cell" data-day="sun" data-time="20:30"></div>
+                    <div class="cell" data-day="mon" data-time="20:30">월요일</div>
+                    <div class="cell" data-day="tue" data-time="20:30">월요일</div>
+                    <div class="cell" data-day="wed" data-time="20:30">월요일</div>
+                    <div class="cell" data-day="thur" data-time="20:30">월요일</div>
+                    <div class="cell" data-day="fri" data-time="20:30">월요일</div>
+                    <div class="cell" data-day="sat" data-time="20:30">월요일</div>
+                    <div class="cell" data-day="sun" data-time="20:30">월요일</div>
 
-                <div class="time-label">21:00</div>
-                <div class="cell" data-day="mon" data-time="21:00"></div>
-                <div class="cell" data-day="tue" data-time="21:00"></div>
-                <div class="cell" data-day="wed" data-time="21:00"></div>
-                <div class="cell" data-day="thur" data-time="21:00"></div>
-                <div class="cell" data-day="fri" data-time="21:00"></div>
-                <div class="cell" data-day="sat" data-time="21:00"></div>
-                <div class="cell" data-day="sun" data-time="21:00"></div>
+                    <div class="time-label">21:00</div>
+                    <div class="cell" data-day="mon" data-time="21:00">월요일</div>
+                    <div class="cell" data-day="tue" data-time="21:00">월요일</div>
+                    <div class="cell" data-day="wed" data-time="21:00">월요일</div>
+                    <div class="cell" data-day="thur" data-time="21:00">월요일</div>
+                    <div class="cell" data-day="fri" data-time="21:00">월요일</div>
+                    <div class="cell" data-day="sat" data-time="21:00">월요일</div>
+                    <div class="cell" data-day="sun" data-time="21:00">월요일</div>
+                </div>
             </div>
             <div class="comment">
                 <div class="text">💡 <strong>각 시간대를 눌러서 만날 수 있는 시간을<br> 표시해주세요!</strong></div>
@@ -283,6 +287,7 @@
         </svg>
     </button>
 </div>
+</form>
 
 <script>
     const cells = document.querySelectorAll('.cell');
