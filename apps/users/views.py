@@ -27,7 +27,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .serializers import UserInterestCreateSerializer
 
 
 load_dotenv()
@@ -275,18 +274,4 @@ def user_logout(request):   # 로그아웃
     return redirect("/")
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def create_user_interest(request):  #관심사 등록
-    serializer = UserInterestCreateSerializer(data=request.data, context={'request': request})
-    if serializer.is_valid():
-        created_interests = serializer.save()
 
-        return Response([
-            {
-                "user": user_interest.user.id,
-                "interest": user_interest.interest.id
-            } for user_interest in created_interests
-        ], status=status.HTTP_201_CREATED)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,9 +1,18 @@
-# profiles/serializers.py
+# profiles/ProfileSerializer.py
 # 프로필 5단계의 요청 데이터를 검증할 시리얼라이저
 from rest_framework import serializers
-from .models import School, Department, Profile, Personality, AdditionalInfo
+from django.core.validators import MinLengthValidator, MaxLengthValidator
+from .models import School, Department, Profile, Personality, AdditionalInfo, ProfileInterest
+from apps.interests.models import Interest
 from apps.schedules.models import FreeTime, DayOfWeek
 from datetime import time
+
+
+# 프로필 간단 시리얼라이저
+class ProfileSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['id', 'nickname', 'mbti']
 
 # 프로필 1단계 시리얼라이저
 class SchoolProfileSerializer(serializers.Serializer):
@@ -52,9 +61,37 @@ class SchoolProfileSerializer(serializers.Serializer):
             grade=grade,
             age=age
         )
+
 # 프로필 2단계 시리얼라이저
 class InterestSerializer(serializers.Serializer):
-    pass
+    interest_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        validators=[MinLengthValidator(4), MaxLengthValidator(4)],
+        help_text="관심사 ID 리스트 (정확히 4개)"
+    )
+
+    def validate_interest_ids(self, ids):
+        if len(ids) != len(set(ids)):
+            raise serializers.ValidationError("중복된 관심사 태그입니다.")
+        existing_ids = set(Interest.objects.filter(id__in=ids).values_list('id', flat=True))
+        invalid_ids = set(ids) - existing_ids
+        if invalid_ids:
+            raise serializers.ValidationError(f"다음 ID는 존재하지 않습니다: {invalid_ids}")
+        return list(existing_ids)
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        interest_ids = validated_data['interest_ids']
+
+        # 🔥 핵심 수정
+        profile = Profile.objects.get(user=user)
+        ProfileInterest.objects.filter(profile=profile).delete()
+
+        for interest_id in interest_ids:
+            ProfileInterest.objects.create(profile=profile, interest_id=interest_id)
+
+        return {"message": "관심사가 성공적으로 저장되었습니다."}
+    
 # 프로필 3단계 시리얼라이저
 # 공강시간 개별의 요청 데이터를 검증할 시리얼라이저
 class FreeTimeSerializer(serializers.Serializer):
