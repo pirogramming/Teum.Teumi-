@@ -46,5 +46,41 @@
         <p>처음이시라면 프로필을 차근차근 만들어가요!</p>
     </div>
 </div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    fetch('/api/token/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: email,
+            password: password
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("로그인 실패");
+        return res.json();
+    })
+    .then(data => {
+        // ✅ access, refresh 토큰 저장
+        localStorage.setItem('access', data.access);
+        localStorage.setItem('refresh', data.refresh);
+        localStorage.setItem('user_email', data.user_email);
+
+        // ✅ 로그인 성공 시 main.html로 이동
+        window.location.href = "/main.html";
+    })
+    .catch(err => {
+        alert("로그인 실패: " + err.message);
+    });
+});
+</script>
 </body>
 </html>

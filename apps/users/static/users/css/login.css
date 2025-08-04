@@ -168,7 +168,39 @@ button {
 @media (min-width: 768px) {
   .body {
     width: 100%;
-  }
+    }
+
+  #circle-1 {
+        width: 80px;
+        height: 80px;
+        top: 60px;
+        left: 30px;
+        animation: bubble 3s infinite alternate ease-in-out;
+    }
+
+    #circle-2 {
+        width: 45px;
+        height: 45px;
+        top: 95px;
+        right: 70px;
+        animation: bubble 2s infinite alternate-reverse ease-in-out;
+    }
+
+    #circle-3 {
+        width: 60px;
+        height: 60px;
+        top: 140px;
+        right: 30px;
+        animation: bubble 2s infinite alternate ease-in-out;
+    }
+
+    #circle-4 {
+        width: 60px;
+        height: 60px;
+        bottom: 90px;
+        left: 50px;
+        animation: bubble 2s infinite alternate-reverse ease-in-out;
+    }
 }
 
 @keyframes bubble {

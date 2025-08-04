@@ -1,0 +1,52 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teum.Teumi</title>
+    <link href="{% static 'matches/css/match.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<div id="header">
+    <div class="div-container">
+        <div>🤝</div>
+        <div class="header-context">
+            <div><h2>내 매칭 현황</h2></div>
+            <div>대화 신청과 완료된 만남들을 관리해요</div>
+        </div>
+    </div>
+</div>
+<div id="body">
+    {% block content %} {% endblock %}
+</div>
+<div id="footer" class="bottom-nav">
+    <div class="nav-container">
+        <button class="nav-item active" onclick="setCurrentPage('home')">
+            <div class="nav-emoji">🏠</div>
+            <span class="nav-label">홈</span>
+        </button>
+        <button class="nav-item" onclick="setCurrentPage('browse')">
+            <div class="nav-emoji">🔍</div>
+            <span class="nav-label">탐색</span>
+        </button>
+        <button class="nav-item" onclick="setCurrentPage('chat-list')">
+            <div class="nav-emoji">💬</div>
+            <span class="nav-label">대화</span>
+        </button>
+        <button class="nav-item" onclick="setCurrentPage('matching')">
+            <div class="nav-emoji">🤝</div>
+            <span class="nav-label">매칭</span>
+        </button>
+        <button class="nav-item" onclick="setCurrentPage('mypage')">
+            <div class="nav-emoji">👤</div>
+            <span class="nav-label">마이</span>
+        </button>
+    </div>
+</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

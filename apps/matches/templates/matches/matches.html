@@ -1,0 +1,89 @@
+{% extends 'matches/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="tabs">
+  <button class="tab-button active" onclick="showTab('request')">💌 대화 신청</button>
+  <button class="tab-button" onclick="showTab('completed')">✅ 완료된 만남</button>
+</div>
+
+<div id="tab-request" class="tab-content">
+    {# {% for in % } #}
+    <div class="tab-container">
+        <div>
+            <div id="circle"></div>
+        </div>
+        <div class="tab-content">
+            <div class="tab-content-top">
+                <div>
+                    <div><h2>닉네임</h2></div>
+                    <div>전공과 학년</div>
+                </div>
+                <div>status</div>
+            </div>
+            <div class="tab-content-bottom">
+                <div>
+                    <button type="submit" class="accept">수락하기</button>
+                    <button type="submit" class="reject">정중히 거절하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {# {% endfor %} #}
+</div>
+
+<div id="tab-completed" class="tab-content" style="display: none;">
+    {# {% for in % } #}
+    <div class="tab-container">
+        <div class="tab-left">
+            <div>
+                <div class="circle"></div>
+            </div>
+            <div class="tab-content">
+                <div>닉네임</div>
+                <div>경영학과 3학년</div>
+                <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                    </svg>
+                    만남 완료
+                </div>
+            </div>
+        </div>
+        <div class="tab-right">
+            <div>
+                ⭐ 매너온도 남기기
+            </div>
+        </div>
+    </div>
+    {# {% endfor %} #}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showTab(tabName, event = null) {
+        // 모든 탭 콘텐츠 숨기기
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+
+        // 선택된 탭만 보이기
+        document.getElementById('tab-' + tabName).style.display = 'block';
+
+        // 버튼 스타일 초기화
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+
+        // 클릭한 버튼에만 active 추가 (event가 있을 때만)
+        if (event) {
+        event.currentTarget.classList.add('active');
+        } else {
+        // 기본 선택은 첫 번째 버튼에 active 추가
+        document.querySelector('.tab-button[data-tab="' + tabName + '"]')?.classList.add('active');
+        }
+    }
+
+    // 페이지가 로드될 때 기본 탭 열기
+    document.addEventListener('DOMContentLoaded', function () {
+        showTab('request');
+    });
+</script>
+{% endblock %}
