@@ -21,7 +21,7 @@
         <div class="progress"><progress id="progress" value="4" min="0" max="5"></progress></div>
     </div>
 </div>
-<form method="POST" action="#">
+<form method="POST" action="#" id="basic-info-form">
 {% csrf_token %}
 <div id="body">
     <div>
@@ -34,33 +34,46 @@
         </div>
         <div class="section">
             <div class="section-text">✨ <strong>닉네임(필수)</strong></div>
-            <input type="text" class="selectbox" placeholder="다른 친구들에게 보여질 친근한 닉네임을 지어주세요">
+            <input type="text" name="nickname" id="nickname" class="selectbox" placeholder="다른 친구들에게 보여질 친근한 닉네임을 지어주세요">
         </div>
         <div id="section"> 
             <div class="section">
                 <div class="select-text">🧠 <strong>MBTI(필수)</strong></div>
                 <select name="mbti" id="mbti" class="selectbox" required>
                     <option selected disabled value="">MBTI</option>
-                    {% for major in majors %}
-                    <option value="{{ major }}">{{ major }}</option>
-                    {% endfor %}
+                    <option value="INTJ">INTJ</option>
+                    <option value="INTP">INTP</option>
+                    <option value="ENTJ">ENTJ</option>
+                    <option value="ENTP">ENTP</option>
+                    <option value="INFJ">INFJ</option>
+                    <option value="INFP">INFP</option>
+                    <option value="ENFJ">ENFJ</option>
+                    <option value="ENFP">ENFP</option>
+                    <option value="ISTJ">ISTJ</option>
+                    <option value="ISFJ">ISFJ</option>
+                    <option value="ESTJ">ESTJ</option>
+                    <option value="ESFJ">ESFJ</option>
+                    <option value="ISTP">ISTP</option>
+                    <option value="ISFP">ISFP</option>
+                    <option value="ESTP">ESTP</option>
+                    <option value="ESFP">ESFP</option>
                 </select>
             </div>
             <div class="section">
                 <div class="select-text">🙋 <strong>성별(필수)</strong></div>
                 <select name="gender" id="gender" class="selectbox" required>
                     <option selected disabled value="">성별</option>
-                    <option value="male">남성</option>
-                    <option value="female">여성</option>
+                    <option value="M">남성</option>
+                    <option value="F">여성</option>
                 </select>
             </div>
         </div>
         <div class="section">
             <div class="section-text">💬 <strong>자기소개 (필수, 최소 50자)</strong></div>
-            <textarea class="selectbox" rows="7" id="introduce" name="introduce" placeholder="나는 어떤 사람인지, 어떤 이야기를 나누고 싶은지 자유롭게 적어주세요."></textarea>
+            <textarea class="selectbox" rows="7" id="introduction" name="introduction" placeholder="나는 어떤 사람인지, 어떤 이야기를 나누고 싶은지 자유롭게 적어주세요."></textarea>
         </div>
         <div class="textarea-flex">
-            <div id="text-count" class="small-text">0/50자</div>     <!--텍스트 개수에 따라 바뀌는 기능 구현 필요-->
+            <div id="text-count" class="small-text">0/50자</div>
             <span id="text-comment">📝 조금 더 써주세요</span>
         </div>
         <div class="small-text">✍️ 자세히 쓸수록 매칭 정확도가 올라가요. 부담 없이, 자유롭게 적어보세요!</div>
@@ -79,15 +92,20 @@
 </form>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     const MIN_TEXT = 50;
 
-    const nicknameInput = document.querySelector('input[type="text"]');
+    const nicknameInput = document.getElementById('nickname');
     const mbtiSelect = document.getElementById('mbti');
     const genderSelect = document.getElementById('gender');
-    const textarea = document.getElementById('introduce');
+    const textarea = document.getElementById('introduction');
     const textCount = document.getElementById('text-count');
     const message = document.getElementById('text-comment');
     const nextButton = document.getElementById('next-button');
+    const basicInfoForm = document.getElementById('basic-info-form');
+
+    // 기존 데이터 불러오기
+    loadExistingData();
 
     function updateButtonState() {
         const isNicknameFilled = nicknameInput.value.trim() !== '';
@@ -95,7 +113,6 @@
         const isGenderSelected = genderSelect.value !== '';
         const isTextareaLongEnough = textarea.value.length >= MIN_TEXT;
 
-        // 버튼 활성화 조건 검사
         if (isNicknameFilled && isMbtiSelected && isGenderSelected && isTextareaLongEnough) {
             nextButton.disabled = false;
         } else {
@@ -103,7 +120,37 @@
         }
     }
 
-    textarea.addEventListener('input', () => {      // 자기소개 실시간 글자 수 표시 및 메시지 처리
+    // 기존 데이터 불러오기
+    async function loadExistingData() {
+        try {
+            const response = await fetch('/profiles/api/basic_info/', {
+                method: 'GET',
+                credentials: 'include',  // 세션 쿠키 포함
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                if (data.nickname) nicknameInput.value = data.nickname;
+                if (data.mbti) mbtiSelect.value = data.mbti;
+                if (data.gender) genderSelect.value = data.gender;
+                if (data.introduction) {
+                    textarea.value = data.introduction;
+                    updateTextCount();
+                }
+                
+                updateButtonState();
+            }
+        } catch (error) {
+            console.error('데이터 불러오기 실패:', error);
+        }
+    }
+
+    function updateTextCount() {
         const length = textarea.value.length;
         textCount.textContent = `${length}/${MIN_TEXT}자`;
 
@@ -112,7 +159,10 @@
         } else {
             message.innerHTML = '📝 조금 더 써주세요';
         }
+    }
 
+    textarea.addEventListener('input', () => {
+        updateTextCount();
         updateButtonState();
     });
 
@@ -120,6 +170,43 @@
     mbtiSelect.addEventListener('change', updateButtonState);
     genderSelect.addEventListener('change', updateButtonState);
 
-    updateButtonState();        // 페이지 로딩 시 상태 점검
+    // 폼 제출 처리
+    basicInfoForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            nickname: nicknameInput.value.trim(),
+            mbti: mbtiSelect.value,
+            gender: genderSelect.value,
+            introduction: textarea.value.trim(),
+        };
+
+        try {
+            const response = await fetch('/profiles/api/basic_info/', {
+                method: 'PATCH',
+                credentials: 'include',  // 세션 쿠키 포함
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert('기본 정보가 성공적으로 저장되었습니다!');
+                window.location.href = '/profiles/step5/';
+            } else {
+                const error = await response.json();
+                alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(error));
+            }
+        } catch (error) {
+            console.error('저장 실패:', error);
+            alert('저장 중 오류가 발생했습니다.');
+        }
+    });
+
+    updateButtonState();
+});
 </script>
 {% endblock %}

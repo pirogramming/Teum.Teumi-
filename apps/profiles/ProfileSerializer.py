@@ -34,18 +34,18 @@ class SchoolProfileSerializer(serializers.Serializer):
             raise serializers.ValidationError({'department': '해당 학교에 존재하지 않는 학과입니다.'})
         
         age = data.get('age')
-        if age < 20 or age > 40:
-            raise serializers.ValidationError({'age': '유효한 나이 범위는 20세 이상 40세 이하입니다.'})
+        if age < 20 or age > 29:
+            raise serializers.ValidationError({'age': '유효한 나이 범위는 20세 이상 29세 이하입니다.'})
 
-        valid_grades = ['1 학년 (새내기)', '2 학년', '3 학년', '4 학년', '대학원생']
+        valid_grades = ['1 학년', '2 학년', '3 학년', '4 학년', '대학원생']
         if data.get('grade') not in valid_grades:
             raise serializers.ValidationError({'grade': '유효한 학년이 아닙니다.'})
 
         return data
 
     def create(self, validated_data):
-        school_name = validated_data.pop('school_name')
-        department_name = validated_data.pop('department')
+        school_name = validated_data.get('school_name')
+        department_name = validated_data.get('department')
         grade = validated_data.get('grade')
         age = validated_data.get('age')
 
@@ -54,13 +54,27 @@ class SchoolProfileSerializer(serializers.Serializer):
 
         user = self.context['request'].user
 
-        return Profile.objects.create(
-            user=user,
-            school=school,
-            department=department,
-            grade=grade,
-            age=age
-        )
+        # 기존 프로필이 있는지 확인
+        try:
+            profile = Profile.objects.get(user=user)
+            # 기존 프로필 업데이트
+            profile.school = school
+            profile.department = department
+            profile.grade = grade
+            profile.age = age
+            profile.current_step = 'step2'  # 다음 단계로 진행
+            profile.save()
+            return profile
+        except Profile.DoesNotExist:
+            # 새 프로필 생성
+            return Profile.objects.create(
+                user=user,
+                school=school,
+                department=department,
+                grade=grade,
+                age=age,
+                current_step='step2'  # 다음 단계로 진행
+            )
 
 # 프로필 2단계 시리얼라이저
 class InterestSerializer(serializers.Serializer):
@@ -90,14 +104,37 @@ class InterestSerializer(serializers.Serializer):
         for interest_id in interest_ids:
             ProfileInterest.objects.create(profile=profile, interest_id=interest_id)
 
+        # 다음 단계로 진행 상태 업데이트
+        profile.current_step = 'step3'
+        profile.save()
+
         return {"message": "관심사가 성공적으로 저장되었습니다."}
     
 # 프로필 3단계 시리얼라이저
 # 공강시간 개별의 요청 데이터를 검증할 시리얼라이저
 class FreeTimeSerializer(serializers.Serializer):
-    day_of_week = serializers.ChoiceField(choices=DayOfWeek.choices)
+    day_of_week = serializers.CharField()  # ChoiceField에서 CharField로 변경
     start_time = serializers.TimeField(format='%H:%M', input_formats=['%H:%M'])
     end_time = serializers.TimeField(format='%H:%M', input_formats=['%H:%M'])
+
+    def validate_day_of_week(self, value):
+        # 요일 축약형을 전체 이름으로 변환
+        day_mapping = {
+            'MON': 'Monday',
+            'TUE': 'Tuesday', 
+            'WED': 'Wednesday',
+            'THU': 'Thursday',
+            'FRI': 'Friday',
+            'SAT': 'Saturday',
+            'SUN': 'Sunday'
+        }
+        
+        if value in day_mapping:
+            return day_mapping[value]
+        elif value in [choice[0] for choice in DayOfWeek.choices]:
+            return value
+        else:
+            raise serializers.ValidationError(f"'{value}'은 유효하지 않은 요일입니다.")
 
     def validate(self, data):
         start = data.get('start_time')
@@ -127,6 +164,11 @@ class FreeTimeListSerializer(serializers.Serializer):
 
         for entry in free_time_data:
             FreeTime.objects.create(user=user, **entry)
+
+        # 다음 단계로 진행 상태 업데이트
+        profile = Profile.objects.get(user=user)
+        profile.current_step = 'step4'
+        profile.save()
 
         return {"message": "공강 시간이 성공적으로 등록되었습니다."}
     
@@ -162,42 +204,71 @@ class BasicInfoSerializer(serializers.Serializer):
         return data
 
     def update(self, instance, validated_data):
-        instance.nickname = validated_data.get('nickname', instance.nickname)
-        instance.mbti = validated_data.get('mbti', instance.mbti)
-        instance.gender = validated_data.get('gender', instance.gender)
-        instance.introduction = validated_data.get('introduction', instance.introduction)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         instance.save()
+
+        # 다음 단계로 진행 상태 업데이트
+        profile = Profile.objects.get(user=instance.user)
+        profile.current_step = 'step5'
+        profile.save()
+
         return instance
 
 # 프로필 5단계 시리얼라이저
 class AddtionalInfoSerializer(serializers.ModelSerializer):
-    personality_keyword = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Personality.objects.all(),
-        required=False
+    personality_keywords = serializers.ListField(
+        child=serializers.CharField(max_length=50),
+        required=False,
+        help_text="성격 키워드 리스트 (정확히 3개)"
     )
 
     class Meta:
         model = AdditionalInfo
         exclude = ['profile']
-        # 각 필드들을 required=False, allow_null=True로 설정해서 입력 필수는 아님을 명시
         extra_kwargs = {
             'experience': {'required': False, 'allow_null': True},
             'conversation_style': {'required': False, 'allow_null': True},
             'activity_location': {'required': False, 'allow_null': True},
-            'personality_keyword': {'required': False, 'allow_null': True},
             'goal_or_concern': {'required': False, 'allow_null': True},
         }
 
-    def validate_personality_keyword(self, value):
-        if len(value) not in (0, 3):
+    def validate_personality_keywords(self, value):
+        if value and len(value) != 3:
             raise serializers.ValidationError("성격 키워드는 반드시 3개를 선택해야 합니다.")
+        
+        # 키워드가 실제로 존재하는지 확인
+        if value:
+            existing_keywords = set(Personality.objects.filter(keyword__in=value).values_list('keyword', flat=True))
+            invalid_keywords = set(value) - existing_keywords
+            if invalid_keywords:
+                raise serializers.ValidationError(f"존재하지 않는 키워드입니다: {invalid_keywords}")
+        
         return value
     
     def create(self, validated_data):
-        personality_keyword = validated_data.pop('personality_keyword', [])
-        profile = validated_data.pop('profile')  # Remove to prevent duplication
+        personality_keywords = validated_data.pop('personality_keywords', [])
+        profile = validated_data.pop('profile')
         additional_info = AdditionalInfo.objects.create(profile=profile, **validated_data)
-        if personality_keyword:
-            additional_info.personality_keyword.set(personality_keyword)
+        
+        if personality_keywords:
+            personality_objects = Personality.objects.filter(keyword__in=personality_keywords)
+            additional_info.personality_keyword.set(personality_objects)
+        
         return additional_info
+    
+    def update(self, instance, validated_data):
+        personality_keywords = validated_data.pop('personality_keywords', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if personality_keywords is not None:
+            personality_objects = Personality.objects.filter(keyword__in=personality_keywords)
+            instance.personality_keyword.set(personality_objects)
+
+        # 프로필 완료 상태로 업데이트
+        profile = Profile.objects.get(user=instance.profile.user)
+        profile.current_step = 'completed'
+        profile.save()
+
+        return instance

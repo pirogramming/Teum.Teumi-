@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'users/css/login.css' %}" />
     <title>Teum.Teumi</title>
+    {% csrf_token %}
 </head>
 <body>
 <div id="circle-1" class="circles"></div>
@@ -25,29 +26,25 @@
     <div class="body">
         <div>
             <div id="login-logo" class="login-logo">
-                <button id="kakao" class="login">
-                    <a href="{% url 'users:kakao-login' %}">
+                <button id="kakao" class="login" onclick="handleKakaoLogin()">
                     KaKao로 시작하기
-                    </a>
                 </button>
             </div>
             <div class="login-logo">
-                <button id="google" class="login">
-                    <a  href="{% url 'users:google-login' %}">
+                <button id="google" class="login" onclick="handleGoogleLogin()">
                     Google로 시작하기
-                    </a>
                 </button>
             </div>
         </div>
     </div>
     <div class="footer">
         <p>🌟 로그인하시면 <strong class="strong">이용약관</strong> 및 <strong class="strong">개인정보처리방침</strong>에 동의하시는 거예요</p>
-        <!--일단 이용약관, 개인정보처리방침은 css 서식으로 처리, 나중에 링크 추가할 거면 수정할 수 있음-->
         <p>처음이시라면 프로필을 차근차근 만들어가요!</p>
     </div>
 </div>
 
 <script>
+<<<<<<< HEAD
 document.getElementById('login-form').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -81,6 +78,33 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
         alert("로그인 실패: " + err.message);
     });
 });
+=======
+// CSRF 토큰 가져오기
+function getCSRFToken() {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    return token;
+}
+
+// 카카오 로그인 처리
+function handleKakaoLogin() {
+    const button = document.getElementById('kakao');
+    button.disabled = true;
+    button.textContent = '로그인 중...';
+    
+    // 카카오 로그인 페이지로 이동
+    window.location.href = '/users/login/kakao/';
+}
+
+// 구글 로그인 처리
+function handleGoogleLogin() {
+    const button = document.getElementById('google');
+    button.disabled = true;
+    button.textContent = '로그인 중...';
+    
+    // 구글 로그인 페이지로 이동
+    window.location.href = '/users/login/google/';
+}
+>>>>>>> 14e4f1ebf7a39731be06b076a544d1b3ee1cb184
 </script>
 </body>
 </html>
