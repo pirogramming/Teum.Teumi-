@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from .models import ChatRoom, ChatParticipation, Chat
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
 User = get_user_model()
 
@@ -80,3 +82,9 @@ def get_chat_messages(request, room_id):
     ]
 
     return Response(data)
+
+def chat_rooms_page(request):
+    return render(request, 'chats/chat_rooms.html')
+
+def chat_room_page(request, room_id):
+    return render(request, 'chats/chat_room.html', {'room_id': room_id})
