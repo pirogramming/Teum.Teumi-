@@ -57,7 +57,3 @@ class AddtionalInfoAPIView(APIView):
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
-def profile_input_page(request):        # 임시이니 이따 지우자
-    universities = ["학교1", "학교2", "학교3"]
-    majors = ["컴퓨터공학", "경영학", "심리학"]
-    return render(request, "profiles/profile_5.html", {"universities": universities, "majors": majors})
