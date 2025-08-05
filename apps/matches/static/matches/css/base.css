@@ -11,7 +11,6 @@ html, body {
 
 html {
     font-size: 14px;
-    background-color: #f9fafb;
     font-family: 'Noto Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
     word-break: keep-all;
     word-wrap: break-word;
@@ -19,6 +18,7 @@ html {
 
 body {
     color: 	#1a1d29;
+    background-color: #FAFBFF;
 }
 
 #header {
