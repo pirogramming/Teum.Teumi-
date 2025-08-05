@@ -44,41 +44,6 @@
 </div>
 
 <script>
-<<<<<<< HEAD
-document.getElementById('login-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    fetch('/api/token/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            email: email,
-            password: password
-        })
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("로그인 실패");
-        return res.json();
-    })
-    .then(data => {
-        // ✅ access, refresh 토큰 저장
-        localStorage.setItem('access', data.access);
-        localStorage.setItem('refresh', data.refresh);
-        localStorage.setItem('user_email', data.user_email);
-
-        // ✅ 로그인 성공 시 main.html로 이동
-        window.location.href = "/main.html";
-    })
-    .catch(err => {
-        alert("로그인 실패: " + err.message);
-    });
-});
-=======
 // CSRF 토큰 가져오기
 function getCSRFToken() {
     const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -104,7 +69,6 @@ function handleGoogleLogin() {
     // 구글 로그인 페이지로 이동
     window.location.href = '/users/login/google/';
 }
->>>>>>> 14e4f1ebf7a39731be06b076a544d1b3ee1cb184
 </script>
 </body>
 </html>
