@@ -178,6 +178,7 @@ svg {
 .tab-right > div:hover {
     background-color: #6366f1;
     color: #fff;
+    cursor: pointer;
 }
 
 #completed {

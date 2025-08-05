@@ -27,7 +27,7 @@
             </div>
             <div class="tab-content-bottom">
                 <button type="submit" class="accept">수락하기</button>
-                <button type="submit" class="reject">정중히 거절하기</button>
+                <button type="submit" id="reject" class="reject">정중히 거절하기</button>
             </div>
         </div>
     </div>
@@ -49,6 +49,35 @@
         </div>
     </div>
     {# {% endfor %} #}
+    
+    <div id="reject-reason" class="small-view">
+        <span class="close">&times;</span>
+        <div class="small-title">🙏 정중히 거절하기</div>
+        <div class="small-comment">코딩마스터님께 정중한 거절 사유를 전달해드릴게요.</div>
+        <div>
+            <label>
+                <input type="radio" name="reject" value="1">시간이 맞지 않아요
+            </label>
+            <label>
+                <input type="radio" name="reject" value="2" checked >관심사가 다른 것 같아요
+            </label>
+            <label>
+                <input type="radio" name="reject" value="3">지금은 만남이 어려워요
+            </label>
+            <label>
+                <input type="radio" name="reject" value="3">다른 이유
+            </label>
+        </div>
+        <div>💙 정중한 거절도 상대방에 대한 배려입니다</div>
+        <div>
+            <button type="button">취소</button>
+            <button type="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg> 거절하기
+            </button>
+        </div>
+    </div>
 </div>
 
 <div id="tab-completed" class="tab-content">        <!--내부 텍스트는 나중에 수정 필요-->
@@ -108,5 +137,25 @@
         activeButton.id = 'active'; // 클릭된 버튼에 active ID 설정
         }
     }
+
+    document.addEventListener("DOMContentLoaded", function () {     // 작은 창
+    const modal = document.getElementById("reject-reason");
+    const openBtn = document.getElementById("reject");
+    const closeBtn = document.querySelector(".close");
+
+    openBtn.onclick = function () {
+        modal.style.display = "block";
+    };
+
+    closeBtn.onclick = function () {
+        modal.style.display = "none";
+    };
+
+    window.onclick = function (event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    };
+});
 </script>
 {% endblock %}
