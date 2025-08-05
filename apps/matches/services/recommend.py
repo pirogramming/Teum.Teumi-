@@ -27,10 +27,10 @@ def filter_candidates(user):
         matched_user_ids.update([s_id, r_id])
     matched_user_ids.discard(user.id)
 
-    # 공강시간 교집합이 있는 사람만 남기기
-    user_times = FreeTime.objects.filter(profile=user.profile)
+    # 공강시간 교집합이 있는 사람만 남기기 (모든 완료된 프로필 반환으로 단순화)
     overlap_profiles = Profile.objects.filter(
-        freetime__in=user_times
+        current_step='completed',
+        is_active=True
     ).exclude(user__id__in=matched_user_ids).exclude(user=user).distinct()
 
     return overlap_profiles
@@ -43,40 +43,64 @@ def calculate_match_score(my_profile, other_profile):
     score = 0
 
     # 성격 키워드 교집합
-    my_keywords = set(my_profile.personality_keywords.values_list('id', flat=True))
-    other_keywords = set(other_profile.personality_keywords.values_list('id', flat=True))
-    if my_keywords & other_keywords:
-        score += 15
+    try:
+        my_additional = getattr(my_profile, 'additional_info', None)
+        other_additional = getattr(other_profile, 'additional_info', None)
+        if my_additional and other_additional:
+            my_keywords = set(my_additional.personality_keyword.values_list('id', flat=True))
+            other_keywords = set(other_additional.personality_keyword.values_list('id', flat=True))
+            if my_keywords & other_keywords:
+                score += 15
+    except:
+        pass
 
     # 관심사 태그 교집합
-    my_tags = set(my_profile.interest_tags.values_list('id', flat=True))
-    other_tags = set(other_profile.interest_tags.values_list('id', flat=True))
-    common_tags = my_tags & other_tags
-    score += len(common_tags) * 5  # 태그 하나당 5점
+    try:
+        my_interests = set(my_profile.interests.values_list('interest_id', flat=True))
+        other_interests = set(other_profile.interests.values_list('interest_id', flat=True))
+        common_interests = my_interests & other_interests
+        score += len(common_interests) * 5  # 관심사 하나당 5점
+    except:
+        pass
 
-    # 대화 목적
-    if my_profile.conversation_purpose == other_profile.conversation_purpose:
-        score += 10
+    # 대화 스타일 일치
+    try:
+        my_additional = getattr(my_profile, 'additional_info', None)
+        other_additional = getattr(other_profile, 'additional_info', None)
+        if (my_additional and other_additional and 
+            my_additional.conversation_style and other_additional.conversation_style and
+            my_additional.conversation_style == other_additional.conversation_style):
+            score += 10
+    except:
+        pass
 
-    # 대화 스타일
-    if my_profile.conversation_style == other_profile.conversation_style:
-        score += 7
+    # 같은 학교 보너스
+    if my_profile.school and other_profile.school:
+        if my_profile.school == other_profile.school:
+            score += 10
 
-    # 고민 주제 교집합
-    my_worries = set(my_profile.worry_topics.values_list('id', flat=True))
-    other_worries = set(other_profile.worry_topics.values_list('id', flat=True))
-    if my_worries & other_worries:
-        score += 6
+    # 학년 차이 (1-2학년 차이는 보너스)
+    if my_profile.grade and other_profile.grade:
+        try:
+            my_grade_num = int(my_profile.grade[0])
+            other_grade_num = int(other_profile.grade[0])
+            grade_diff = abs(my_grade_num - other_grade_num)
+            if grade_diff <= 1:
+                score += 7
+            elif grade_diff <= 2:
+                score += 3
+        except:
+            pass
 
-    # 진로 희망과 관련 직업 일치
-    if my_profile.desired_career and other_profile.related_career:
-        if my_profile.desired_career in other_profile.related_career:
+    # 나이 차이 (3세 이내 보너스)
+    if my_profile.age and other_profile.age:
+        age_diff = abs(my_profile.age - other_profile.age)
+        if age_diff <= 2:
+            score += 10
+        elif age_diff <= 3:
             score += 7
-
-    # 주요 커리큘럼 키워드 유사도
-    if my_profile.desired_career and other_profile.main_subject:
-        if my_profile.desired_career.lower() in other_profile.main_subject.lower():
-            score += 5
+        elif age_diff <= 5:
+            score += 3
 
     # 리뷰 평점
     review_scores = Review.objects.filter(target=other_profile.user).values_list('rating', flat=True)

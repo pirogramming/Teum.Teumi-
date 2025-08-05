@@ -231,7 +231,7 @@
                 const result = await response.json();
                 alert('프로필이 성공적으로 저장되었습니다!');
                 // 홈페이지로 리다이렉트
-                window.location.href = '/';
+                window.location.href = '/profiles/profile/';
             } else {
                 const error = await response.json();
                 alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(error));
@@ -245,7 +245,7 @@
     // 기본 정보로 시작하기
     defaultStartForm.addEventListener('click', function() {
         if (confirm('기본 정보로만 프로필을 완성하시겠습니까?')) {
-            window.location.href = '/';
+            window.location.href = '/profiles/profile/';
         }
     });
 
