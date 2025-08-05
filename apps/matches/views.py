@@ -8,6 +8,7 @@ from .models import Matching
 from .serializers import MatchCreateSerializer, MatchDetailSerializer
 from apps.matches.services.recommend import recommend_top_n
 from apps.profiles.ProfileSerializer import ProfileSimpleSerializer
+from django.shortcuts import render     # 임시
 
 # 1. 매칭 목록 조회(GET) & 매칭 신청(POST)
 class MatchListCreateView(generics.ListCreateAPIView):
@@ -54,3 +55,7 @@ class MatchRecommendationView(APIView):
         top_users = recommend_top_n(request.user)
         data = ProfileSimpleSerializer([user.profile for user in top_users], many=True, context={'request': request}).data
         return Response(data)
+    
+def matches_practice(request) :     # 임시
+    matches = Matching.objects.all()
+    return render(request, "matches/matches.html")

@@ -6,4 +6,5 @@ urlpatterns = [
     path("<int:pk>/", views.MatchStatusUpdateView.as_view(), name="match-status-update"),  # PATCH
     path("mine", views.MyMatchListView.as_view(), name="my-match-list"),  # GET with status query param
     path("recommendations", views.MatchRecommendationView.as_view(), name="match-recommendations"),  # GET
+    path("prac", views.matches_practice, name="practice"),     # 임시
 ]

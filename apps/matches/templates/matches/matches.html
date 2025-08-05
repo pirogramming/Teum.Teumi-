@@ -1,6 +1,10 @@
 {% extends 'matches/base.html' %}
 {% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'matches/css/matches.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="tabs">
   <button class="tab-button active" onclick="showTab('request')">💌 대화 신청</button>
