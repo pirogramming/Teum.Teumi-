@@ -311,8 +311,30 @@ class AddtionalInfoAPIView(APIView):
             return Response({"message": "추가 정보가 성공적으로 저장되었습니다."}, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request):
+        """기존 추가 정보 수정"""
+        try:
+            profile = Profile.objects.get(user=request.user)
+            additional_info = getattr(profile, 'additional_info', None)
+            
+            if additional_info:
+                serializer = AddtionalInfoSerializer(additional_info, data=request.data, partial=True, context={'request': request})
+                if serializer.is_valid():
+                    serializer.save()
+                    profile.current_step = 'completed'
+                    profile.save()
+                    return Response({"message": "추가 정보가 성공적으로 수정되었습니다."}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                # 추가 정보가 없으면 새로 생성
+                return self.post(request)
+        except Profile.DoesNotExist:
+            return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
 # 프로필 홈 페이지 뷰
+@login_required
 def profile_home(request):
     """프로필 홈 페이지를 렌더링하는 뷰"""
     try:
@@ -338,7 +360,58 @@ def profile_home(request):
         return redirect(step_mapping.get(profile.current_step, 'profiles:profile_step1'))
     
     # 프로필이 완료된 경우 홈 페이지 렌더링
-    return render(request, 'profiles/profile_home.html', {'profile': profile})
+    # AI 추천 프로필 가져오기 (matches 앱의 recommend_top_n 함수 사용)
+    try:
+        recommended_users = recommend_top_n(request.user, n=6)
+        recommendations = []
+        
+        for recommended_user in recommended_users:
+            recommended_profile = recommended_user.profile
+            # 템플릿에서 필요한 추가 정보 설정
+            profile_interests = Interest.objects.filter(profileinterest__profile=recommended_profile)[:3]
+            recommended_profile.user_interests = profile_interests
+            recommended_profile.average_rating = 4.5  # 임시 평점
+            recommended_profile.matching_score = 85  # 임시 매칭 점수
+            
+            # 공통 관심사 계산
+            my_interests = Interest.objects.filter(profileinterest__profile=profile)
+            my_interest_names = set(my_interests.values_list('name', flat=True))
+            other_interest_names = set(profile_interests.values_list('name', flat=True))
+            recommended_profile.common_interests = list(my_interest_names & other_interest_names)
+            
+            recommendations.append(recommended_profile)
+    except Exception as e:
+        print(f"추천 시스템 오류: {e}")
+        recommendations = []
+    
+    # 인기 프로필 가져오기 (간단한 로직)
+    try:
+        from django.db.models import Count
+        from apps.profiles.models import ProfileInterest
+        popular_users = Profile.objects.filter(
+            current_step='completed',
+            is_active=True
+        ).exclude(user=request.user).annotate(
+            interest_count=Count('interests', distinct=True)
+        ).order_by('-interest_count', '-created_at')[:6]
+        
+        popular_profiles = []
+        for popular_profile in popular_users:
+            profile_interests = Interest.objects.filter(profileinterest__profile=popular_profile)[:3]
+            popular_profile.user_interests = profile_interests
+            popular_profile.average_rating = 4.3  # 임시 평점
+            popular_profiles.append(popular_profile)
+    except Exception as e:
+        print(f"인기 프로필 로드 오류: {e}")
+        popular_profiles = []
+    
+    context = {
+        'profile': profile,
+        'recommendations': recommendations,
+        'popular_profiles': popular_profiles,
+    }
+    
+    return render(request, 'profiles/profile_home.html', context)
 
 # 프로필 상세 페이지 뷰
 def profile_detail(request, profile_id):
@@ -354,7 +427,7 @@ def profile_detail(request, profile_id):
         raise Http404("프로필을 찾을 수 없습니다.")
     
     # 사용자 관심사 가져오기
-    interests = Interest.objects.filter(userinterest__user=profile.user)
+    interests = Interest.objects.filter(profileinterest__profile=profile)
     
     # 추가 정보 가져오기
     try:
@@ -385,8 +458,54 @@ def profile_detail(request, profile_id):
         'text': '목표 달성을 위한 조언과 경험 나누기'
     })
     
-    # 추천 매칭 대상 가져오기(상위 3명)
-    top_matches = recommend_top_n(request.user)[:3]
+    # 스케줄 정보 가져오기
+    from apps.schedules.models import FreeTime, DayOfWeek
+    schedule_data = [[] for _ in range(7)]  # 7일간의 스케줄
+    
+    try:
+        user_freetimes = FreeTime.objects.filter(user=profile.user)
+        for freetime in user_freetimes:
+            day_index = freetime.day_of_week.value - 1  # 월요일=1이므로 0-based로 변환
+            # 시간을 30분 단위로 분할
+            start_hour = freetime.start_time.hour
+            start_minute = freetime.start_time.minute
+            end_hour = freetime.end_time.hour
+            end_minute = freetime.end_time.minute
+            
+            # 30분 단위 인덱스 계산 (9:00부터 시작)
+            start_index = (start_hour - 9) * 2 + (1 if start_minute >= 30 else 0)
+            end_index = (end_hour - 9) * 2 + (1 if end_minute >= 30 else 0)
+            
+            # 해당 시간 슬롯들을 True로 설정
+            for i in range(max(0, start_index), min(25, end_index)):  # 9:00-21:00 = 25슬롯
+                if len(schedule_data[day_index]) <= i:
+                    schedule_data[day_index].extend([False] * (i + 1 - len(schedule_data[day_index])))
+                schedule_data[day_index][i] = True
+            
+            # 리스트를 25개 슬롯으로 맞춤
+            while len(schedule_data[day_index]) < 25:
+                schedule_data[day_index].append(False)
+    except Exception as e:
+        print(f"스케줄 로드 오류: {e}")
+        # 기본 스케줄 (모두 False)
+        schedule_data = [[False] * 25 for _ in range(7)]
+    
+    # 매칭 점수 및 공통 관심사 계산
+    matching_score = 85  # 기본값
+    common_interests_count = 0
+    
+    try:
+        # 현재 로그인한 사용자의 관심사
+        my_interests = Interest.objects.filter(profileinterest__profile__user=request.user)
+        my_interest_names = set(my_interests.values_list('name', flat=True))
+        other_interest_names = set(interests.values_list('name', flat=True))
+        common_interests_count = len(my_interest_names & other_interest_names)
+        
+        # 매칭 점수 계산 (간단한 버전)
+        if common_interests_count > 0:
+            matching_score = min(95, 70 + (common_interests_count * 5))
+    except Exception as e:
+        print(f"매칭 계산 오류: {e}")
     
     context = {
         'profile': profile,
@@ -394,25 +513,10 @@ def profile_detail(request, profile_id):
         'additional_info': additional_info,
         'personality_keywords': personality_keywords,
         'conversation_recommendations': conversation_recommendations,
-        'top_matches': top_matches,
+        'schedule': schedule_data,
+        'matching_score': matching_score,
+        'common_interests_count': common_interests_count,
     }
     return render(request, 'profiles/profile_detail.html', context)
     
-def patch(self, request):
-    """기존 추가 정보 수정"""
-    try:
-        profile = Profile.objects.get(user=request.user)
-        additional_info = getattr(profile, 'additional_info', None)
-        
-        if additional_info:
-            serializer = AddtionalInfoSerializer(additional_info, data=request.data, partial=True, context={'request': request})
-            if serializer.is_valid():
-                serializer.save()
-                return Response({"message": "추가 정보가 성공적으로 수정되었습니다."}, status=status.HTTP_200_OK)
-            else:
-                return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            # 추가 정보가 없으면 새로 생성
-            return self.post(request)
-    except Profile.DoesNotExist:
-        return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
