@@ -185,7 +185,7 @@ svg {
     justify-content: space-between;
 }
 
-#reject-reason {
+.small-view {
     background-color: #fff;
     border-radius: 1rem;
     padding: 15px;
@@ -210,14 +210,12 @@ svg {
 
 .small-comment {
     color: #64748b;
-    margin-bottom: 15px;
 }
 
 .reject-radio {
     display: grid;
     grid-template-rows: 1fr;
-    gap: 10px;
-    padding-bottom: 15px;
+    padding: 15px 0;
 }
 
 label {
@@ -226,6 +224,7 @@ label {
     display: flex;
     gap: 5px;
     align-items: center;
+    padding-top: 10px;
 }
 
 input[type="radio"] {
@@ -286,4 +285,99 @@ input[type="radio"]:checked {
 
 .reject-button:hover {
     background-color: rgba(255, 0, 0, 0.9);
+}
+
+.manner {
+    padding: 15px 0;
+}
+
+.review-title {
+    font-weight: 500;
+}
+
+.review-slider {
+    padding: 15px 0 0;
+}
+
+.slidecontainer {
+    width: 100%;
+    margin-top: 100px;
+}
+
+.slider {
+    -webkit-appearance: none; /* 기본 CSS 스타일 제거 */
+    width: 100%;
+    height: 1rem;
+    border-radius: 1rem;
+    background: rgba(156, 163, 175, 0.1);
+    outline: none;
+}
+
+/* 슬라이더 핸들 커스텀 */
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* 기본 CSS 스타일 제거 */
+    appearance: none; /* 기본 CSS 스타일 제거 */
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #6366f1;
+    cursor: pointer;
+}
+
+.values {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+.slider-value {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+#value {
+    color: #3730a3;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.3rem;
+    background-color: #fff;
+    border: 1px solid #E0E7FF;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08)
+}
+
+input[type="checkbox"]:checked {
+    color: #fff;
+    background-color: #6366f1;
+}
+
+.attitude > div:nth-of-type(2), .value > div:nth-of-type(2), .meet > div:nth-of-type(2) {
+    padding: 0 0 20px;
+}
+
+textarea {
+    padding: 10px;
+    width: 100%;
+    margin-top: 15px;
+    border-radius: 1rem;
+    background-color: rgba(156, 163, 175, 0.1);
+    border: none;
+    resize: none;
+}
+
+.review-button {
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 1rem;
+    padding: 5px 10px;
+    border: none;
+}
+
+#reject-reason, #review {
+    display: none; /* 처음엔 보이지 않게 */
 }
