@@ -184,3 +184,106 @@ svg {
 #completed {
     justify-content: space-between;
 }
+
+#reject-reason {
+    background-color: #fff;
+    border-radius: 1rem;
+    padding: 15px;
+}
+
+.close {
+    font-size: 1.2rem;
+    text-align: right;
+    color: #64748b;
+    padding: 0;
+}
+
+.close:hover {
+    cursor: pointer;
+}
+
+.small-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.small-comment {
+    color: #64748b;
+    margin-bottom: 15px;
+}
+
+.reject-radio {
+    display: grid;
+    grid-template-rows: 1fr;
+    gap: 10px;
+    padding-bottom: 15px;
+}
+
+label {
+    font-size: 0.9rem;
+    font-weight: 400;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+input[type="radio"] {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #999;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    vertical-align: middle;
+    background-color: black;
+    cursor: pointer;
+    margin: 0;
+}
+
+input[type="radio"]:checked {
+    width: 12px;
+    height: 12px;
+    background-color: rgba(0, 123, 255, 0.4);
+    border: 2px solid black;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.4);
+    margin-right: 2px;
+}
+
+.reject-comment {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.submit-button {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    gap: 15px;
+    padding: 15px;
+}
+
+.cancle-button {
+    background-color: #fff;
+    border-radius: 1rem;
+    padding: 5px 10px;
+    border: 1px solid #E0E7FF;
+}
+
+.cancle-button:hover {
+    color: #3730A3;
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.reject-button {
+    border-radius: 1rem;
+    padding: 5px 10px;
+    color: #fff;
+    background-color: red;
+    border: 1px solid red;
+}
+
+.reject-button:hover {
+    background-color: rgba(255, 0, 0, 0.9);
+}

@@ -17,8 +17,9 @@ html {
 }
 
 body {
-    color: 	#1a1d29;
+    color: #1a1d29;
     background-color: #FAFBFF;
+    overflow-y: auto;
 }
 
 #header {
@@ -61,6 +62,7 @@ body {
     top: 71px;
     bottom: 103px;
     padding: 15px;
+    overflow-y: auto;
 }
 
 #footer {
