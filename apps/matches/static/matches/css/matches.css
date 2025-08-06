@@ -273,13 +273,14 @@ input[type="radio"]:checked {
 
 .submit-button {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: right;
     gap: 15px;
-    padding: 15px;
+    padding: 15px 0;
 }
 
 .cancle-button {
+    width: 100%;
     background-color: #fff;
     border-radius: 1rem;
     padding: 5px 10px;
@@ -292,6 +293,7 @@ input[type="radio"]:checked {
 }
 
 .reject-button {
+    width: 100%;
     border-radius: 1rem;
     padding: 5px 10px;
     color: #fff;
@@ -388,6 +390,7 @@ textarea {
 }
 
 .review-button {
+    width: 100%;
     color: #fff;
     background: linear-gradient(135deg, #6366f1, #a855f7);
     border-radius: 1rem;
