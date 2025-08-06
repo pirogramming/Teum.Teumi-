@@ -51,7 +51,7 @@ def get_my_chat_rooms(request):
         last_message = chatroom.chats.order_by("-created_at").first()
         result.append({
             "room_id": chatroom.id,
-            "participants": [u.user.username for u in other_users],
+            "participants": [u.user.profile.nickname for u in other_users],
             "last_message": last_message.content if last_message else None,
             "last_time": str(last_message.created_at) if last_message else None
         })
