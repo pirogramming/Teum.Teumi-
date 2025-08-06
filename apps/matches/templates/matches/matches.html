@@ -4,6 +4,9 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'matches/css/matches.css' %}">
 {% endblock %}
+{% block extra_js %}
+<script src="{% static 'matches/js/matches.js' %}" defer></script>
+{% endblock %}
 
 {% block content %}
 <div class="tabs">
@@ -50,6 +53,8 @@
     </div>
     {# {% endfor %} #}
     
+
+    <div class="modal-overlay" id="modal-overlay"></div>
     <div id="reject-reason" class="small-view">     <!--작은 창-->
         <div class="close"><span>&times;</span></div>
         <div class="small-title">🙏 정중히 거절하기</div>
@@ -108,6 +113,7 @@
     </div>
     {# {% endfor %} #}
 
+    <div class="modal-overlay" id="modal-overlay"></div>
     <div id="review" class="small-view">        <!--작은 창-->
         <div class="close"><span>&times;</span></div>
         <div class="small-title">⭐ 매너온도 남기기</div>
@@ -160,126 +166,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // 페이지 로드 시 기본 탭 보여주기
-    document.addEventListener("DOMContentLoaded", function () {
-        showTab('request'); // 기본 탭: 대화 신청
-    });
-
-    function showTab(tabName) {
-        const tabs = document.querySelectorAll('.tab-content');
-        const buttons = document.querySelectorAll('.tab-button');
-
-        tabs.forEach(tab => {
-        tab.style.display = 'none';
-        });
-
-        buttons.forEach(btn => {
-        btn.removeAttribute('id'); // 'id="active"' 제거
-        });
-
-        document.getElementById(`tab-${tabName}`).style.display = 'block';
-        const activeButton = Array.from(buttons).find(btn =>
-        btn.getAttribute('onclick') === `showTab('${tabName}')`
-        );
-        if (activeButton) {
-        activeButton.id = 'active'; // 클릭된 버튼에 active ID 설정
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-    showTab('request');
-
-    // 모달 요소들
-    const rejectModal = document.getElementById("reject-reason");
-    const reviewModal = document.getElementById("review");
-
-    // ✉️ 정중히 거절하기 버튼들에 이벤트 등록
-    const rejectButtons = document.querySelectorAll(".reject");
-    rejectButtons.forEach(btn => {
-        btn.addEventListener("click", function () {
-            rejectModal.style.display = "block";
-        });
-    });
-
-    // 매너온도 남기기 버튼들
-    const reviewButtons = document.querySelectorAll(".tab-right");
-    reviewButtons.forEach(btn => {
-        btn.addEventListener("click", function () {
-            reviewModal.style.display = "block";
-        });
-    });
-
-    // 모달 닫기 버튼
-    const rejectCloseBtn = rejectModal.querySelector(".close span");
-    const reviewCloseBtn = reviewModal.querySelector(".close span");
-
-    rejectCloseBtn.addEventListener("click", function () {
-        rejectModal.style.display = "none";
-    });
-    reviewCloseBtn.addEventListener("click", function () {
-        reviewModal.style.display = "none";
-    });
-
-    // 바깥 클릭 시 닫기
-    window.addEventListener("click", function (event) {
-        if (event.target === rejectModal) {
-            rejectModal.style.display = "none";
-        }
-        if (event.target === reviewModal) {
-            reviewModal.style.display = "none";
-        }
-    });
-
-    // 🌡️ 슬라이더 설정
-    const slider = document.getElementById("myRange");
-    const output = document.getElementById("value");
-
-    function updateValue(input) {
-        output.textContent = parseFloat(input.value).toFixed(1) + "점";
-    }
-
-    function updateRangeBackground(input) {
-        const val = (input.value - input.min) / (input.max - input.min) * 100;
-        input.style.background = `linear-gradient(to right, #6366f1 ${val}%, #ddd ${val}%)`;
-    }
-
-    if (slider) {
-        slider.addEventListener('input', function () {
-            updateValue(this);
-            updateRangeBackground(this);
-        });
-
-        // 초기화
-        updateValue(slider);
-        updateRangeBackground(slider);
-    }
-    });
-
-
-    /* var slider = document.getElementById("myRange");   // 슬라이더
-    var output = document.getElementById("value");     // 값 표시 영역
-
-    function updateValue(input) {
-    output.textContent = parseFloat(input.value).toFixed(1) + "점"; // 소수점 1자리
-    }
-
-    function updateRangeBackground(input) {
-    const val = (input.value - input.min) / (input.max - input.min) * 100;
-    input.style.background = `linear-gradient(to right, #6366f1 ${val}%, #ddd ${val}%)`;
-    }
-
-    // 슬라이더가 input 될 때마다 두 함수 호출
-    slider.addEventListener('input', function () {
-    updateValue(this);
-    updateRangeBackground(this);
-    });
-
-    // 초기 상태 설정
-    updateValue(slider);
-    updateRangeBackground(slider); */
-</script>
 {% endblock %}

@@ -185,10 +185,26 @@ svg {
     justify-content: space-between;
 }
 
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 반투명 검정 */
+    z-index: 999; /* 모달보다 살짝 낮거나 동일하게 */
+    display: none; /* 처음엔 숨김 */
+}
+
 .small-view {
     background-color: #fff;
     border-radius: 1rem;
     padding: 15px;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
 }
 
 .close {
@@ -368,6 +384,7 @@ textarea {
     background-color: rgba(156, 163, 175, 0.1);
     border: none;
     resize: none;
+    outline: none;
 }
 
 .review-button {
