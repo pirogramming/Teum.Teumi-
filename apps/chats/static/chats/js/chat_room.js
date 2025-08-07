@@ -16,11 +16,11 @@ socket.onopen = () => {
 
 socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
-    const msgElem = document.createElement("div");
-    msgElem.className = "msg";
-    msgElem.innerText = `${data.sender || "익명"}: ${data.message}`;
-    log.appendChild(msgElem);
-    log.scrollTop = log.scrollHeight;
+    const { message, sender, sender_id, created_at } = data;
+    console.log("CURRENT_USER_ID:", CURRENT_USER_ID);
+    console.log("sender_id:", sender_id);
+    const isMine = sender_id == CURRENT_USER_ID; 
+    addMessage(sender, message, created_at, isMine);
 };
 
 socket.onclose = () => {
@@ -39,19 +39,51 @@ function sendMessage() {
     input.value = "";
 }
 
-// 이전 채팅 내역 불러오기
+function addMessage(sender, content, timestamp, isMine){
+    const row = document.createElement("div");
+    row.className = `message-row ${isMine ? "mymessege" : "other-messege"}`;
+
+    // if(!isMine){
+    //     const profile = document.createElement("div");
+    //     profile.className = "profile";
+    //     profile.innerText = sender[0];
+    //     row.appendChild(profile);
+    // }
+
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble"
+    bubble.innerHTML = `
+        <div class="message-header">
+            ${/* !isMine ? `<span class="sender">${sender}</span>` : "" */""}
+            <span class="text">${content}</span>
+        </div>
+        <div class="timestamp">${formatTime(new Date(timestamp || Date.now()))}</div>
+        `;
+        
+    row.appendChild(bubble);
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+}
+
+function formatTime(data){
+    const h = data.getHours();
+    const m = data.getMinutes().toString().padStart(2, "0");
+    const ampm = h>=12 ? "오후" : "오전";
+    const hour = h % 12 || 12;
+    return `${ampm} ${hour}:${m}`;
+}
+
 fetch(`http://127.0.0.1:8000/chats/rooms/${roomId}/messages/`, {
     headers: {
         Authorization: `Bearer ${token}`
     }
 })
-.then(res => res.json())
-.then(messages => {
-    messages.forEach(m => {
-        const msgElem = document.createElement("div");
-        msgElem.className = "msg";
-        msgElem.innerText = `${m.sender}: ${m.content}`;
-        log.appendChild(msgElem);
+    .then(res => res.json())
+    .then(messages => {
+        messages.forEach(m => {
+            addMessage(m.sender, m.content, m.created_at, m.isMine);
+        });
+    })
+    .catch(err => {
+        console.error("이전 메시지 불러오기 실패", err);
     });
-    log.scrollTop = log.scrollHeight;
-});
