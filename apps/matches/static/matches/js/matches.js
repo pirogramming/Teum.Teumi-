@@ -1,8 +1,4 @@
- document.addEventListener("DOMContentLoaded", function () {
-    // 기본 탭 열기
-    showTab('request');
-
-    // 탭 전환 함수
+// 탭 전환 함수
     function showTab(tabName) {
         const tabs = document.querySelectorAll('.tab-content');
         const buttons = document.querySelectorAll('.tab-button');
@@ -23,22 +19,35 @@
             activeButton.id = 'active';
         }
     }
+ 
+document.addEventListener("DOMContentLoaded", function () {
+
+    showTab('request');
 
     // 모달 공통 요소
     const overlay = document.getElementById("modal-overlay");
+    const reviewOverlay = document.getElementById("review-modal-overlay");
     const rejectModal = document.getElementById("reject-reason");
     const reviewModal = document.getElementById("review");
 
     // 모달 열기
     function showModal(modal) {
         modal.style.display = "block";
-        overlay.style.display = "block";
+        if(modal === rejectModal) {
+            overlay.style.display = "block";
+        } else if(modal === reviewModal) {
+            reviewOverlay.style.display = "block";
+        }
     }
 
     // 모달 닫기
     function hideModal(modal) {
         modal.style.display = "none";
-        overlay.style.display = "none";
+        if(modal === rejectModal) {
+            overlay.style.display = "none";
+        } else if(modal === reviewModal) {
+            reviewOverlay.style.display = "none";
+        }
     }
 
     // 정중히 거절하기 버튼
@@ -63,6 +72,14 @@
     reviewModal.querySelector(".close span").addEventListener("click", function () {
         hideModal(reviewModal);
     });
+
+    document.getElementById("reject-cancle").addEventListener("click", function () {
+        hideModal(rejectModal);
+    })
+
+    document.getElementById("review-cancle").addEventListener("click", function () {
+        hideModal(reviewModal);
+    })
 
     // 오버레이 클릭 → 모달 닫기
     overlay.addEventListener("click", function () {

@@ -80,7 +80,7 @@
                     <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
                 </svg> 거절하기
             </button>
-            <button type="button" class="cancle-button">취소</button>
+            <button type="button" id="reject-cancle" class="cancle-button">취소</button>
         </div>
     </div>
 </div>
@@ -113,55 +113,57 @@
     </div>
     {# {% endfor %} #}
 
-    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-overlay" id="review-modal-overlay"></div>
     <div id="review" class="small-view">        <!--작은 창-->
         <div class="close"><span>&times;</span></div>
         <div class="small-title">⭐ 매너온도 남기기</div>
         <div class="small-comment">창업왕철수님과의 만남은 어떠셨나요?</div>        <!--닉네임 바꿔야 함-->
-        <div class="manner">
-            <div class="review-title">🌡️ 매너온도 (1-5)</div>
-            <div class="review-slider">
-                <div class="slider-container"><input id="myRange" class="slider" type="range" min="1" max="5" step="0.1" value="2.5"></div>
-                <div class="values"><span class="slider-value">1점</span><span id="value" class="slider-value"></span><span class="slider-value">5점</span></div>
+        <div class="review-container">
+            <div class="manner">
+                <div class="review-title">🌡️ 매너온도 (1-5)</div>
+                <div class="review-slider">
+                    <div class="slider-container"><input id="myRange" class="slider" type="range" min="1" max="5" step="0.1" value="2.5"></div>
+                    <div class="values"><span class="slider-value">1점</span><span id="value" class="slider-value"></span><span class="slider-value">5점</span></div>
+                </div>
             </div>
-        </div>
-        <div class="attitude">
-            <div class="review-title">💬 대화 태도 (복수 선택 가능)</div>
-            <div>
-                <label><input type="checkbox" name="attitude" value="1">적극적으로 참여해주셨어요</label>
-                <label><input type="checkbox" name="attitude" value="2">경청을 잘해주셨어요</label>
-                <label><input type="checkbox" name="attitude" value="3">질문을 많이 해주셨어요</label>
-                <label><input type="checkbox" name="attitude" value="4">편안한 분위기를 만들어주셨어요</label>
-                <label><input type="checkbox" name="attitude" value="5">시간을 잘 지켜주셨어요</label>
+            <div class="attitude">
+                <div class="review-title">💬 대화 태도 (복수 선택 가능)</div>
+                <div>
+                    <label><input type="checkbox" name="attitude" value="1">적극적으로 참여해주셨어요</label>
+                    <label><input type="checkbox" name="attitude" value="2">경청을 잘해주셨어요</label>
+                    <label><input type="checkbox" name="attitude" value="3">질문을 많이 해주셨어요</label>
+                    <label><input type="checkbox" name="attitude" value="4">편안한 분위기를 만들어주셨어요</label>
+                    <label><input type="checkbox" name="attitude" value="5">시간을 잘 지켜주셨어요</label>
+                </div>
             </div>
-        </div>
-        <div class="value">
-            <div class="review-title">💡 대화에서 얻은 가치 (복수 선택 가능)</div>
-            <div>
-                <label><input type="checkbox" name="value" value="1">새로운 관점을 얻었어요</label>
-                <label><input type="checkbox" name="value" value="2">실용적인 조언을 받았어요</label>
-                <label><input type="checkbox" name="value" value="3">동기부여가 되었어요</label>
-                <label><input type="checkbox" name="value" value="4">재미있는 경험담을 들었어요</label>
-                <label><input type="checkbox" name="value" value="5">전문적인 지식을 배웠어요</label>
+            <div class="value">
+                <div class="review-title">💡 대화에서 얻은 가치 (복수 선택 가능)</div>
+                <div>
+                    <label><input type="checkbox" name="value" value="1">새로운 관점을 얻었어요</label>
+                    <label><input type="checkbox" name="value" value="2">실용적인 조언을 받았어요</label>
+                    <label><input type="checkbox" name="value" value="3">동기부여가 되었어요</label>
+                    <label><input type="checkbox" name="value" value="4">재미있는 경험담을 들었어요</label>
+                    <label><input type="checkbox" name="value" value="5">전문적인 지식을 배웠어요</label>
+                </div>
             </div>
-        </div>
-        <div class="meet">
-            <div class="review-title">🤝 다시 만나고 싶나요?</div>
-            <div>
-                <label><input type="radio" name="meet" value="1">네, 다시 만나고 싶어요</label>
-                <label><input type="radio" name="meet" value="2">아니요, 한 번으로 충분해요</label>
+            <div class="meet">
+                <div class="review-title">🤝 다시 만나고 싶나요?</div>
+                <div>
+                    <label><input type="radio" name="meet" value="1">네, 다시 만나고 싶어요</label>
+                    <label><input type="radio" name="meet" value="2">아니요, 한 번으로 충분해요</label>
+                </div>
             </div>
-        </div>
-        <div class="review-comment">
-            <div class="review-title">✍️ 한 줄 후기 (선택)</div>
-            <textarea name="review" id="oneline-review" rows="5px" placeholder="예 : 창업에 대한 열정이 대단하셨어요! 좋은 조언 감사합니다."></textarea>
+            <div class="review-comment">
+                <div class="review-title">✍️ 한 줄 후기 (선택)</div>
+                <textarea name="review" id="oneline-review" rows="5px" placeholder="예 : 창업에 대한 열정이 대단하셨어요! 좋은 조언 감사합니다."></textarea>
+            </div>
         </div>
         <div class="submit-button">
             <button type="submit" class="review-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
                     <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"/>
                 </svg> 평가 완료
-            <button type="button" class="cancle-button">취소</button>
+            <button type="button" id="review-cancle" class="cancle-button">취소</button>
             </button>
         </div>
     </div>
