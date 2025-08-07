@@ -51,7 +51,7 @@ def get_my_chat_rooms(request):
         last_message = chatroom.chats.order_by("-created_at").first()
         result.append({
             "room_id": chatroom.id,
-            "participants": [u.user.username for u in other_users],
+            "participants": [u.user.profile.nickname for u in other_users],
             "last_message": last_message.content if last_message else None,
             "last_time": str(last_message.created_at) if last_message else None
         })
@@ -74,9 +74,10 @@ def get_chat_messages(request, room_id):
     data = [
         {
             "id": msg.id,
-            "sender": msg.sender.username,
+            "sender": msg.sender.profile.nickname,
             "content": msg.content,
             "created_at": msg.created_at,
+            "isMine": msg.sender.id == user.id
         }
         for msg in messages
     ]
@@ -86,5 +87,17 @@ def get_chat_messages(request, room_id):
 def chat_rooms_page(request):
     return render(request, 'chats/chat_rooms.html')
 
+# 채팅 내역 보여주기
+@login_required
 def chat_room_page(request, room_id):
-    return render(request, 'chats/chat_room.html', {'room_id': room_id})
+    user = request.user
+    participations = ChatParticipation.objects.filter(chatroom_id=room_id).select_related("user__profile")
+    opponents = [p.user for p in participations if p.user.id != user.id]
+    opponent_nicknames = [u.profile.nickname for u in opponents]
+    opponent_initials = [u.profile.nickname[0] for u in opponents]
+
+    return render(request, 'chats/chat_room.html', {
+        'room_id': room_id,
+        'opponent_nicknames': opponent_nicknames,
+        'opponent_initials': opponent_initials,
+    })
