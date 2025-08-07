@@ -7,13 +7,36 @@
   <link rel="stylesheet" href="{% static 'chats/css/chat_room.css' %}">
 </head>
 <body>
-  <h2>채팅방</h2>
+  <div class="chat-header">
+    <div class="profile-circle">
+      {{ opponent_initials.0 }}
+    </div>
+    <div class="chat-title">
+      <div class="chat-nickname">
+        {% if opponent_nicknames|length > 1 %}
+          {{ opponent_nicknames|join:", " }}
+        {% else %}
+          {{ opponent_nicknames.0 }}
+        {% endif %}
+      </div>
+      <div class = "chatting">
+        대화 중...
+      </div>
+    </div>
+  </div>
   <div id="chat-log"></div>
-  <input type="text" id="chat-input" placeholder="메시지 입력" />
-  <button id="send-btn">전송</button>
-
+  <div class="chat-input-container">
+  <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." />
+  <button id="send-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke="white" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+      </svg>
+    </button>
+  </button>
+  </div>
   <script>
     const ROOM_ID = "{{ room_id }}";
+    const CURRENT_USER_ID = "{{ request.user.id }}";
   </script>
   <script src="{% static 'chats/js/chat_room.js' %}"></script>
 </body>

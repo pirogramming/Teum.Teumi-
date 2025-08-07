@@ -7,7 +7,11 @@
   <link rel="stylesheet" href="{% static 'chats/css/chat_rooms.css' %}">
 </head>
 <body>
-  <h2>채팅방 목록</h2>
+  <div class="chat-rooms-header">
+    <h1 class="chat-rooms-title">💬 대화방</h1>
+    <p class="chat-rooms-subtitle">진행 중인 대화들을 확인해보세요</p>
+  </div>
+
   <ul id="room-list"></ul>
 
   <script src="{% static 'chats/js/chat_rooms.js' %}"></script>
