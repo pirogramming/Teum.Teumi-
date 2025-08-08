@@ -15,43 +15,61 @@
 </div>
 
 <div id="tab-request" class="tab-content">
-    {# {% for in % } #}
+    {% for match in matchings %}
     <div class="tab-container">     <!--내부 텍스트는 나중에 수정 필요-->
         <div>
-            <div class="circle">닉</div>
+            <div class="circle">
+                {% if match.sender == user %}
+                {{ match.receiver.username|slice:":1" }}
+                {% else %}
+                {{ match.sender.username|slice:":1" }}
+                {% endif %}
+            </div>
         </div>
         <div class="content">
             <div class="tab-content-top">
                 <div>
-                    <div><strong class="nickname">닉네임</strong></div>
-                    <div class="major">전공과 학년</div>
+                    {% if match.sender == user %}
+                    <div>
+                        <strong class="nickname">
+                        {{ match.receiver.profile.nickname }}
+                        </strong>
+                    </div>
+                    <div class="major">
+                        {{ match.receiver.profile.department.department_name }} {{ match.receiver.profile.grade }}
+                    </div>
+                    {% else %}
+                    <div>
+                        <strong class="nickname">
+                        {{ match.sender.profile.nickname }}
+                        </strong>
+                    </div>
+                    <div class="major">
+                        {{ match.sender.profile.department.department_name }} {{ match.sender.profile.grade }}
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="status">⏳ 대기중</div>
+                <div class="status">
+                    {% if match.status == MatchingStatus.PENDING %}
+                    ⏳ 대기중
+                    {% elif match.status == MatchingStatus.ACCEPTED %}
+                    ✅ 수락됨
+                    {% elif match.status == MatchingStatus.REJECTED %}
+                    ❌ 거절됨
+                    {% endif %}
+                </div>
             </div>
             <div class="tab-content-bottom">
+                {% if match.status == MatchingStatus.PENDING and match.receiver == user %}
                 <button type="submit" class="accept">수락하기</button>
-                <button type="submit" id="reject" class="reject">정중히 거절하기</button>
-            </div>
-        </div>
-    </div>
-    <div class="tab-container">     <!--내부 텍스트는 나중에 수정 필요, 조건에 따라 수락/거절 or 대기 중인지 코드 작성 필요-->
-        <div>
-            <div class="circle">닉</div>
-        </div>
-        <div class="content">
-            <div class="tab-content-top">
-                <div>
-                    <div><strong class="nickname">닉네임</strong></div>
-                    <div class="major">전공과 학년</div>
-                </div>
-                <div class="status">⏳ 대기중</div>
-            </div>
-            <div class="tab-content-bottom">
+                <button type="submit" class="reject">정중히 거절하기</button>
+                {% elif match.status == MatchingStatus.PENDING and match.sender == user %}
                 <button type="submit" class="ask">📤 신청 완료</button>
+                {% endif %}
             </div>
         </div>
     </div>
-    {# {% endfor %} #}
+    {% endfor %}
     
 
     <div class="modal-overlay" id="modal-overlay"></div>
