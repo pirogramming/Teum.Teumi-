@@ -148,9 +148,8 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const response = await fetch('/profiles/api/school/', {
                 method: 'POST',
-                credentials: 'include',  // 세션 쿠키 포함
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Authorization': 'Bearer ' + localStorage.getItem('access'),
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(formData),

@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 def home_view(request):
     if request.user.is_authenticated:
@@ -35,4 +36,6 @@ urlpatterns = [
     path('reviews/', include('apps.reviews.urls')),
     path('chats/', include('apps.chats.urls',  namespace="chats")),
     path('interests/', include('apps.interests.urls')),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

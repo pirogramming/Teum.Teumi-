@@ -70,5 +70,45 @@ function handleGoogleLogin() {
     window.location.href = '/users/login/google/';
 }
 </script>
+<script>
+// 소셜 로그인 이후 JWT 토큰이 URL에 포함되어 있다면 localStorage에 저장
+(function storeTokensFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const access = urlParams.get('access');
+    const refresh = urlParams.get('refresh');
+
+    if (access && refresh) {
+        localStorage.setItem('access', access);
+        localStorage.setItem('refresh', refresh);
+
+        // 프로필 상태 확인 API 호출
+        fetch('/profiles/profile/', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${access}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.next_step) {
+                window.location.href = data.next_step;
+            } else if (data.current_step) {
+                if (data.current_step === 'completed') {
+                    window.location.href = '/';
+                } else {
+                    window.location.href = `/profiles/${data.current_step}/`;
+                }
+            } else {
+                window.location.href = '/';
+            }
+        })
+        .catch(err => {
+            console.error('프로필 상태 확인 실패:', err);
+            window.location.href = '/';
+        });
+    }
+})();
+</script>
 </body>
 </html>

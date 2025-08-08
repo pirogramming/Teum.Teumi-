@@ -24,9 +24,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-# 프로필 관련 모델 import
-from apps.profiles.models import Profile, AdditionalInfo, Personality,ProfileInterest
-from apps.interests.models import Interest
 
 # 환경 변수 로드
 load_dotenv()
@@ -41,13 +38,32 @@ class KakaoException(Exception):
     pass
 
 def user_login(request):
-    # 이미 로그인된 사용자는 프로필 페이지로 리다이렉트, 프로필도 작성되었다면 홈화면으로 리다이렉트
+    """
+    로그인 페이지 진입점
+    - 카카오/구글 콜백에서 `/users/login/?access=...&refresh=...`로 리다이렉트되면
+      반드시 이 템플릿을 렌더해서 프론트 JS가 토큰을 localStorage에 저장할 수 있도록 함.
+    - 세션 기반 분기에서는 Profile의 `is_completed` 대신 `current_step == 'completed'`로 판단.
+    """
+    # 1) 토큰이 URL 파라미터로 온 경우: 무조건 템플릿 렌더 (토큰 저장을 위해)
+    if request.GET.get('access') and request.GET.get('refresh'):
+        form = AuthenticationForm()
+        return render(request, 'users/login.html', {'form': form})
+
+    # 2) 이미 로그인된 경우: 프로필 진행 단계에 따라 분기
     if request.user.is_authenticated:
-        if hasattr(request.user, 'profile') and request.user.profile.is_completed:
-            return redirect('profile-home')
+        if hasattr(request.user, 'profile'):
+            try:
+                if getattr(request.user.profile, 'current_step', None) == 'completed':
+                    return redirect('profile-home')
+                else:
+                    return redirect('profiles:profile_step1')
+            except Exception:
+                # profile 접근 중 예외가 나도 안전하게 step1로 보냄
+                return redirect('profiles:profile_step1')
         else:
             return redirect('profiles:profile_step1')
 
+    # 3) 일반 폼 로그인 처리 (선택적으로 유지)
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -56,6 +72,8 @@ def user_login(request):
             return redirect('profiles:profile_step1')
     else:
         form = AuthenticationForm()
+
+    # 기본: 로그인 템플릿 렌더
     return render(request, 'users/login.html', {'form': form})
 
 def kakao_login(request):
@@ -82,9 +100,12 @@ def kakao_login(request):
 @csrf_exempt
 def kakao_callback(request):
     try:
-        # 이미 로그인된 사용자는 프로필 페이지로 리다이렉트
+        # 이미 로그인된 사용자는 JWT 발급 후 토큰과 함께 리다이렉트
         if request.user.is_authenticated:
-            return redirect('profiles:profile_step1')
+            refresh = RefreshToken.for_user(request.user)
+            access_token_jwt = str(refresh.access_token)
+            refresh_token_jwt = str(refresh)
+            return redirect(f"/users/login/?access={access_token_jwt}&refresh={refresh_token_jwt}")
 
         code = request.GET.get("code")
         if not code:
@@ -143,9 +164,9 @@ def kakao_callback(request):
         
         # JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
-        
-        # 성공적으로 로그인 후 프로필 페이지로 리다이렉트
-        return redirect('profiles:profile_step1')
+        access_token_jwt = str(refresh.access_token)
+        refresh_token_jwt = str(refresh)
+        return redirect(f"/users/login/?access={access_token_jwt}&refresh={refresh_token_jwt}")
 
     except KakaoException as error:
         print(f"[kakao_callback error] {error}")
@@ -164,9 +185,12 @@ def google_login(request):
     )
 
 def google_callback(request):
-    # 이미 로그인된 사용자는 프로필 페이지로 리다이렉트
+    # 이미 로그인된 사용자는 JWT 발급 후 토큰과 함께 리다이렉트
     if request.user.is_authenticated:
-        return redirect('profiles:profile_step1')
+        refresh = RefreshToken.for_user(request.user)
+        access_token_jwt = str(refresh.access_token)
+        refresh_token_jwt = str(refresh)
+        return redirect(f"/users/login/?access={access_token_jwt}&refresh={refresh_token_jwt}")
         
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("SOCIAL_AUTH_GOOGLE_SECRET")
@@ -241,8 +265,9 @@ def google_callback(request):
     
     # JWT 토큰 생성
     refresh = RefreshToken.for_user(user)
-
-    return redirect('profiles:profile_step1')
+    access_token_jwt = str(refresh.access_token)
+    refresh_token_jwt = str(refresh)
+    return redirect(f"/users/login/?access={access_token_jwt}&refresh={refresh_token_jwt}")
 
 class GoogleLoginFinishView(APIView):
     def post(self, request):
@@ -295,43 +320,4 @@ def user_logout(request):   # 로그아웃
     logout(request)
     return redirect("/")
   
-# 마이페이지 뷰
-def mypage(request):
-    """마이페이지를 렌더링하는 뷰"""
-    
-    if not request.user.is_authenticated:
-        return redirect('/users/login/')
-    
-    profile = Profile.objects.select_related('user', 'school', 'department').get(user=request.user)
-    
-    # 사용자 관심사 가져오기
-    user_interests = ProfileInterest.objects.filter(user=request.user).select_related('interest')
-    selected_interests = [ui.interest for ui in user_interests]
-    
-    # 모든 관심사 가져오기
-    available_interests = Interest.objects.all()
-    
-    # 추가 정보 가져오기
-    try:
-        additional_info = AdditionalInfo.objects.get(profile=profile)
-        personality_keywords = additional_info.personality_keyword.all()
-        selected_personalities = list(personality_keywords)
-    except AdditionalInfo.DoesNotExist:
-        additional_info = None
-        personality_keywords = []
-        selected_personalities = []
-    
-    # 모든 성격 키워드 가져오기
-    available_personalities = Personality.objects.all()
-    
-    context = {
-        'user': request.user,
-        'user_interests': user_interests,
-        'selected_interests': selected_interests,
-        'available_interests': available_interests,
-        'personality_keywords': personality_keywords,
-        'selected_personalities': selected_personalities,
-        'available_personalities': available_personalities,
-    }
-    
-    return render(request, 'users/mypage.html', context)
+
