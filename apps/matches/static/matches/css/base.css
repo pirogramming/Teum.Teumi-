@@ -88,6 +88,10 @@ body {
     padding: 15px;
 }
 
+.nav-item:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
 .active {
     background: linear-gradient(135deg, #6366f1, #a855f7);
     color: #fff;
