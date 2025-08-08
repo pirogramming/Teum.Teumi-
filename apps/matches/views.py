@@ -57,8 +57,9 @@ class MatchRecommendationView(APIView):
         data = ProfileSimpleSerializer([user.profile for user in top_users], many=True, context={'request': request}).data
         return Response(data)
     
+# 매칭 리스트 페이지
 @login_required
-def matching_list(request) :     # 매칭 리스트 페이지
+def matching_list(request) :
     user = request.user
     status_pending = Matching.objects.filter(status=MatchingStatus.PENDING)
     status_accepted = Matching.objects.filter(status=MatchingStatus.ACCEPTED)

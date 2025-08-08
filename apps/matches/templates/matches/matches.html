@@ -20,9 +20,9 @@
         <div>
             <div class="circle">
                 {% if match.sender == user %}
-                {{ match.receiver.username|slice:":1" }}
+                    {{ match.receiver.username|slice:":1" }}
                 {% else %}
-                {{ match.sender.username|slice:":1" }}
+                    {{ match.sender.username|slice:":1" }}
                 {% endif %}
             </div>
         </div>
@@ -31,18 +31,14 @@
                 <div>
                     {% if match.sender == user %}
                     <div>
-                        <strong class="nickname">
-                        {{ match.receiver.profile.nickname }}
-                        </strong>
+                        <strong class="nickname">{{ match.receiver.profile.nickname }}</strong>
                     </div>
                     <div class="major">
                         {{ match.receiver.profile.department.department_name }} {{ match.receiver.profile.grade }}
                     </div>
                     {% else %}
                     <div>
-                        <strong class="nickname">
-                        {{ match.sender.profile.nickname }}
-                        </strong>
+                        <strong class="nickname">{{ match.sender.profile.nickname }}</strong>
                     </div>
                     <div class="major">
                         {{ match.sender.profile.department.department_name }} {{ match.sender.profile.grade }}
@@ -51,24 +47,26 @@
                 </div>
                 <div class="status">
                     {% if match.status == MatchingStatus.PENDING %}
-                    ⏳ 대기중
+                        ⏳ 대기중
                     {% elif match.status == MatchingStatus.ACCEPTED %}
-                    ✅ 수락됨
+                        ✅ 수락됨
                     {% elif match.status == MatchingStatus.REJECTED %}
-                    ❌ 거절됨
+                        ❌ 거절됨
                     {% endif %}
                 </div>
             </div>
             <div class="tab-content-bottom">
                 {% if match.status == MatchingStatus.PENDING and match.receiver == user %}
-                <button type="submit" class="accept">수락하기</button>
-                <button type="submit" class="reject">정중히 거절하기</button>
+                    <button type="submit" class="accept">수락하기</button>
+                    <button type="submit" class="reject">정중히 거절하기</button>
                 {% elif match.status == MatchingStatus.PENDING and match.sender == user %}
-                <button type="submit" class="ask">📤 신청 완료</button>
+                    <button type="submit" class="ask">📤 신청 완료</button>
                 {% endif %}
             </div>
         </div>
     </div>
+    {% empty %}
+    <p>대화 신청 내역이 없습니다.</p>
     {% endfor %}
     
 
