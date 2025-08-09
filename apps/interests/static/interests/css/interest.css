@@ -134,7 +134,7 @@ svg {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5); /* 반투명 검정 */
     z-index: 999; /* 모달보다 살짝 낮거나 동일하게 */
-    /* display: none; 처음엔 숨김 */
+    /* display: none;  처음엔 숨김 */
 }
 
 .small-view {
@@ -147,6 +147,7 @@ svg {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 10000;
+    /* display: none; */
 }
 
 .close {
@@ -180,6 +181,15 @@ svg {
 
 .interest-title {
     font-weight: 500;
+}
+
+.selectbox {
+    color: #64748b;
+    background-color: #f8fafc;
+    border-radius: 1rem;
+    border: none;
+    outline: none;
+    padding: 10px;
 }
 
 #tags {

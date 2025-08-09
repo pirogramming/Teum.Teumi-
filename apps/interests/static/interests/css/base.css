@@ -26,8 +26,9 @@ body {
     background-color: #fff;
     padding: 15px;
     display: flex;
-    justify-content: left;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
     border-bottom: 0.5px solid rgba(99, 102, 241, 0.1);
     position: fixed;
     top: 0;
@@ -42,7 +43,7 @@ body {
 .div-container {
     display: flex;
     align-items: center;
-    justify-content: space-around;
+    justify-content: left;
     gap: 15px;
 }
 
@@ -56,10 +57,39 @@ body {
     font-weight: 500;
 }
 
+.search {
+    display: flex;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.search-input {
+    background-color: rgba(156, 163, 175, 0.1);
+    width: 100%;
+    border-radius: 1rem;
+    padding: 15px;
+    border: 0.5px solid #E0E7FF;
+    outline: none;
+}
+
+.search-svg {
+    color: #6366f1;
+    width: 35px;
+    height: 30px;
+    border-radius: 1rem;
+    border: 1px solid #E0E7FF;
+    padding: 5px;
+}
+
+.search-svg:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+    cursor: pointer;
+}
+
 #body {
     width: 100%;
     position: absolute;
-    top: 71px;
+    top: 132.5px;
     bottom: 103px;
     padding: 15px;
     overflow-y: auto;
