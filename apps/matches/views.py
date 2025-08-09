@@ -59,22 +59,19 @@ class MatchRecommendationView(APIView):
     
 # 매칭 리스트 페이지
 @login_required
-def matching_list(request) :
+def matching_list(request):
     user = request.user
-    status_pending = Matching.objects.filter(status=MatchingStatus.PENDING)
-    status_accepted = Matching.objects.filter(status=MatchingStatus.ACCEPTED)
-    status_rejected = Matching.objects.filter(status=MatchingStatus.REJECTED)
 
-    # 로그인한 사용자가 sender이거나 receiver인 모든 매칭
-    matchings = Matching.objects.filter(Q(sender=user) | Q(receiver=user))\
-                .select_related('sender__profile__department', 'receiver__profile__department')\
-                .order_by('-created_at')  # 최신 순으로 정렬
+    matchings = Matching.objects.filter(
+        Q(sender=user) | Q(receiver=user)       # 내가 보낸 매칭이거나 내가 받은 매칭인 경우 모두 가져오는 조건
+    ).select_related(
+        'sender__profile__department',
+        'receiver__profile__department'
+    ).order_by('-created_at')       # 최신순 정렬
 
     context = {
-        'status_pending' : status_pending,
-        'status_accepted' : status_accepted,
-        'status_rejected' : status_rejected,
         'matchings': matchings,
         'MatchingStatus': MatchingStatus,
+        'user' : user,
     }
     return render(request, 'matches/matches.html', context)

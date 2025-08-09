@@ -12,5 +12,9 @@ def interest_list(request):
     serializer = InterestSerializer(interests, many=True)
     return Response(serializer.data)
 
-
-
+def interest_list_page(request):
+    interests = Interest.objects.all()
+    context = {
+        'interests' : interests,
+    }
+    return render(request, 'interests/interest.html', context)

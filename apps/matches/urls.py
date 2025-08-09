@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'matches'
+
 urlpatterns = [
     path("", views.MatchListCreateView.as_view(), name="match-list-create"),  # GET, POST
     path("<int:pk>/", views.MatchStatusUpdateView.as_view(), name="match-status-update"),  # PATCH
