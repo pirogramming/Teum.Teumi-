@@ -20,7 +20,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "."
-          target: "/home/${{ secrets.SERVER_USER }}/Teum.Teumi-"
+          target: "/home/ubuntu/Teum.Teumi-"
 
       - name: Restart Daphne service
         uses: appleboy/ssh-action@master
@@ -29,7 +29,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /home/${{ secrets.SERVER_USER }}/Teum.Teumi-
+            cd /home/ubuntu/Teum.Teumi- 
             source venv/bin/activate
             pip install -r requirements.txt
             python manage.py migrate
