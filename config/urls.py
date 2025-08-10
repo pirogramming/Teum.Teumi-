@@ -44,14 +44,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home_view, name='home'), 
-    path("users/", include("apps.users.urls", namespace="users")),
-    path('profiles/', include('apps.profiles.urls')),
-    path('schedules/', include('apps.schedules.urls')),
-    path('matches/', include('apps.matches.urls')),
-    path('reviews/', include('apps.reviews.urls')),
-    path('chats/', include('apps.chats.urls')),
-    path('interests/', include('apps.interests.urls')),
-    path('api/users/', include('apps.users.urls', namespace='users')),   # 하나의 prefix로만 사용
+    path('api/users/', include('apps.users.urls', namespace='users')),
     path('api/profiles/', include('apps.profiles.urls')),
     path('api/schedules/', include('apps.schedules.urls')),
     path('api/matches/', include('apps.matches.urls')),
