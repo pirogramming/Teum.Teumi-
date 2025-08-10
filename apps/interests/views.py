@@ -15,9 +15,23 @@ def interest_list(request):
 
 def interest_list_page(request):
     interests = Interest.objects.all()
-    universities = School.objects.all()
+    universities = School.objects.prefetch_related('departments').all()
+
+    # 직렬화하여 학과 포함한 JSON 생성
+    universities_data = []
+    for uni in universities:
+        universities_data.append({
+            'school_id': uni.school_id,
+            'school_name': uni.school_name,
+            'departments': [
+                {'department_id': dept.department_id, 'department_name': dept.department_name}
+                for dept in uni.departments.all()
+            ]
+        })
+
     context = {
         'interests' : interests,
         'universities' : universities,
+        'universities_json': universities_data,  # 템플릿에서 JSON으로 사용
     }
     return render(request, 'interests/interest.html', context)

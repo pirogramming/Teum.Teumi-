@@ -10,13 +10,17 @@ document.addEventListener("DOMContentLoaded", function () {
     overlay.style.display = "none";
 
     // 필터 아이콘 클릭 시 열기
-    filterBtn.addEventListener("click", function () {
-        smallView.style.display = "block";
-        overlay.style.display = "block";
-    });
+    if (filterBtn) {
+        filterBtn.addEventListener("click", function () {
+            smallView.style.display = "block";
+            overlay.style.display = "block";
+        });
+    }
 
     // 닫기 버튼 클릭 시 닫기
-    closeBtn.addEventListener("click", closeSmallView);
+    if (closeBtn) {
+        closeBtn.addEventListener("click", closeSmallView);
+    }
     if (cancelBtn) {
         cancelBtn.addEventListener("click", closeSmallView);
     }
@@ -36,4 +40,31 @@ document.addEventListener("DOMContentLoaded", function () {
             tag.classList.toggle("selected");
         });
     });
+
+    // ===== 학교/학과 동적 선택 =====
+    const universitySelect = document.getElementById("university");
+    const departmentSelect = document.getElementById("department");
+    const universitiesDataElement = document.getElementById("universities-data");
+
+    if (universitySelect && departmentSelect && universitiesDataElement) {
+        // 템플릿에서 전달받은 JSON 데이터
+        const data = JSON.parse(universitiesDataElement.textContent);
+
+        universitySelect.addEventListener("change", () => {
+            const selectedId = universitySelect.value;
+            const school = data.find(s => s.school_id == selectedId);
+
+            // 학과 옵션 초기화
+            departmentSelect.innerHTML = '<option selected disabled hidden value="">학과 선택</option>';
+
+            if (school && school.departments) {
+                school.departments.forEach(dept => {
+                    const option = document.createElement("option");
+                    option.value = dept.department_id;
+                    option.textContent = dept.department_name;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        });
+    }
 });

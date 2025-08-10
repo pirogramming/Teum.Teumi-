@@ -192,6 +192,10 @@ svg {
     padding: 10px;
 }
 
+/* #department {
+    display: none;
+} */
+
 #tags {
     overflow-y: auto;
     height: 150px;

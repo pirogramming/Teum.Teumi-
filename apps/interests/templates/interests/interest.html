@@ -5,7 +5,8 @@
 <link rel="stylesheet" href="{% static 'interests/css/interest.css' %}">
 {% endblock %}
 {% block extra_js %}
-<script src="{% static 'interests/js/interest.js' %}" defer></script>      <!--이따 고칩시다-->
+{{ universities_json|json_script:"universities-data" }}
+<script src="{% static 'interests/js/interest.js' %}" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -69,8 +70,11 @@
             <select name="school_name" id="university" class="selectbox" required>
                 <option selected disabled hidden value="">대학교 선택</option>
                 {% for uni in universities %}
-                <option value="{{ uni }}">{{ uni }}</option>
+                <option value="{{ uni.school_id }}">{{ uni.school_name }}</option>
                 {% endfor %}
+            </select>
+            <select name="department_name" id="department" class="selectbox" required>
+                <option selected disabled hidden value="">학과 선택</option>
             </select>
         </div>
         <div class="interest-container">
