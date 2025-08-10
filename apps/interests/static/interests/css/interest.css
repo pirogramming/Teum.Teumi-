@@ -134,7 +134,7 @@ svg {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5); /* 반투명 검정 */
     z-index: 999; /* 모달보다 살짝 낮거나 동일하게 */
-    /* display: none;  처음엔 숨김 */
+    display: none;
 }
 
 .small-view {
@@ -147,7 +147,7 @@ svg {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 10000;
-    /* display: none; */
+    display: none;
 }
 
 .close {
@@ -200,6 +200,7 @@ svg {
 }
 
 .view-tag {
+    font-weight: 500;
     border-radius: 1rem;
     border: 1px solid #E0E7FF;
     padding: 5px 10px;
@@ -207,6 +208,12 @@ svg {
 
 .view-tag:hover {
     background-color: rgba(99, 102, 241, 0.1);
+    cursor: pointer;
+}
+
+.view-tag.selected {
+    color: #fff;
+    background-color: #6366f1;
 }
 
 .interest-time {

@@ -28,4 +28,12 @@ document.addEventListener("DOMContentLoaded", function () {
         smallView.style.display = "none";
         overlay.style.display = "none";
     }
+
+    // view-tag 클릭 시 선택 토글
+    const viewTags = document.querySelectorAll(".view-tag");
+    viewTags.forEach(tag => {
+        tag.addEventListener("click", function () {
+            tag.classList.toggle("selected");
+        });
+    });
 });
