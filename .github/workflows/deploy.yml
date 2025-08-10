@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+  workflow_dispatch: # 수동 실행을 위한 트리거 추가
 
 jobs:
   deploy:
