@@ -88,10 +88,10 @@
         <!-- Popular Profiles Section -->
         <section class="section">
             <div class="section-header">
-                <div class="section-icon">🔥</div>
+                <div class="section-icon">⭐</div>
                 <div class="section-title">
-                    <h2>요즘 인기 있는 친구들</h2>
-                    <p>많은 사람들이 만나고 싶어하는 분들이에요</p>
+                    <h2>인기 프로필</h2>
+                    <p>좋은 리뷰와 자세한 자기소개로 신뢰받는 분들이에요</p>
                 </div>
             </div>
             
@@ -104,8 +104,10 @@
                     <h3 class="profile-name">{{ profile.nickname }}</h3>
                     <p class="profile-info">{{ profile.age }}세 • {{ profile.department.department_name|default:"학과" }}</p>
                     <div class="profile-interest">
-                                                    {% if profile.user_interests %}
-                            <span class="interest-badge">#{{ profile.user_interests.0.name }}</span>
+                        {% if profile.user_interests %}
+                            {% for interest in profile.user_interests %}
+                            <span class="interest-badge">#{{ interest.name }}</span>
+                            {% endfor %}
                         {% else %}
                             <span class="interest-badge">#관심사</span>
                         {% endif %}

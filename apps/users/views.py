@@ -4,35 +4,25 @@ from django.contrib.auth import login as django_login
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.forms import AuthenticationForm
-from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
 from allauth.socialaccount.models import SocialAccount
-from allauth.socialaccount.providers.google import views as google_view
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
 from dotenv import load_dotenv
-from json import JSONDecodeError
 import requests
 import os
-from .models import User
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
 
 
 load_dotenv()
 
 GOOGLE_CALLBACK_URI = settings.GOOGLE_CALLBACK_URI
-BASE_URL = 'http://localhost:8000/'
 
 class SocialLoginException(Exception):
     pass
@@ -137,11 +127,14 @@ def kakao_callback(request):
         login(request, user)
 
         refresh = RefreshToken.for_user(user)
-        return JsonResponse({
+
+        '''return JsonResponse({                      #Json 응답
             'access': str(refresh.access_token),
             'refresh': str(refresh),
             'user_email': user.email
-        })
+        })'''
+        # 프로필 완성 상태에 따라 적절한 페이지로 리다이렉트로 임시 수정
+        return redirect('profiles:profile-home') 
 
     except (KakaoException, SocialLoginException) as error:
         return JsonResponse({'error': str(error)}, status=400)
@@ -349,7 +342,7 @@ def mypage(request):
     return render(request, 'users/mypage.html', context)
 
 # 마이페이지 편집 API 뷰들
-# API 명세서: API_SPECIFICATION.md - 1. 기본 정보 업데이트 API
+# API 명세서:  1. 기본 정보 업데이트 API
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_basic(request):
@@ -410,7 +403,7 @@ def update_basic(request):
             'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'
         }, status=500)
 
-# API 명세서: API_SPECIFICATION.md - 2. 관심사 업데이트 API
+# API 명세서:  2. 관심사 업데이트 API
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_interests(request):
@@ -478,7 +471,7 @@ def update_interests(request):
             'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'
         }, status=500)
 
-# API 명세서: API_SPECIFICATION.md - 3. 스케줄 업데이트 API
+# API 명세서: 3. 스케줄 업데이트 API
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_schedule(request):
@@ -532,6 +525,17 @@ def update_schedule(request):
             minute = 30 if i % 2 else 0
             time_slots.append(time(hour, minute))
         
+        # DayOfWeek 매핑 (0=월 ~ 6=일)
+        day_choices = [
+            DayOfWeek.MONDAY,
+            DayOfWeek.TUESDAY,
+            DayOfWeek.WEDNESDAY,
+            DayOfWeek.THURSDAY,
+            DayOfWeek.FRIDAY,
+            DayOfWeek.SATURDAY,
+            DayOfWeek.SUNDAY,
+        ]
+
         for day_index, day_schedule in enumerate(schedule_matrix):
             for time_index, is_selected in enumerate(day_schedule):
                 if is_selected and time_index < len(time_slots):
@@ -544,7 +548,7 @@ def update_schedule(request):
                     
                     FreeTime.objects.create(
                         user=request.user,
-                        day_of_week=day_index,
+                        day_of_week=day_choices[day_index],
                         start_time=start_time,
                         end_time=end_time
                     )
@@ -560,7 +564,7 @@ def update_schedule(request):
             'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'
         }, status=500)
 
-# API 명세서: API_SPECIFICATION.md - 4. 상세 정보 업데이트 API
+# API 명세서 4. 상세 정보 업데이트 API
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_advanced(request):
@@ -589,8 +593,7 @@ def update_advanced(request):
     - 실패 (404): {"success": false, "message": "프로필을 찾을 수 없습니다."}
     """
     try:
-        from apps.profiles.models import Profile, AdditionalInfo
-        from apps.interests.models import Personality
+        from apps.profiles.models import Profile, AdditionalInfo, Personality
         import json
         
         profile = Profile.objects.get(user=request.user)

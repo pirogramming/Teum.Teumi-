@@ -368,10 +368,10 @@ def profile_home(request):
         for recommended_user in recommended_users:
             recommended_profile = recommended_user.profile
             
-            # 프로필 데이터 설정
+            # 프로필 데이터 설정 (최대 4개 관심사)
             recommended_profile.user_interests = Interest.objects.filter(
                 profileinterest__profile=recommended_profile
-            )[:3]
+            )[:4]
             
             # 공통 관심사 계산
             my_interests = Interest.objects.filter(profileinterest__profile=profile)
@@ -398,41 +398,84 @@ def profile_home(request):
         print(f"추천 시스템 오류: {e}")
         recommendations = []
     
-    # 인기 프로필 가져오기 (리뷰 평점 기준)
+    # 인기 프로필 가져오기 (자기소개 길이 가중치 기준)
     try:
-        from django.db.models import Avg
+        from django.db.models import Avg, Case, When, Value, IntegerField, F
+        from django.db.models.functions import Length
         from apps.reviews.models import Review
         
-        # 리뷰가 있는 프로필들 중에서 평점이 높은 순으로 정렬
+        # 자기소개 길이와 리뷰 평점을 모두 고려한 가중치 계산
         popular_users = Profile.objects.filter(
             current_step='completed',
             is_active=True
         ).exclude(user=request.user).annotate(
-            avg_rating=Avg('user__received_reviews__rating')
-        ).filter(avg_rating__isnull=False).order_by('-avg_rating', '-created_at')[:6]
+            avg_rating=Avg('user__received_reviews__rating'),
+            intro_length=Length('introduction')
+        ).annotate(
+            # 자기소개 길이 가중치 (0-100점)
+            intro_score=Case(
+                When(intro_length__gte=200, then=Value(100)),  # 200자 이상: 100점
+                When(intro_length__gte=150, then=Value(80)),   # 150자 이상: 80점
+                When(intro_length__gte=100, then=Value(60)),   # 100자 이상: 60점
+                When(intro_length__gte=50, then=Value(40)),    # 50자 이상: 40점
+                default=Value(20),  # 50자 미만: 20점
+                output_field=IntegerField(),
+            ),
+            # 리뷰 평점 (0-100점으로 변환)
+            rating_score=Case(
+                When(avg_rating__isnull=False, then=F('avg_rating') * 20),  # 5점 만점을 100점으로 변환
+                default=Value(60),  # 리뷰 없으면 기본 60점
+                output_field=IntegerField(),
+            )
+        ).annotate(
+            # 최종 점수: 리뷰 평점 60% + 자기소개 40%
+            final_score=(F('rating_score') * 0.6) + (F('intro_score') * 0.4)
+        ).order_by('-final_score', '-created_at')[:5]
         
-        # 만약 리뷰가 있는 프로필이 부족하면, 최근 가입한 프로필들로 보완
-        if popular_users.count() < 6:
-            recent_profiles = Profile.objects.filter(
+        # 만약 프로필이 부족하면, 자기소개 길이 기준으로 보완
+        if popular_users.count() < 5:
+            additional_profiles = Profile.objects.filter(
                 current_step='completed',
                 is_active=True
             ).exclude(user=request.user).exclude(
                 user__id__in=popular_users.values_list('user_id', flat=True)
-            ).order_by('-created_at')[:6-popular_users.count()]
+            ).annotate(
+                intro_length=Length('introduction')
+            ).order_by('-intro_length', '-created_at')[:5-popular_users.count()]
             
-            popular_users = list(popular_users) + list(recent_profiles)
+            popular_users = list(popular_users) + list(additional_profiles)
         
         popular_profiles = []
         for popular_profile in popular_users:
             popular_profile.user_interests = Interest.objects.filter(
                 profileinterest__profile=popular_profile
-            )[:3]
+            )[:2]
             
-            # 매너온도 설정
-            if hasattr(popular_profile, 'avg_rating') and popular_profile.avg_rating:
+            # 매너온도 설정 (더미 데이터 기반)
+            # 사용자별 매너온도 매핑
+            manner_temperatures = {
+                'kim_haneul': 4.8,      # 하늘빛코딩
+                'lee_dohyun': 4.2,      # 데이터마니아
+                'park_seojin': 4.7,     # 금융퀸
+                'choi_minwoo': 4.0,     # AI연구생
+                'jung_yuna': 4.3,       # 디자인러버
+                'kang_jiseok': 4.5,     # 바이오스타터
+            }
+            
+            # 사용자명으로 매너온도 찾기
+            username = popular_profile.user.username
+            if username in manner_temperatures:
+                popular_profile.average_rating = manner_temperatures[username]
+            elif hasattr(popular_profile, 'avg_rating') and popular_profile.avg_rating:
                 popular_profile.average_rating = popular_profile.avg_rating
             else:
                 popular_profile.average_rating = 4.0  # 기본값
+            
+            # 자기소개 길이 정보 추가 (디버깅용)
+            if hasattr(popular_profile, 'intro_length'):
+                popular_profile.intro_length_display = f"{popular_profile.intro_length}자"
+            else:
+                popular_profile.intro_length_display = "정보 없음"
             
             popular_profiles.append(popular_profile)
     except Exception as e:
@@ -559,7 +602,7 @@ def profile_detail(request, profile_id):
         'additional_info': additional_info,
         'personality_keywords': personality_keywords,
         'conversation_recommendations': conversation_recommendations,
-        'schedule': json.dumps(schedule_data),  # JSON 문자열로 변환
+        'schedule': json.dumps(schedule_data),  # JSON 문자열로 변환  스케줄 데이터 업로드
         'matching_score': matching_score,
         'common_interests_count': common_interests_count,
     }

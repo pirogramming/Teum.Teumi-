@@ -165,11 +165,7 @@
                 <div class="view-content" id="schedule-view">
                     <div class="schedule-preview">
                         {% if user_schedule %}
-                            <div class="schedule-display">
-                                {% for schedule in user_schedule %}
-                                <span class="schedule-badge">{{ schedule.get_day_of_week_display }} {{ schedule.start_time|time:"H:i" }}-{{ schedule.end_time|time:"H:i" }}</span>
-                                {% endfor %}
-                            </div>
+                        <p class="schedule-text">⏰ 만날 수 있는 시간이 설정되어 있어요. 편집을 눌러 변경할 수 있어요.</p>
                         {% else %}
                         <p class="schedule-text">📅 시간표를 편집하여 만날 수 있는 시간을 설정해보세요</p>
                         {% endif %}
@@ -320,7 +316,7 @@
         const existingScheduleData = [
             {% for schedule in user_schedule %}
             {
-                day_of_week: '{{ schedule.day_of_week }}',
+                day_of_week: '{{ schedule.get_day_of_week_display }}',
                 start_time: '{{ schedule.start_time|time:"H:i" }}',
                 end_time: '{{ schedule.end_time|time:"H:i" }}'
             }{% if not forloop.last %},{% endif %}

@@ -7,6 +7,9 @@ let scheduleData = Array(7).fill(null).map(() => Array(25).fill(false));
 document.addEventListener('DOMContentLoaded', function() {
     console.log('마이페이지 로드됨');
     
+    // 기존 스케줄 데이터 로드 (가장 먼저 실행)
+    loadExistingSchedule();
+    
     // 관심사 카운터 초기화 (편집 모드에서만)
     const interestsEdit = document.getElementById('interests-edit');
     if (interestsEdit && !interestsEdit.classList.contains('hidden')) {
@@ -25,9 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeSchedule();
         updateScheduleValidation();
     }
-    
-    // 기존 스케줄 데이터 로드
-    loadExistingSchedule();
     
     // 스케줄 편집 모드가 활성화되어 있다면 그리드 다시 렌더링
     const scheduleEditElement = document.getElementById('schedule-edit');
@@ -96,6 +96,8 @@ function toggleEditSection(section) {
             updateInterestCount();
         } else if (section === 'schedule') {
             console.log('스케줄 편집 모드 활성화');
+            // 기존 스케줄 데이터 다시 로드
+            loadExistingSchedule();
             initializeSchedule();
             updateScheduleValidation();
         } else if (section === 'advanced') {
@@ -112,7 +114,6 @@ function cancelEdit(section) {
     const editElement = document.getElementById(section + '-edit');
     
     if (viewElement && editElement) {
-        // CSS 클래스를 사용하여 토글
         viewElement.classList.remove('hidden');
         editElement.classList.add('hidden');
     }
@@ -122,129 +123,91 @@ function cancelEdit(section) {
 function saveSection(section) {
     console.log('섹션 저장:', section);
     
-    const formData = new FormData();
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-    if (csrfToken) {
-        formData.append('csrfmiddlewaretoken', csrfToken.value);
+    const saveButton = document.querySelector(`#${section}-edit .save-button`);
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<span>⏳</span> 저장 중...';
     }
     
-    // 섹션별 데이터 수집
+    let data = {};
+    let url = '';
+    
     if (section === 'basic') {
-        const nickname = document.getElementById('basic-nickname');
-        const mbti = document.getElementById('basic-mbti');
-        const gender = document.getElementById('basic-gender');
-        const introduction = document.getElementById('basic-introduction');
-        
-        if (nickname) formData.append('nickname', nickname.value);
-        if (mbti) formData.append('mbti', mbti.value);
-        if (gender) formData.append('gender', gender.value);
-        if (introduction) formData.append('introduction', introduction.value);
+        data = {
+            nickname: document.getElementById('basic-nickname').value,
+            mbti: document.getElementById('basic-mbti').value,
+            gender: document.getElementById('basic-gender').value,
+            introduction: document.getElementById('basic-introduction').value
+        };
+        url = '/users/update-basic/';
     } else if (section === 'interests') {
-        const selectedInterests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(input => input.value);
-        if (selectedInterests.length !== 4) {
-            alert('정확한 매칭을 위해 관심사 4개를 모두 선택해주세요.');
-            return;
-        }
-        formData.append('interests', JSON.stringify(selectedInterests));
+        const selectedInterests = Array.from(document.querySelectorAll('#interests-edit input[name="interests"]:checked'))
+            .map(checkbox => checkbox.value);
+        data = { interests: JSON.stringify(selectedInterests) };
+        url = '/users/update-interests/';
     } else if (section === 'schedule') {
-        if (!scheduleData.some(day => day && day.some(time => time))) {
-            alert('만날 수 있는 시간을 최소 1개 이상 선택해주세요.');
-            return;
-        }
-        formData.append('schedule', JSON.stringify(scheduleData));
-        console.log('스케줄 데이터 저장:', scheduleData);
+        data = { schedule: JSON.stringify(scheduleData) };
+        url = '/users/update-schedule/';
     } else if (section === 'advanced') {
-        const experience = document.getElementById('advanced-experience');
-        const conversationStyle = document.getElementById('advanced-conversation-style');
-        const location = document.getElementById('advanced-location');
-        const goal = document.getElementById('advanced-goal');
-        
-        if (experience) formData.append('experience', experience.value);
-        if (conversationStyle) formData.append('conversation_style', conversationStyle.value);
-        if (location) formData.append('activity_location', location.value);
-        if (goal) formData.append('goal_or_concern', goal.value);
-        
-        const selectedPersonalities = Array.from(document.querySelectorAll('input[name="personalities"]:checked')).map(input => input.value);
-        formData.append('personalities', JSON.stringify(selectedPersonalities));
+        data = {
+            experience: document.getElementById('advanced-experience').value,
+            conversation_style: document.getElementById('advanced-conversation-style').value,
+            activity_location: document.getElementById('advanced-activity-location').value,
+            goal_or_concern: document.getElementById('advanced-goal').value,
+            personalities: JSON.stringify(Array.from(document.querySelectorAll('#advanced-edit input[name="personalities"]:checked'))
+                .map(checkbox => checkbox.value))
+        };
+        url = '/users/update-advanced/';
     }
     
-    // API 호출
-    fetch(`/users/update-${section}/`, {
+    fetch(url, {
         method: 'POST',
-        body: formData
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(data)
     })
     .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('저장되었습니다!');
-            location.reload();
+    .then(result => {
+        if (result.success) {
+            alert(result.message);
+            // 페이지 새로고침으로 변경사항 반영
+            window.location.reload();
         } else {
-            alert('저장에 실패했습니다: ' + (data.message || '알 수 없는 오류'));
+            alert('저장에 실패했습니다: ' + result.message);
         }
     })
     .catch(error => {
         console.error('저장 오류:', error);
-        alert('저장 중 오류가 발생했습니다.');
+        alert('저장에 실패했습니다: 업데이트 중 오류가 발생했습니다.');
+    })
+    .finally(() => {
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.innerHTML = '<span>💾</span> 저장';
+        }
     });
 }
 
 // 관심사 카운터 업데이트
 function updateInterestCount() {
-    const checkedInterests = document.querySelectorAll('input[name="interests"]:checked');
-    const countElement = document.getElementById('interest-count');
-    const requiredText = document.querySelector('#interests-edit .required-text');
-    const saveButton = document.querySelector('#interests-edit .save-button');
-    
-    console.log('관심사 카운터 업데이트:', checkedInterests.length);
-    
-    if (countElement) {
-        countElement.textContent = checkedInterests.length;
+    const selectedInterests = document.querySelectorAll('#interests-edit input[name="interests"]:checked');
+    const counter = document.getElementById('interest-counter');
+    if (counter) {
+        counter.textContent = `${selectedInterests.length}/4`;
+        counter.style.color = selectedInterests.length >= 4 ? '#e74c3c' : '#2c3e50';
     }
-    
-    if (requiredText) {
-        if (checkedInterests.length === 4) {
-            requiredText.innerHTML = '✅ 완성! 정확한 매칭을 위해 4개를 모두 선택해주셨어요.';
-            requiredText.style.color = '#10b981';
-        } else {
-            requiredText.innerHTML = '정확한 매칭을 위해 관심사 4개를 모두 선택해주세요.';
-            requiredText.style.color = '#6b7280';
-        }
-    }
-    
-    if (saveButton) {
-        const isValid = checkedInterests.length === 4;
-        saveButton.disabled = !isValid;
-        saveButton.style.opacity = isValid ? '1' : '0.5';
-        saveButton.style.pointerEvents = isValid ? 'auto' : 'none';
-    }
-    
-    // 초과 선택 방지
-    const allInterests = document.querySelectorAll('input[name="interests"]');
-    allInterests.forEach(checkbox => {
-        const isDisabled = !checkbox.checked && checkedInterests.length >= 4;
-        checkbox.disabled = isDisabled;
-        checkbox.parentElement.classList.toggle('disabled', isDisabled);
-    });
 }
 
 // 성격 키워드 카운터 업데이트
 function updatePersonalityCount() {
-    const checkedPersonalities = document.querySelectorAll('input[name="personalities"]:checked');
-    const countElement = document.getElementById('personality-count');
-    
-    console.log('성격 키워드 카운터 업데이트:', checkedPersonalities.length);
-    
-    if (countElement) {
-        countElement.textContent = checkedPersonalities.length;
+    const selectedPersonalities = document.querySelectorAll('#advanced-edit input[name="personalities"]:checked');
+    const counter = document.getElementById('personality-counter');
+    if (counter) {
+        counter.textContent = `${selectedPersonalities.length}/3`;
+        counter.style.color = selectedPersonalities.length >= 3 ? '#e74c3c' : '#2c3e50';
     }
-    
-    // 초과 선택 방지
-    const allPersonalities = document.querySelectorAll('input[name="personalities"]');
-    allPersonalities.forEach(checkbox => {
-        const isDisabled = !checkbox.checked && checkedPersonalities.length >= 3;
-        checkbox.disabled = isDisabled;
-        checkbox.parentElement.classList.toggle('disabled', isDisabled);
-    });
 }
 
 // 스케줄 초기화
@@ -255,22 +218,16 @@ function initializeSchedule() {
         console.error('schedule-grid 요소를 찾을 수 없습니다');
         return;
     }
-    console.log('schedule-grid 요소 찾음:', scheduleGrid);
     
     // 기존 내용 제거
     scheduleGrid.innerHTML = '';
-    console.log('schedule-grid 내용 초기화됨');
     
-    // 시간대별로 행 생성
+    // 시간대별로 행 생성 (9:00-21:00, 30분 단위, 총 25개 슬롯)
     const timeSlots = [];
-    for (let hour = 9; hour <= 22; hour++) {
+    for (let hour = 9; hour <= 21; hour++) {
         timeSlots.push(`${hour}:00`);
         timeSlots.push(`${hour}:30`);
     }
-    timeSlots.push('23:00');
-    
-    console.log('생성할 시간 슬롯:', timeSlots);
-    console.log('총 시간 슬롯 수:', timeSlots.length);
     
     timeSlots.forEach((time, timeIndex) => {
         const row = document.createElement('div');
@@ -288,10 +245,9 @@ function initializeSchedule() {
             cell.className = 'schedule-cell';
             cell.onclick = () => toggleScheduleCell(dayIndex, timeIndex, cell);
             
-            // 기존 선택 상태 반영 (텍스트 없이 클래스만)
+            // 기존 선택 상태 반영
             if (scheduleData[dayIndex] && scheduleData[dayIndex][timeIndex]) {
                 cell.classList.add('selected');
-                console.log(`셀 선택됨: ${dayIndex}일 ${timeIndex}시간대 (${time})`);
             }
             
             row.appendChild(cell);
@@ -300,27 +256,41 @@ function initializeSchedule() {
         scheduleGrid.appendChild(row);
     });
     
-    console.log('스케줄 그리드 초기화 완료, 총 행 수:', scheduleGrid.children.length);
-    console.log('scheduleData 상태:', scheduleData);
+    console.log('스케줄 그리드 초기화 완료');
 }
 
 // 기존 스케줄 데이터 로드
 function loadExistingSchedule() {
+    console.log('loadExistingSchedule 함수 호출됨');
+    
+    // scheduleData 초기화
+    scheduleData = Array(7).fill(null).map(() => Array(25).fill(false));
+    
     // Django 템플릿에서 전달받은 기존 스케줄 데이터를 scheduleData에 설정
     if (typeof existingScheduleData !== 'undefined' && existingScheduleData.length > 0) {
-        // 기존 스케줄 데이터를 2차원 배열로 변환
+        console.log('기존 스케줄 데이터 발견:', existingScheduleData.length, '개');
+        
         existingScheduleData.forEach(schedule => {
             const dayOfWeek = schedule.day_of_week;
             const startTime = schedule.start_time;
             const endTime = schedule.end_time;
             
-            // 요일 인덱스 매핑 (Monday=0, Tuesday=1, ...)
+            console.log('처리 중인 스케줄:', { dayOfWeek, startTime, endTime });
+            
+            // 요일 인덱스 매핑 (한글 요일명 - 한 글자)
             const dayMapping = {
-                'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
-                'Friday': 4, 'Saturday': 5, 'Sunday': 6
+                '월': 0, '화': 1, '수': 2, '목': 3,
+                '금': 4, '토': 5, '일': 6
             };
             
-            const dayIndex = dayMapping[dayOfWeek];
+            let dayIndex = dayMapping[dayOfWeek];
+            // 숫자 문자열로 전달된 기존 데이터(0~6)도 대응
+            if (dayIndex === undefined) {
+                const numericDay = parseInt(dayOfWeek, 10);
+                if (!Number.isNaN(numericDay) && numericDay >= 0 && numericDay <= 6) {
+                    dayIndex = numericDay;
+                }
+            }
             if (dayIndex !== undefined) {
                 // 시간을 30분 단위로 변환
                 const startHour = parseInt(startTime.split(':')[0]);
@@ -328,32 +298,31 @@ function loadExistingSchedule() {
                 const endHour = parseInt(endTime.split(':')[0]);
                 const endMinute = parseInt(endTime.split(':')[1]);
                 
-                // 30분 단위 인덱스 계산 (9:00부터 시작)
+                // 30분 단위 인덱스 계산 (9:00부터 시작, 25개 슬롯)
                 const startIndex = (startHour - 9) * 2 + (startMinute >= 30 ? 1 : 0);
                 const endIndex = (endHour - 9) * 2 + (endMinute >= 30 ? 1 : 0);
                 
+                console.log('시간 인덱스:', { startIndex, endIndex });
+                
                 // 해당 시간 슬롯들을 true로 설정
                 for (let i = Math.max(0, startIndex); i < Math.min(25, endIndex); i++) {
-                    if (!scheduleData[dayIndex]) {
-                        scheduleData[dayIndex] = Array(25).fill(false);
-                    }
                     scheduleData[dayIndex][i] = true;
                 }
+            } else {
+                console.log('알 수 없는 요일:', dayOfWeek);
             }
         });
+        
+        console.log('기존 스케줄 데이터 로드 완료');
+    } else {
+        console.log('기존 스케줄 데이터가 없습니다');
     }
-    
-    console.log('기존 스케줄 데이터 로드 완료:', scheduleData);
 }
 
 // 스케줄 셀 토글
 function toggleScheduleCell(dayIndex, timeIndex, cell) {
-    // 디버그 정보 제거 - 셀 내용을 비우고 클래스만 토글
+    // 셀 내용을 비우고 클래스만 토글
     cell.textContent = '';
-    
-    if (!scheduleData[dayIndex]) {
-        scheduleData[dayIndex] = Array(25).fill(false);
-    }
     
     scheduleData[dayIndex][timeIndex] = !scheduleData[dayIndex][timeIndex];
     cell.classList.toggle('selected', scheduleData[dayIndex][timeIndex]);
