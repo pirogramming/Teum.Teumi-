@@ -91,7 +91,27 @@
 </form>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    // 1) 템플릿 변수로 전달된 토큰을 localStorage에 저장
+    (function bootstrapToken() {
+      const tmplAccess = "{{ access_token|default:''|escapejs }}";
+      const tmplRefresh = "{{ refresh_token|default:''|escapejs }}";
+      if (tmplAccess) localStorage.setItem('access', tmplAccess);
+      if (tmplRefresh) localStorage.setItem('refresh', tmplRefresh);
+    })();
+
+    // 2) Authorization 헤더를 자동으로 붙여주는 fetch 헬퍼
+    window.authFetch = (url, options = {}) => {
+      const token = localStorage.getItem('access') || '';
+      const headers = Object.assign(
+        {},
+        options.headers || {},
+        { 'Authorization': token ? `Bearer ${token}` : '' }
+      );
+      return fetch(url, { ...options, headers });
+    };
+
+    // --- 엘리먼트 조회 ---
     const universitySelect = document.getElementById('university');
     const majorSelect = document.getElementById('major');
     const gradeSelect = document.getElementById('grade');
@@ -99,78 +119,87 @@ document.addEventListener('DOMContentLoaded', function () {
     const nextButton = document.getElementById('next-button');
     const profileForm = document.getElementById('profile-form');
 
-    // 학교 선택 시 학과 목록 업데이트
-    universitySelect.addEventListener('change', function() {
-        const schoolName = this.value;
-        if (schoolName) {
-            fetch(`/profiles/api/majors/?school_name=${encodeURIComponent(schoolName)}`)
-                .then(response => response.json())
-                .then(data => {
-                    majorSelect.innerHTML = '<option selected disabled value="">전공하시는 학과를 선택해주세요</option>';
-                    data.majors.forEach(major => {
-                        const option = document.createElement('option');
-                        option.value = major;
-                        option.textContent = major;
-                        majorSelect.appendChild(option);
-                    });
-                    checkAllSelected();
-                })
-                .catch(error => {
-                    console.error('학과 목록 불러오기 실패:', error);
-                });
-        }
-    });
-
-    function checkAllSelected() {
-        const allSelected = universitySelect.value && 
-                          majorSelect.value && 
-                          gradeSelect.value && 
-                          ageSelect.value;
-        nextButton.disabled = !allSelected;
+    // 페이지에 요소가 없으면 조용히 종료 (공통 스크립트 안전 가드)
+    if (!universitySelect || !majorSelect || !gradeSelect || !ageSelect || !nextButton || !profileForm) {
+      console.warn('[profile_1] 필요한 엘리먼트 일부가 없습니다. 스크립트를 종료합니다.');
+      return;
     }
 
-    // 각 select 요소에 이벤트 리스너 추가
-    [universitySelect, majorSelect, gradeSelect, ageSelect].forEach(select => {
-        select.addEventListener('change', checkAllSelected);
-    });
-
-    // 폼 제출 처리
-    profileForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = {
-            school_name: universitySelect.value,
-            department: majorSelect.value,
-            grade: gradeSelect.value,
-            age: parseInt(ageSelect.value)
-        };
-
-        try {
-            const response = await fetch('/profiles/api/school/', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('access'),
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
+    // 학교 선택 시 학과 목록 업데이트 (인증 필요하므로 authFetch 사용)
+    if (universitySelect) {
+      universitySelect.addEventListener('change', function () {
+        const schoolName = this.value;
+        if (schoolName) {
+          authFetch(`/profiles/api/majors/?school_name=${encodeURIComponent(schoolName)}`)
+            .then(response => response.json())
+            .then(data => {
+              majorSelect.innerHTML = '<option selected disabled value="">전공하시는 학과를 선택해주세요</option>';
+              (data.majors || []).forEach(major => {
+                const option = document.createElement('option');
+                option.value = major;
+                option.textContent = major;
+                majorSelect.appendChild(option);
+              });
+              checkAllSelected();
+            })
+            .catch(error => {
+              console.error('학과 목록 불러오기 실패:', error);
+              alert('학과 목록을 불러오지 못했습니다. 인증 상태를 확인해주세요.');
             });
-
-            if (response.ok) {
-                const result = await response.json();
-                alert('학교 정보가 성공적으로 저장되었습니다!');
-                window.location.href = '/profiles/step2/';
-            } else {
-                const error = await response.json();
-                alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(error));
-            }
-        } catch (error) {
-            console.error('저장 실패:', error);
-            alert('저장 중 오류가 발생했습니다.');
         }
+      });
+    }
+
+    function checkAllSelected() {
+      const allSelected = universitySelect.value &&
+                          majorSelect.value &&
+                          gradeSelect.value &&
+                          ageSelect.value;
+      nextButton.disabled = !allSelected;
+    }
+
+    // 각 셀렉트에 change 핸들러 (존재하는 요소만 바인딩)
+    [universitySelect, majorSelect, gradeSelect, ageSelect]
+      .filter(Boolean)
+      .forEach(select => select.addEventListener('change', checkAllSelected));
+
+    // 폼 제출 처리 (인증 필요하므로 authFetch 사용)
+    if (profileForm) profileForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const formData = {
+        school_name: universitySelect.value,
+        department: majorSelect.value,
+        grade: gradeSelect.value,
+        age: parseInt(ageSelect.value, 10)
+      };
+
+      try {
+        const response = await authFetch('/profiles/api/school/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+          // 다음 단계는 페이지 전용 URL로 이동
+          window.location.href = '/profiles/step2/page/';
+        } else {
+          const error = await response.json().catch(() => ({}));
+          alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(error));
+        }
+      } catch (error) {
+        console.error('저장 실패:', error);
+        alert('저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.');
+      }
     });
 
-    // 초기 상태 확인
-    checkAllSelected();
-});
+    // 초기 상태 확인 (필요 요소가 있을 때만)
+    if (universitySelect && majorSelect && gradeSelect && ageSelect && typeof checkAllSelected === 'function') {
+      checkAllSelected();
+    }
+  });
 </script>
 {% endblock %}

@@ -174,6 +174,58 @@
     </div>
 
     <script>
+        // JWT 토큰을 localStorage에 저장
+        (function() {
+            const accessToken = "{{ access_token|escapejs }}";
+            const refreshToken = "{{ refresh_token|escapejs }}";
+            if (accessToken && accessToken !== "None") {
+                localStorage.setItem('access_token', accessToken);
+            }
+            if (refreshToken && refreshToken !== "None") {
+                localStorage.setItem('refresh_token', refreshToken);
+            }
+        })();
+
+        // 인증 fetch 함수: JWT 포함, 401 시 refresh 시도
+        async function authFetch(url, options = {}) {
+            let accessToken = localStorage.getItem('access_token');
+            if (!options.headers) options.headers = {};
+            options.headers['Authorization'] = 'Bearer ' + accessToken;
+            let response = await fetch(url, options);
+            if (response.status === 401) {
+                // 액세스 토큰 만료: refresh 시도
+                const refreshToken = localStorage.getItem('refresh_token');
+                if (!refreshToken) {
+                    // 로그인 필요
+                    alert("로그인이 필요합니다.");
+                    window.location.href = '/users/login/';
+                    return;
+                }
+                // refresh 요청
+                let refreshResp = await fetch('/users/api/token/refresh/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({refresh: refreshToken})
+                });
+                if (refreshResp.ok) {
+                    let data = await refreshResp.json();
+                    localStorage.setItem('access_token', data.access);
+                    // 재시도
+                    options.headers['Authorization'] = 'Bearer ' + data.access;
+                    response = await fetch(url, options);
+                    return response;
+                } else {
+                    // refresh 실패: 로그인 페이지로
+                    alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+                    window.location.href = '/users/login/';
+                    return;
+                }
+            }
+            return response;
+        }
+
         // 네비게이션 함수들 - 나중에 실제 페이지로 연결
         function goToMyPage() {
             // 마이페이지로 이동
@@ -245,27 +297,29 @@
 
         // 나중에 서버에서 데이터를 받아와서 동적으로 렌더링하는 함수
         function loadRecommendations() {
-            // fetch('/api/recommendations/')
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         // 데이터를 받아와서 DOM을 업데이트
-            //         updateRecommendations(data);
-            //     })
-            //     .catch(error => {
-            //         console.error('추천 데이터 로드 실패:', error);
-            //     });
+            // authFetch를 이용해 추천 프로필 불러오기
+            authFetch('/api/recommendations/')
+                .then(response => response && response.json())
+                .then(data => {
+                    // 데이터를 받아와서 DOM을 업데이트
+                    if(data) updateRecommendations(data);
+                })
+                .catch(error => {
+                    console.error('추천 데이터 로드 실패:', error);
+                });
         }
 
         function loadPopularProfiles() {
-            // fetch('/api/popular-profiles/')
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         // 데이터를 받아와서 DOM을 업데이트
-            //         updatePopularProfiles(data);
-            //     })
-            //     .catch(error => {
-            //         console.error('인기 프로필 로드 실패:', error);
-            //     });
+            // authFetch를 이용해 인기 프로필 불러오기
+            authFetch('/api/popular-profiles/')
+                .then(response => response && response.json())
+                .then(data => {
+                    // 데이터를 받아와서 DOM을 업데이트
+                    if(data) updatePopularProfiles(data);
+                })
+                .catch(error => {
+                    console.error('인기 프로필 로드 실패:', error);
+                });
         }
 
         // 페이지 로드 시 데이터 로드

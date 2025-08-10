@@ -4,32 +4,21 @@ from django.contrib.auth import login as django_login
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.forms import AuthenticationForm
-from django.core.files.base import ContentFile
-from django.http import JsonResponse
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from allauth.socialaccount.models import SocialAccount
-from allauth.socialaccount.providers.google import views as google_view
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
 from dotenv import load_dotenv
-from json import JSONDecodeError
 import requests
 import os
 from .models import User
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
 
 # 환경 변수 로드
 load_dotenv()
 
 GOOGLE_CALLBACK_URI = settings.GOOGLE_CALLBACK_URI
-BASE_URL = 'http://localhost:8000/'
 
 class SocialLoginException(Exception):
     pass
@@ -44,10 +33,12 @@ def user_login(request):
       반드시 이 템플릿을 렌더해서 프론트 JS가 토큰을 localStorage에 저장할 수 있도록 함.
     - 세션 기반 분기에서는 Profile의 `is_completed` 대신 `current_step == 'completed'`로 판단.
     """
-    # 1) 토큰이 URL 파라미터로 온 경우: 무조건 템플릿 렌더 (토큰 저장을 위해)
-    if request.GET.get('access') and request.GET.get('refresh'):
+    # 0) 세션에 저장된 토큰이 있으면 템플릿 변수로 주입하여 렌더
+    access_token = request.session.get('access_token')
+    refresh_token = request.session.get('refresh_token')
+    if access_token and refresh_token:
         form = AuthenticationForm()
-        return render(request, 'users/login.html', {'form': form})
+        return render(request, 'users/login.html', {'form': form, 'access_token': access_token, 'refresh_token': refresh_token})
 
     # 2) 이미 로그인된 경우: 프로필 진행 단계에 따라 분기
     if request.user.is_authenticated:
@@ -100,12 +91,17 @@ def kakao_login(request):
 @csrf_exempt
 def kakao_callback(request):
     try:
-        # 이미 로그인된 사용자는 JWT 발급 후 토큰과 함께 리다이렉트
+        # 이미 로그인된 사용자는 JWT 발급 후 토큰과 함께 렌더
         if request.user.is_authenticated:
             refresh = RefreshToken.for_user(request.user)
             access_token_jwt = str(refresh.access_token)
             refresh_token_jwt = str(refresh)
-            return redirect(f"/users/login/?access={access_token_jwt}&refresh={refresh_token_jwt}")
+            request.session['access_token'] = access_token_jwt
+            request.session['refresh_token'] = refresh_token_jwt
+            return render(request, 'users/login.html', {
+                'access_token': access_token_jwt,
+                'refresh_token': refresh_token_jwt
+            })
 
         code = request.GET.get("code")
         if not code:
@@ -166,7 +162,12 @@ def kakao_callback(request):
         refresh = RefreshToken.for_user(user)
         access_token_jwt = str(refresh.access_token)
         refresh_token_jwt = str(refresh)
-        return redirect(f"/users/login/?access={access_token_jwt}&refresh={refresh_token_jwt}")
+        request.session['access_token'] = access_token_jwt
+        request.session['refresh_token'] = refresh_token_jwt
+        return render(request, 'users/login.html', {
+            'access_token': access_token_jwt,
+            'refresh_token': refresh_token_jwt
+        })
 
     except KakaoException as error:
         print(f"[kakao_callback error] {error}")
@@ -185,12 +186,17 @@ def google_login(request):
     )
 
 def google_callback(request):
-    # 이미 로그인된 사용자는 JWT 발급 후 토큰과 함께 리다이렉트
+    # 이미 로그인된 사용자는 JWT 발급 후 토큰과 함께 렌더
     if request.user.is_authenticated:
         refresh = RefreshToken.for_user(request.user)
         access_token_jwt = str(refresh.access_token)
         refresh_token_jwt = str(refresh)
-        return redirect(f"/users/login/?access={access_token_jwt}&refresh={refresh_token_jwt}")
+        request.session['access_token'] = access_token_jwt
+        request.session['refresh_token'] = refresh_token_jwt
+        return render(request, 'users/login.html', {
+            'access_token': access_token_jwt,
+            'refresh_token': refresh_token_jwt
+        })
         
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("SOCIAL_AUTH_GOOGLE_SECRET")
@@ -267,7 +273,12 @@ def google_callback(request):
     refresh = RefreshToken.for_user(user)
     access_token_jwt = str(refresh.access_token)
     refresh_token_jwt = str(refresh)
-    return redirect(f"/users/login/?access={access_token_jwt}&refresh={refresh_token_jwt}")
+    request.session['access_token'] = access_token_jwt
+    request.session['refresh_token'] = refresh_token_jwt
+    return render(request, 'users/login.html', {
+        'access_token': access_token_jwt,
+        'refresh_token': refresh_token_jwt
+    })
 
 class GoogleLoginFinishView(APIView):
     def post(self, request):
@@ -317,7 +328,7 @@ class GoogleLoginFinishView(APIView):
         }, status=status.HTTP_200_OK)
     
 def user_logout(request):   # 로그아웃
+    request.session.pop('access_token', None)
+    request.session.pop('refresh_token', None)
     logout(request)
     return redirect("/")
-  
-

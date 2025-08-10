@@ -15,13 +15,14 @@ from apps.users.models import User
 from apps.interests.models import Interest
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import JsonResponse
 from django.urls import reverse
 
 from .models import School, Department, Profile, Personality
 
 from apps.matches.services.recommend import recommend_top_n
+
 
 # ---- helpers ----
 def wants_html(request):
@@ -32,14 +33,79 @@ def wants_html(request):
     accept = request.META.get('HTTP_ACCEPT', '')
     return 'text/html' in accept.lower()
 
-# 필요한 모듈 import
+# -------------------------------------------------------------------
+# [페이지 전용] 프로필 단계 1 화면 렌더 (인증 없음, 템플릿만 반환)
+#  - 세션의 access/refresh 토큰을 템플릿 변수로 주입
+#  - 실제 데이터는 프론트 JS가 /profiles/step1/ API로 호출
+# -------------------------------------------------------------------
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def profile_step1_page(request):
+    universities = School.objects.all()
+    return render(request, 'profiles/profile_1.html', {
+        'universities': universities,
+        'access_token': request.session.get('access_token'),
+        'refresh_token': request.session.get('refresh_token'),
+    })
 
+# -------------------------------------------------------------------
+# [페이지 전용] 프로필 단계 2 화면 렌더 (인증 없음, 템플릿만 반환)
+# -------------------------------------------------------------------
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def profile_step2_page(request):
+    return render(request, 'profiles/profile_2.html', {
+        'access_token': request.session.get('access_token'),
+        'refresh_token': request.session.get('refresh_token'),
+    })
+
+# -------------------------------------------------------------------
+# [페이지 전용] 프로필 단계 3 화면 렌더 (인증 없음, 템플릿만 반환)
+# -------------------------------------------------------------------
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def profile_step3_page(request):
+    return render(request, 'profiles/profile_3.html', {
+        'access_token': request.session.get('access_token'),
+        'refresh_token': request.session.get('refresh_token'),
+    })
+
+# -------------------------------------------------------------------
+# [페이지 전용] 프로필 단계 4 화면 렌더 (인증 없음, 템플릿만 반환)
+# -------------------------------------------------------------------
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def profile_step4_page(request):
+    return render(request, 'profiles/profile_4.html', {
+        'access_token': request.session.get('access_token'),
+        'refresh_token': request.session.get('refresh_token'),
+    })
+
+# -------------------------------------------------------------------
+# [페이지 전용] 프로필 단계 5 화면 렌더 (인증 없음, 템플릿만 반환)
+# -------------------------------------------------------------------
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def profile_step5_page(request):
+    return render(request, 'profiles/profile_5.html', {
+        'access_token': request.session.get('access_token'),
+        'refresh_token': request.session.get('refresh_token'),
+    })
+
+#
+# -------------------------------------------------------------------
+# [API] 프로필 1단계 데이터 조회/분기
+#  - HTML 요청: 템플릿 렌더 (wants_html 참일 때)
+#  - JSON 요청: 단계/다음 경로(next_step) 응답
+# -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_step1(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
+        access_token = request.session.get('access_token')
+        refresh_token = request.session.get('refresh_token')
         if current_step != 'step1':
             step_mapping = {
                 'step2': 'profiles:profile_step2',
@@ -61,6 +127,8 @@ def profile_step1(request):
             return render(request, 'profiles/profile_1.html', {
                 'universities': universities,
                 'current_step': 'step1',
+                'access_token': request.session.get('access_token'),
+                'refresh_token': request.session.get('refresh_token'),
             })
         return Response({'current_step': 'step1', 'note': 'profile not found; proceed with step1'}, status=200)
 
@@ -69,10 +137,16 @@ def profile_step1(request):
         return render(request, 'profiles/profile_1.html', {
             'universities': universities,
             'current_step': 'step1',
+            'access_token': request.session.get('access_token'),
+            'refresh_token': request.session.get('refresh_token'),
         })
     universities_data = [{'id': u.id, 'school_name': u.school_name} for u in universities]
     return Response({'current_step': 'step1', 'universities': universities_data}, status=200)
 
+#
+# -------------------------------------------------------------------
+# [API] 선택한 학교에 따른 학과(전공) 목록 조회
+# -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_majors_by_school(request):
@@ -84,6 +158,10 @@ def get_majors_by_school(request):
     except School.DoesNotExist:
         return Response({'majors': []})
 
+#
+# -------------------------------------------------------------------
+# [API] 프로필 2단계 데이터 조회/분기
+# -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_step2(request):
@@ -115,10 +193,16 @@ def profile_step2(request):
         return render(request, 'profiles/profile_2.html', {
             'interests': interests,
             'current_step': 'step2',
+            'access_token': request.session.get('access_token'),
+            'refresh_token': request.session.get('refresh_token'),
         })
     interests_data = [{'id': i.id, 'name': i.name} for i in interests]
     return Response({'current_step': 'step2', 'interests': interests_data}, status=200)
 
+#
+# -------------------------------------------------------------------
+# [API] 프로필 3단계 데이터 조회/분기
+# -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_step3(request):
@@ -150,9 +234,17 @@ def profile_step3(request):
         return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
 
     if wants_html(request):
-        return render(request, 'profiles/profile_3.html', {'current_step': 'step3'})
+        return render(request, 'profiles/profile_3.html', {
+            'current_step': 'step3',
+            'access_token': request.session.get('access_token'),
+            'refresh_token': request.session.get('refresh_token'),
+        })
     return Response({'current_step': 'step3', 'message': 'Step 3: Please enter your free time.'}, status=200)
 
+#
+# -------------------------------------------------------------------
+# [API] 프로필 4단계 데이터 조회/분기
+# -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_step4(request):
@@ -184,9 +276,17 @@ def profile_step4(request):
         return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
 
     if wants_html(request):
-        return render(request, 'profiles/profile_4.html', {'current_step': 'step4'})
+        return render(request, 'profiles/profile_4.html', {
+            'current_step': 'step4',
+            'access_token': request.session.get('access_token'),
+            'refresh_token': request.session.get('refresh_token'),
+        })
     return Response({'current_step': 'step4', 'message': 'Step 4: Please enter your basic info.'}, status=200)
 
+#
+# -------------------------------------------------------------------
+# [API] 프로필 5단계 데이터 조회/분기
+# -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_step5(request):
@@ -232,6 +332,8 @@ def profile_step5(request):
             'current_step': 'step5',
             'additional_info': additional_info_data,
             'personality_keywords': personality_keywords,
+            'access_token': request.session.get('access_token'),
+            'refresh_token': request.session.get('refresh_token'),
         })
 
     return Response({
@@ -245,7 +347,10 @@ def profile_step5(request):
 # 프로필 5단계의 요청 데이터를 검증할 시리얼라이저
 from .ProfileSerializer import SchoolProfileSerializer, FreeTimeListSerializer, InterestSerializer, BasicInfoSerializer, AddtionalInfoSerializer
 
-# 학교 및 학과 프로필 API 뷰
+#
+# -------------------------------------------------------------------
+# [API] 학교/학과/학년/나이 저장
+# -------------------------------------------------------------------
 class SchoolProfileAPIView(APIView):
     def post(self, request):
         serializer = SchoolProfileSerializer(data=request.data, context={'request': request})
@@ -255,7 +360,10 @@ class SchoolProfileAPIView(APIView):
         else:
             return Response(serializer.errors, status=400)
 
-#관심사 태그 등록
+#
+# -------------------------------------------------------------------
+# [API] 관심사 태그 조회/저장
+# -------------------------------------------------------------------
 class InterestTagAPIView(APIView):
     def get(self, request):
         """기존 관심사 조회"""
@@ -277,7 +385,10 @@ class InterestTagAPIView(APIView):
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-#공강시간 등록
+#
+# -------------------------------------------------------------------
+# [API] 공강시간 조회/등록
+# -------------------------------------------------------------------
 class FreeTimeAPIView(APIView):
     def get(self, request):
         """기존 공강시간 조회"""
@@ -307,7 +418,10 @@ class FreeTimeAPIView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-# Basic Info (Nickname, MBTI, 성별, 자기소개) 등록
+#
+# -------------------------------------------------------------------
+# [API] 기본 정보(MBTI/성별/자기소개 등) 조회/수정
+# -------------------------------------------------------------------
 class BasicInfoAPIView(APIView):
     def get(self, request):
         """기존 기본 정보 조회"""
@@ -332,7 +446,11 @@ class BasicInfoAPIView(APIView):
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-# Additional Info 등록
+#
+# -------------------------------------------------------------------
+# [API] 추가 정보(경험/대화스타일/활동지역/키워드/고민) 조회/저장/수정
+#  - 저장/수정 시 current_step 를 'completed' 로 설정
+# -------------------------------------------------------------------
 class AddtionalInfoAPIView(APIView):
     def get(self, request):
         """기존 추가 정보 조회"""
@@ -387,6 +505,12 @@ class AddtionalInfoAPIView(APIView):
         except Profile.DoesNotExist:
             return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
+#
+# -------------------------------------------------------------------
+# [API] 프로필 홈 데이터 (추천/인기) + 단계 분기
+#  - current_step != 'completed' 이면 next_step 안내 또는 HTML 리다이렉트
+#  - completed 이면 추천/인기 프로필 데이터 제공
+# -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_home(request):
@@ -474,9 +598,18 @@ def profile_home(request):
         'popular_profiles': popular_profiles,
     }
     if wants_html(request):
-        return render(request, 'profiles/profile_home.html', data)
+        return render(request, 'profiles/profile_home.html', {
+            **data,
+            'access_token': request.session.get('access_token'),
+            'refresh_token': request.session.get('refresh_token'),
+        })
     return Response(data, status=200)
 
+#
+# -------------------------------------------------------------------
+# [API] 특정 프로필 상세 정보 + 스케줄/매칭 점수 계산
+#  - HTML 요청: 템플릿 렌더, JSON 요청: 상세 데이터 반환
+# -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_detail(request, profile_id):
@@ -552,9 +685,17 @@ def profile_detail(request, profile_id):
         'common_interests_count': common_interests_count,
     }
     if wants_html(request):
-        return render(request, 'profiles/profile_detail.html', context)
+        return render(request, 'profiles/profile_detail.html', {
+            **context,
+            'access_token': request.session.get('access_token'),
+            'refresh_token': request.session.get('refresh_token'),
+        })
     return Response(context, status=200)
     
+#
+# -------------------------------------------------------------------
+# [API] 마이페이지 데이터 반환 (관심사/성격 키워드 등)
+# -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def mypage(request):

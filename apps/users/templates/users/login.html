@@ -44,71 +44,105 @@
 </div>
 
 <script>
-// CSRF 토큰 가져오기
-function getCSRFToken() {
-    const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    return token;
-}
+  {# 소셜 로그인 URL을 이름으로 역참조. 이름이 없으면 기본 경로를 사용 #}
+  {% url 'users:kakao_login' as kakao_url %}
+  {% url 'users:google_login' as google_url %}
+  const KAKAO_URL = "{{ kakao_url|default:'/users/login/kakao/' }}";
+  const GOOGLE_URL = "{{ google_url|default:'/users/login/google/' }}";
 
-// 카카오 로그인 처리
-function handleKakaoLogin() {
-    const button = document.getElementById('kakao');
-    button.disabled = true;
-    button.textContent = '로그인 중...';
-    
-    // 카카오 로그인 페이지로 이동
-    window.location.href = '/users/login/kakao/';
-}
+  // ==== 템플릿 변수 → localStorage 저장 & 인증 fetch 헬퍼 ====
+  (function bootstrapTokenAndAuthFetch(){
+    const tmplAccess = "{{ access_token|default:''|escapejs }}";
+    const tmplRefresh = "{{ refresh_token|default:''|escapejs }}";
+    if (tmplAccess) localStorage.setItem('access', tmplAccess);
+    if (tmplRefresh) localStorage.setItem('refresh', tmplRefresh);
 
-// 구글 로그인 처리
-function handleGoogleLogin() {
-    const button = document.getElementById('google');
-    button.disabled = true;
-    button.textContent = '로그인 중...';
-    
-    // 구글 로그인 페이지로 이동
-    window.location.href = '/users/login/google/';
-}
-</script>
-<script>
-// 소셜 로그인 이후 JWT 토큰이 URL에 포함되어 있다면 localStorage에 저장
-(function storeTokensFromUrl() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const access = urlParams.get('access');
-    const refresh = urlParams.get('refresh');
-
-    if (access && refresh) {
-        localStorage.setItem('access', access);
-        localStorage.setItem('refresh', refresh);
-
-        // 프로필 상태 확인 API 호출
-        fetch('/profiles/profile/', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${access}`,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.next_step) {
-                window.location.href = data.next_step;
-            } else if (data.current_step) {
-                if (data.current_step === 'completed') {
-                    window.location.href = '/';
-                } else {
-                    window.location.href = `/profiles/${data.current_step}/`;
-                }
-            } else {
-                window.location.href = '/';
-            }
-        })
-        .catch(err => {
-            console.error('프로필 상태 확인 실패:', err);
-            window.location.href = '/';
+    async function refreshAccessToken() {
+      const refresh = localStorage.getItem('refresh');
+      if (!refresh) return null;
+      try {
+        const res = await fetch('/api/token/refresh/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh })
         });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data.access) {
+          localStorage.setItem('access', data.access);
+          return data.access;
+        }
+        return null;
+      } catch { return null; }
     }
-})();
+
+    window.authFetch = async (url, options = {}, tryRefresh = true) => {
+      const token = localStorage.getItem('access') || '';
+      const headers = { ...(options.headers || {}), Authorization: token ? `Bearer ${token}` : '' };
+      let res = await fetch(url, { ...options, headers });
+      if (res.status === 401 && tryRefresh) {
+        const newAccess = await refreshAccessToken();
+        if (newAccess) {
+          const retryHeaders = { ...(options.headers || {}), Authorization: `Bearer ${newAccess}` };
+          res = await fetch(url, { ...options, headers: retryHeaders });
+        }
+      }
+      return res;
+    };
+  })();
+
+  // ==== 소셜 로그인 버튼 핸들러 (onclick에서 참조) ====
+  function handleKakaoLogin(){
+    window.location.href = KAKAO_URL;
+  }
+  function handleGoogleLogin(){
+    window.location.href = GOOGLE_URL;
+  }
+
+  // ==== 로그인 후 자동 네비게이션 ====
+  (async function navigateAfterLogin(){
+    // 토큰이 하나도 없으면(순수 로그인 페이지 진입) 아무것도 안 함
+    const access = localStorage.getItem('access');
+    const refresh = localStorage.getItem('refresh');
+    if (!access && !refresh) return;
+
+    try {
+      const res = await authFetch('/profiles/profile/', { method: 'GET' });
+      const data = await res.json();
+
+      // API가 next_step(예: /profiles/step2/)을 주면 페이지 전용 URL로 변환
+      const toPageUrl = (path) => {
+        if (!path) return null;
+        // /profiles/stepX/  →  /profiles/stepX/page/
+        return path.replace(/(\/profiles\/step\d+\/)(?!page\/)/, '$1page/');
+      };
+
+      if (data.next_step) {
+        const target = toPageUrl(data.next_step) || data.next_step;
+        window.location.href = target;
+        return;
+      }
+
+      if (data.current_step === 'completed') {
+        // 프로필 홈으로
+        window.location.href = '/profiles/profile/';
+        return;
+      }
+
+      // current_step이 있으면 해당 페이지 전용 URL로
+      const step = data.current_step;
+      if (step && /^step\d+$/.test(step)) {
+        window.location.href = `/profiles/${step}/page/`;
+        return;
+      }
+
+      // 안전망: 홈으로
+      window.location.href = '/profiles/profile/';
+    } catch (e) {
+      console.error('프로필 상태 확인 실패:', e);
+      window.location.href = '/';
+    }
+  })();
 </script>
 </body>
 </html>

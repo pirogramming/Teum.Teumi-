@@ -76,181 +76,241 @@
 </form>
 
 <script>
-    const MAX_SELECTION = 3;
-    const tags = document.querySelectorAll('.tag');
-    const tagCountText = document.getElementById('tag-count');
-    const experienceInput = document.getElementById('experience');
-    const conversationSelect = document.getElementById('conversation_style');
-    const areaInput = document.getElementById('activity_location');
-    const goalInput = document.getElementById('goal_or_concern');
-    const detailStartForm = document.getElementById('detail-start');
-    const defaultStartForm = document.getElementById('default-start');
-    const profileForm = document.getElementById('profile-form');
-
-    // 페이지 로드 시 기존 데이터 불러오기
-    window.addEventListener('DOMContentLoaded', function() {
-        loadExistingData();
-    });
-
-    // 기존 데이터 불러오기
-    async function loadExistingData() {
+    document.addEventListener('DOMContentLoaded', function () {
+      const MAX_SELECTION = 3;
+  
+      // --------------------------------------
+      // 0) 템플릿 변수 → localStorage 저장
+      // --------------------------------------
+      (function bootstrapToken() {
+        const tmplAccess = "{{ access_token|default:''|escapejs }}";
+        const tmplRefresh = "{{ refresh_token|default:''|escapejs }}";
+        if (tmplAccess) localStorage.setItem('access', tmplAccess);
+        if (tmplRefresh) localStorage.setItem('refresh', tmplRefresh);
+      })();
+  
+      // --------------------------------------
+      // 1) authFetch + (옵션) 토큰 갱신 헬퍼
+      // --------------------------------------
+      async function refreshAccessToken() {
+        const refresh = localStorage.getItem('refresh');
+        if (!refresh) return null;
         try {
-            const response = await fetch('/profiles/api/additional-info/', {
-                method: 'GET',
-                credentials: 'include',  // 세션 쿠키 포함
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                
-                // 기존 데이터로 폼 채우기
-                if (data.experience) experienceInput.value = data.experience;
-                if (data.conversation_style) conversationSelect.value = data.conversation_style;
-                if (data.activity_location) areaInput.value = data.activity_location;
-                if (data.goal_or_concern) goalInput.value = data.goal_or_concern;
-                
-                // 성격 키워드 선택
-                if (data.personality_keywords && data.personality_keywords.length > 0) {
-                    data.personality_keywords.forEach(keyword => {
-                        const tag = document.querySelector(`[data-keyword="${keyword}"]`);
-                        if (tag) {
-                            tag.classList.add('selected');
-                            tag.innerHTML = `✨ #${keyword}`;
-                        }
-                    });
-                    updateCount();
-                }
-                
-                validateForm();
-            }
-        } catch (error) {
-            console.error('데이터 불러오기 실패:', error);
+          const res = await fetch('/api/token/refresh/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh })
+          });
+          if (!res.ok) return null;
+          const data = await res.json();
+          if (data.access) {
+            localStorage.setItem('access', data.access);
+            return data.access;
+          }
+          return null;
+        } catch {
+          return null;
         }
-    }
-
-    function updateCount() {
-        const selectedCount = document.querySelectorAll('.tag.selected').length;
-        tagCountText.textContent = `선택된 키워드: ${selectedCount}/${MAX_SELECTION}`;
-
-        tags.forEach(tag => {
-            const isAlreadySelected = tag.classList.contains('selected');
-
-            if (selectedCount >= MAX_SELECTION && !isAlreadySelected) {
-                tag.classList.add('disabled');
-                tag.style.pointerEvents = 'none';
-                tag.style.opacity = '0.5';
-                tag.style.color = '#64748b';
-            } else {
-                tag.classList.remove('disabled');
-                tag.style.pointerEvents = 'auto';
-                tag.style.opacity = '1';
-                tag.style.color = '';
+      }
+  
+      async function authFetch(url, options = {}, tryRefresh = true) {
+        const token = localStorage.getItem('access') || '';
+        const headers = { ...(options.headers || {}), 'Authorization': token ? `Bearer ${token}` : '' };
+        let res = await fetch(url, { ...options, headers });
+        if (res.status === 401 && tryRefresh) {
+          const newAccess = await refreshAccessToken();
+          if (newAccess) {
+            const retryHeaders = { ...(options.headers || {}), 'Authorization': `Bearer ${newAccess}` };
+            res = await fetch(url, { ...options, headers: retryHeaders });
+          }
+        }
+        return res;
+      }
+  
+      // --------------------------------------
+      // 2) 요소 참조 + Null-guard
+      // --------------------------------------
+      const tags = Array.from(document.querySelectorAll('.tag[data-keyword]'));
+      const tagCountText = document.getElementById('tag-count');
+  
+      const experienceInput = document.getElementById('experience');
+      const conversationSelect = document.getElementById('conversation_style');
+      const areaInput = document.getElementById('activity_location');
+      const goalInput = document.getElementById('goal_or_concern');
+  
+      const detailStartBtn = document.getElementById('detail-start');   // submit 버튼
+      const defaultStartBtn = document.getElementById('default-start'); // 기본 정보로 시작
+      const profileForm = document.getElementById('profile-form');
+  
+      // 필수 요소 없으면 조용히 종료 → 다른 페이지에서 공통 스크립트 로딩 시 에러 방지
+      if (!profileForm || !detailStartBtn || !defaultStartBtn ||
+          !experienceInput || !conversationSelect || !areaInput || !goalInput ||
+          !tagCountText || tags.length === 0) {
+        console.warn('[profile_5] 필요한 엘리먼트가 일부 없습니다. 스크립트를 종료합니다.');
+        return;
+      }
+  
+      // --------------------------------------
+      // 3) 기존 데이터 불러오기 (JWT 사용)
+      // --------------------------------------
+      (async function loadExistingData() {
+        try {
+          const response = await authFetch('/profiles/api/additional-info/', { method: 'GET' });
+          if (response.ok) {
+            const data = await response.json();
+  
+            if (data.experience) experienceInput.value = data.experience;
+            if (data.conversation_style) conversationSelect.value = data.conversation_style;
+            if (data.activity_location) areaInput.value = data.activity_location;
+            if (data.goal_or_concern) goalInput.value = data.goal_or_concern;
+  
+            if (Array.isArray(data.personality_keywords)) {
+              data.personality_keywords.slice(0, MAX_SELECTION).forEach(keyword => {
+                const tag = document.querySelector(`.tag[data-keyword="${keyword}"]`);
+                if (tag) {
+                  tag.classList.add('selected');
+                  tag.innerHTML = `✨ #${keyword}`;
+                }
+              });
             }
+  
+            updateCount();
+            validateForm();
+          } else if (response.status === 401) {
+            console.warn('[profile_5] 인증 필요: 토큰을 확인하세요.');
+          }
+        } catch (error) {
+          console.error('[profile_5] 데이터 불러오기 실패:', error);
+        }
+      })();
+  
+      // --------------------------------------
+      // 4) 선택 개수/버튼 상태 업데이트
+      // --------------------------------------
+      function updateCount() {
+        const selectedCount = document.querySelectorAll('.tag.selected').length;
+        tagCountText.textContent = `선택된 키워드 : ${selectedCount}/${MAX_SELECTION}`;
+  
+        tags.forEach(tag => {
+          const isSelected = tag.classList.contains('selected');
+          if (selectedCount >= MAX_SELECTION && !isSelected) {
+            tag.classList.add('disabled');
+            tag.style.pointerEvents = 'none';
+            tag.style.opacity = '0.5';
+            tag.style.color = '#64748b';
+          } else {
+            tag.classList.remove('disabled');
+            tag.style.pointerEvents = 'auto';
+            tag.style.opacity = '1';
+            tag.style.color = '';
+          }
         });
-
-        validateForm();
-    }
-
-    function validateForm() {
+      }
+  
+      function validateForm() {
         const isExperienceFilled = experienceInput.value.trim() !== '';
         const isCommunicationSelected = conversationSelect.value !== '';
         const isAreaFilled = areaInput.value.trim() !== '';
         const isGoalFilled = goalInput.value.trim() !== '';
-        const selectedTagCount = document.querySelectorAll('.tag.selected').length === MAX_SELECTION;
-
+        const selectedTagCountOk = document.querySelectorAll('.tag.selected').length === MAX_SELECTION;
+  
         const isValid =
-            isExperienceFilled &&
-            isCommunicationSelected &&
-            isAreaFilled &&
-            isGoalFilled &&
-            selectedTagCount;
-
-        detailStartForm.disabled = !isValid;
-    }
-
-    // 성격 키워드 선택 처리
-    tags.forEach(tag => {
+          isExperienceFilled &&
+          isCommunicationSelected &&
+          isAreaFilled &&
+          isGoalFilled &&
+          selectedTagCountOk;
+  
+        detailStartBtn.disabled = !isValid;
+      }
+  
+      // --------------------------------------
+      // 5) 태그 선택 토글
+      // --------------------------------------
+      tags.forEach(tag => {
         tag.addEventListener('click', () => {
-            const isSelected = tag.classList.contains('selected');
-
-            if (!isSelected) {
-                const selectedCount = document.querySelectorAll('.tag.selected').length;
-                if (selectedCount >= MAX_SELECTION) {
-                    return;
-                }
+          const isSelected = tag.classList.contains('selected');
+          // 3개 제한
+          if (!isSelected) {
+            const selectedCount = document.querySelectorAll('.tag.selected').length;
+            if (selectedCount >= MAX_SELECTION) {
+              tag.classList.add('shake');
+              setTimeout(() => tag.classList.remove('shake'), 400);
+              return;
             }
-
-            tag.classList.toggle('selected');
-            const nowSelected = tag.classList.contains('selected');
-            const keyword = tag.dataset.keyword;
-            tag.innerHTML = nowSelected
-                ? `✨ #${keyword}`
-                : `#${keyword}`;
-
-            updateCount();
+          }
+          tag.classList.toggle('selected');
+          const keyword = tag.dataset.keyword;
+          tag.innerHTML = tag.classList.contains('selected') ? `✨ #${keyword}` : `#${keyword}`;
+          updateCount();
+          validateForm();
         });
-    });
-
-    // 폼 입력 이벤트 리스너
-    experienceInput.addEventListener('input', validateForm);
-    conversationSelect.addEventListener('change', validateForm);
-    areaInput.addEventListener('input', validateForm);
-    goalInput.addEventListener('input', validateForm);
-
-    // 상세 정보 저장
-    profileForm.addEventListener('submit', async function(e) {
+      });
+  
+      // 입력 이벤트
+      experienceInput.addEventListener('input', validateForm);
+      conversationSelect.addEventListener('change', validateForm);
+      areaInput.addEventListener('input', validateForm);
+      goalInput.addEventListener('input', validateForm);
+  
+      // --------------------------------------
+      // 6) 상세 정보 저장 (JWT) → 프로필 홈으로 이동
+      // --------------------------------------
+      profileForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+        if (detailStartBtn.disabled) return; // 이중 제출 방지
+  
+        detailStartBtn.disabled = true;
+  
         const selectedKeywords = Array.from(document.querySelectorAll('.tag.selected'))
-            .map(tag => tag.dataset.keyword);
-
+          .map(tag => tag.dataset.keyword);
+  
         const formData = {
-            experience: experienceInput.value.trim(),
-            conversation_style: conversationSelect.value,
-            activity_location: areaInput.value.trim(),
-            personality_keywords: selectedKeywords,
-            goal_or_concern: goalInput.value.trim(),
+          experience: experienceInput.value.trim(),
+          conversation_style: conversationSelect.value,
+          activity_location: areaInput.value.trim(),
+          personality_keywords: selectedKeywords,
+          goal_or_concern: goalInput.value.trim(),
         };
-
+  
         try {
-            const response = await fetch('/profiles/api/additional-info/', {
-                method: 'PATCH',
-                credentials: 'include',  // 세션 쿠키 포함
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                alert('프로필이 성공적으로 저장되었습니다!');
-                // 홈페이지로 리다이렉트
-                window.location.href = '/profiles/profile/';
-            } else {
-                const error = await response.json();
-                alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(error));
-            }
-        } catch (error) {
-            console.error('저장 실패:', error);
-            alert('저장 중 오류가 발생했습니다.');
-        }
-    });
-
-    // 기본 정보로 시작하기
-    defaultStartForm.addEventListener('click', function() {
-        if (confirm('기본 정보로만 프로필을 완성하시겠습니까?')) {
+          const response = await authFetch('/profiles/api/additional-info/', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+          });
+  
+          if (response.ok) {
+            // 완료 후 프로필 홈으로 이동
             window.location.href = '/profiles/profile/';
+          } else {
+            const error = await response.json().catch(() => ({}));
+            alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(error));
+            detailStartBtn.disabled = false;
+          }
+        } catch (error) {
+          console.error('[profile_5] 저장 실패:', error);
+          alert('저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.');
+          detailStartBtn.disabled = false;
         }
+      });
+  
+      // --------------------------------------
+      // 7) 기본 정보로만 시작하기 → 홈으로 이동
+      //    (서버 저장 없이 이동 / 필요 시 서버에 최소 PATCH 시도 후 실패해도 이동)
+      // --------------------------------------
+      defaultStartBtn.addEventListener('click', async function () {
+        try {
+          // 선택사항: 최소 PATCH 시도 (필수값 없이도 허용되면 completed 처리)
+          // 실패해도 홈으로 이동
+          await authFetch('/profiles/api/additional-info/', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+        } catch (_) {}
+        window.location.href = '/profiles/profile/';
+      });
+  
+      // 초기 상태
+      updateCount();
+      validateForm();
     });
-
-    // 초기 상태 점검
-    updateCount();
-    validateForm();
 </script>
 {% endblock %}
