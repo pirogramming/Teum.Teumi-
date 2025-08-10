@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import *
 from rest_framework_simplejwt.views import TokenRefreshView
+from apps.profiles.views import mypage
 
 app_name = 'users'
 
