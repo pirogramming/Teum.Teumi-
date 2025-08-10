@@ -1,0 +1,187 @@
+{% extends 'matches/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'matches/css/matches.css' %}">
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'matches/js/matches.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="tabs">
+  <button id="active" class="tab-button" onclick="showTab('request')">💌 대화 신청</button>
+  <button class="tab-button" onclick="showTab('completed')">✅ 완료된 만남</button>
+</div>
+
+<div id="tab-request" class="tab-content">
+    {% for match in matchings %}
+    <div class="tab-container">     <!--내부 텍스트는 나중에 수정 필요-->
+        <div>
+            <div class="circle">
+                {% if match.sender == user %}
+                    {{ match.receiver.username|slice:":1" }}
+                {% else %}
+                    {{ match.sender.username|slice:":1" }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="content">
+            <div class="tab-content-top">
+                <div>
+                    {% if match.sender == user %}
+                    <div>
+                        <strong class="nickname">{{ match.receiver.profile.nickname }}</strong>
+                    </div>
+                    <div class="major">
+                        {{ match.receiver.profile.department.department_name }} {{ match.receiver.profile.grade }}
+                    </div>
+                    {% else %}
+                    <div>
+                        <strong class="nickname">{{ match.sender.profile.nickname }}</strong>
+                    </div>
+                    <div class="major">
+                        {{ match.sender.profile.department.department_name }} {{ match.sender.profile.grade }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="status">
+                    {% if match.status == MatchingStatus.PENDING %}
+                        ⏳ 대기중
+                    {% elif match.status == MatchingStatus.ACCEPTED %}
+                        ✅ 수락됨
+                    {% elif match.status == MatchingStatus.REJECTED %}
+                        ❌ 거절됨
+                    {% endif %}
+                </div>
+            </div>
+            <div class="tab-content-bottom">
+                {% if match.status == MatchingStatus.PENDING and match.receiver == user %}
+                    <button type="submit" class="accept">수락하기</button>
+                    <button type="submit" class="reject">정중히 거절하기</button>
+                {% elif match.status == MatchingStatus.PENDING and match.sender == user %}
+                    <button type="submit" class="ask">📤 신청 완료</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p>대화 신청 내역이 없습니다.</p>
+    {% endfor %}
+    
+
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div id="reject-reason" class="small-view">     <!--작은 창-->
+        <div class="close"><span>&times;</span></div>
+        <div class="small-title">🙏 정중히 거절하기</div>
+        <div class="small-comment">코딩마스터님께 정중한 거절 사유를 전달해드릴게요.</div>
+        <div class="reject-radio">
+            <label>
+                <input type="radio" name="reject" value="1">시간이 맞지 않아요
+            </label>
+            <label>
+                <input type="radio" name="reject" value="2">관심사가 다른 것 같아요
+            </label>
+            <label>
+                <input type="radio" name="reject" value="3">지금은 만남이 어려워요
+            </label>
+            <label>
+                <input type="radio" name="reject" value="3">다른 이유
+            </label>
+        </div>
+        <div class="reject-comment">💙 정중한 거절도 상대방에 대한 배려입니다</div>
+        <div class="submit-button">
+            <button type="submit" class="reject-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg> 거절하기
+            </button>
+            <button type="button" id="reject-cancle" class="cancle-button">취소</button>
+        </div>
+    </div>
+</div>
+
+<div id="tab-completed" class="tab-content">        <!--내부 텍스트는 나중에 수정 필요-->
+    {# {% for in % } #}
+    <div class="tab-container" id="completed">
+        <div class="tab-left">
+            <div>
+                <div class="circle-1">닉</div>
+            </div>
+            <div class="content">
+                <div>
+                    <div><strong class="nickname">닉네임</strong></div>
+                    <div class="major">전공과 학년</div>
+                </div>
+                <div class="matching-complete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                    </svg>
+                     만남 완료
+                </div>
+            </div>
+        </div>
+        <div class="tab-right">
+            <div>
+                ⭐ 매너온도 남기기
+            </div>
+        </div>
+    </div>
+    {# {% endfor %} #}
+
+    <div class="modal-overlay" id="review-modal-overlay"></div>
+    <div id="review" class="small-view">        <!--작은 창-->
+        <div class="close"><span>&times;</span></div>
+        <div class="small-title">⭐ 매너온도 남기기</div>
+        <div class="small-comment">창업왕철수님과의 만남은 어떠셨나요?</div>        <!--닉네임 바꿔야 함-->
+        <div class="review-container">
+            <div class="manner">
+                <div class="review-title">🌡️ 매너온도 (1-5)</div>
+                <div class="review-slider">
+                    <div class="slider-container"><input id="myRange" class="slider" type="range" min="1" max="5" step="0.1" value="4"></div>
+                    <div class="values"><span class="slider-value">1점</span><span id="value" class="slider-value"></span><span class="slider-value">5점</span></div>
+                </div>
+            </div>
+            <div class="attitude">
+                <div class="review-title">💬 대화 태도 (복수 선택 가능)</div>
+                <div>
+                    <label><input type="checkbox" name="attitude" value="1">적극적으로 참여해주셨어요</label>
+                    <label><input type="checkbox" name="attitude" value="2">경청을 잘해주셨어요</label>
+                    <label><input type="checkbox" name="attitude" value="3">질문을 많이 해주셨어요</label>
+                    <label><input type="checkbox" name="attitude" value="4">편안한 분위기를 만들어주셨어요</label>
+                    <label><input type="checkbox" name="attitude" value="5">시간을 잘 지켜주셨어요</label>
+                </div>
+            </div>
+            <div class="value">
+                <div class="review-title">💡 대화에서 얻은 가치 (복수 선택 가능)</div>
+                <div>
+                    <label><input type="checkbox" name="value" value="1">새로운 관점을 얻었어요</label>
+                    <label><input type="checkbox" name="value" value="2">실용적인 조언을 받았어요</label>
+                    <label><input type="checkbox" name="value" value="3">동기부여가 되었어요</label>
+                    <label><input type="checkbox" name="value" value="4">재미있는 경험담을 들었어요</label>
+                    <label><input type="checkbox" name="value" value="5">전문적인 지식을 배웠어요</label>
+                </div>
+            </div>
+            <div class="meet">
+                <div class="review-title">🤝 다시 만나고 싶나요?</div>
+                <div>
+                    <label><input type="radio" name="meet" value="1">네, 다시 만나고 싶어요</label>
+                    <label><input type="radio" name="meet" value="2">아니요, 한 번으로 충분해요</label>
+                </div>
+            </div>
+            <div class="review-comment">
+                <div class="review-title">✍️ 한 줄 후기 (선택)</div>
+                <textarea name="review" id="oneline-review" rows="5px" placeholder="예 : 창업에 대한 열정이 대단하셨어요! 좋은 조언 감사합니다."></textarea>
+            </div>
+        </div>
+        <div class="submit-button">
+            <button type="submit" class="review-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
+                    <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"/>
+                </svg> 평가 완료
+            <button type="button" id="review-cancle" class="cancle-button">취소</button>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

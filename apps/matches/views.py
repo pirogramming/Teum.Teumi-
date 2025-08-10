@@ -4,10 +4,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from .models import Matching
+from .models import Matching, MatchingStatus
 from .serializers import MatchCreateSerializer, MatchDetailSerializer
 from apps.matches.services.recommend import recommend_top_n
 from apps.profiles.ProfileSerializer import ProfileSimpleSerializer
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
 # 1. 매칭 목록 조회(GET) & 매칭 신청(POST)
 class MatchListCreateView(generics.ListCreateAPIView):
@@ -54,3 +56,22 @@ class MatchRecommendationView(APIView):
         top_users = recommend_top_n(request.user)
         data = ProfileSimpleSerializer([user.profile for user in top_users], many=True, context={'request': request}).data
         return Response(data)
+    
+# 매칭 리스트 페이지
+@login_required
+def matching_list(request):
+    user = request.user
+
+    matchings = Matching.objects.filter(
+        Q(sender=user) | Q(receiver=user)       # 내가 보낸 매칭이거나 내가 받은 매칭인 경우 모두 가져오는 조건
+    ).select_related(
+        'sender__profile__department',
+        'receiver__profile__department'
+    ).order_by('-created_at')       # 최신순 정렬
+
+    context = {
+        'matchings': matchings,
+        'MatchingStatus': MatchingStatus,
+        'user' : user,
+    }
+    return render(request, 'matches/matches.html', context)

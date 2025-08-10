@@ -6,6 +6,9 @@ User = get_user_model()
 
 # 유저앱에 시리얼라이저가 없어서 간단하게 만들어둠
 class UserSimpleSerializer(serializers.ModelSerializer):
+    nickname = serializers.CharField(source='profile.nickname', read_only=True)
+    mbti = serializers.CharField(source='profile.mbti', read_only=True)
+    
     class Meta:
         model = User
         fields = ['id', 'nickname', 'mbti']
