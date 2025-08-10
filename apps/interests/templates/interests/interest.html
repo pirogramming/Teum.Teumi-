@@ -1,0 +1,104 @@
+{% extends 'interests/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'interests/css/interest.css' %}">
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'interests/js/interest.js' %}" defer></script>      <!--이따 고칩시다-->
+{% endblock %}
+
+{% block content %}
+<div class="tag-container">
+  <div>🏷️ 인기 관심사로 찾기</div>
+  <div class="tags">
+    <div class="tag">#창업</div>
+    <div class="tag">#개발</div>
+    <div class="tag">#취업</div>
+    <div class="tag">#진로</div>
+    <div class="tag">#AI</div>
+    <div class="tag">#UX/UI</div>
+  </div>
+</div><hr>
+
+<div class="recommends">
+    {# {% for match in matchings %} #}
+        <div class="recommend">
+            <div class="recommend-left">
+                <div class="circle">
+                    닉
+                </div>
+            </div>
+            <div class="recommend-right">
+                <div class="content-top">
+                    <div class="information">
+                        <div class="nickname">
+                            창업왕 철수 (22)
+                        </div>
+                        <div class="major">
+                            경영학과 3학년 • ENFP
+                        </div>
+                    </div>
+                    <div class="rating">⭐ 4.8</div>
+                </div>
+                <div class="content-bottom">
+                    <div class="interest-comment">스타트업에 관심이 많고, 창업 아이디어를 나누고 싶어요! 함께 성장할 수 있는 분과 가벼운 대화를 나누며 서로 배워가고 싶습니다.</div>
+                    <div class="tags">
+                        <div class="small-tag">#창업</div>
+                        <div class="small-tag">#마케팅</div>
+                        <div class="small-tag">#스타트업</div>
+                        <div class="small-tag">#투자</div>
+                    </div>
+                    <div class="detail-link">
+                        <a href="#">자세히 보기</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {# {% endfor %} #}
+</div>
+
+<div class="modal-overlay" id="modal-overlay"></div>
+<div class="small-view">        <!--작은 창-->
+    <form action="#" method="GET">
+        <div class="close"><span>&times;</span></div>
+        <div class="small-title">🔍 필터 검색</div>
+        <div class="small-comment">🙋 나와 맞는 사람을 찾고 싶다면 아래 조건을 선택해보세요!</div>
+        <div class="interest-container">
+            <div class="interest-title">📍 학교 / 학과</div>
+            <select name="school_name" id="university" class="selectbox" required>
+                <option selected disabled hidden value="">대학교 선택</option>
+                {% for uni in universities %}
+                <option value="{{ uni }}">{{ uni }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="interest-container">
+            <div class="interest-title">💬 관심사 선택</div>
+            <div id="tags" class="tags">
+                {% for interest in interests %}
+                <div class="view-tag">#{{ interest.name }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="interest-container">
+            <div class="interest-title">🕒 시간 선호 필터</div>
+            <div class="interest-time">시간대</div>
+            <div class="tags time-tags">
+                <div class="view-tag">오전 (09:00~12:00)</div>
+                <div class="view-tag">오후 (12:00~18:00)</div>
+                <div class="view-tag">저녁 (18:00~21:00)</div>
+            </div>
+            <div class="interest-time">요일</div>
+            <div class="tags time-tags">
+                <div class="view-tag">평일</div>
+                <div class="view-tag">주말</div>
+            </div>
+        </div>
+        <div class="submit-button">
+            <button type="submit" class="filter-button">🔍 필터 적용하기</button>
+            <button type="button" id="cancle" class="cancle-button">취소</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
