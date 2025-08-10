@@ -736,4 +736,13 @@ def mypage(request):
         'selected_personalities': selected_personalities,
         'available_personalities': available_personalities,
     }
+
+    # 🔁 HTML 요청이면 템플릿 렌더, JSON 요청이면 그대로 반환
+    if wants_html(request):
+        return render(request, 'users/mypage.html', {
+            **data,
+            'access_token': request.session.get('access_token'),
+            'refresh_token': request.session.get('refresh_token'),
+        })
+
     return Response(data)
