@@ -1,0 +1,53 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+    {% block extra_css %}{% endblock %}
+    <title>{% block title %}틈틈이{% endblock %}</title>
+</head>
+<body>
+    <!-- Header -->
+    {% block header %}{% endblock %}
+
+    <!-- Main Content -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bottom Navigation -->
+    {% block bottom_nav %}
+    <div class="bottom-nav">
+        <div class="nav-container">
+            <button class="nav-item {% if current_page == 'home' %}active{% endif %}" onclick="setCurrentPage('home')">
+                <div class="nav-emoji">🏠</div>
+                <span class="nav-label">홈</span>
+            </button>
+            <button class="nav-item {% if current_page == 'browse' %}active{% endif %}" onclick="setCurrentPage('browse')">
+                <div class="nav-emoji">🔍</div>
+                <span class="nav-label">탐색</span>
+            </button>
+            <button class="nav-item {% if current_page == 'chat-list' %}active{% endif %}" onclick="setCurrentPage('chat-list')">
+                <div class="nav-emoji">💬</div>
+                <span class="nav-label">대화</span>
+            </button>
+            <button class="nav-item {% if current_page == 'matching' %}active{% endif %}" onclick="setCurrentPage('matching')">
+                <div class="nav-emoji">🤝</div>
+                <span class="nav-label">매칭</span>
+            </button>
+            <button class="nav-item {% if current_page == 'mypage' %}active{% endif %}" onclick="setCurrentPage('mypage')">
+                <div class="nav-emoji">👤</div>
+                <span class="nav-label">마이</span>
+            </button>
+        </div>
+    </div>
+    {% endblock %}
+
+    <!-- Base JavaScript -->
+    <script src="{% static 'js/base.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

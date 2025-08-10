@@ -41,12 +41,16 @@ class KakaoException(Exception):
     pass
 
 def user_login(request):
+    # 이미 로그인된 사용자는 프로필 완성 상태에 따라 리디렉트
+    if request.user.is_authenticated:
+        return redirect('profiles:profile-home')
+    
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('profiles:profile')
+            return redirect('profiles:profile-home') # 프로필 완성 상태에 따라 적절한 페이지로 리다이렉트
     else:
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})
@@ -54,7 +58,7 @@ def user_login(request):
 def kakao_login(request):
     try:
         if request.user.is_authenticated:
-            raise SocialLoginException("User already logged in")
+            return redirect('profiles:profile-home')
 
         client_id = os.environ.get("KAKAO_ID")
         redirect_uri = "http://127.0.0.1:8000/users/login/kakao/callback/"
@@ -76,7 +80,7 @@ def kakao_login(request):
 def kakao_callback(request):
     try:
         if request.user.is_authenticated:       # 이미 로그인한 상태라면
-            raise SocialLoginException("User already logged in")
+            return redirect('profiles:profile-home')
 
         code = request.GET.get("code")
         if not code:        # 카카오에서 제공한 인가 코드가 없다면 실패 처리
@@ -269,9 +273,18 @@ class GoogleLoginFinishView(APIView):
             'access': str(refresh.access_token),
         }, status=status.HTTP_200_OK)
     
-def user_logout(request):   # 로그아웃
+# API 명세서: API_SPECIFICATION.md - 5. 로그아웃 API
+def user_logout(request):
+    """
+    로그아웃 API
+    
+    엔드포인트: GET /users/logout/
+    설명: 사용자를 로그아웃 처리하고 로그인 페이지로 리다이렉트합니다.
+    
+    응답: 로그인 페이지로 리다이렉트 (/users/login/)
+    """
     logout(request)
-    return redirect("/")
+    return redirect('/users/login/')
 
 # 마이페이지 뷰
 def mypage(request):
@@ -314,6 +327,10 @@ def mypage(request):
     # 모든 성격 키워드 가져오기
     available_personalities = Personality.objects.all()
     
+    # 사용자 스케줄 데이터 가져오기(추가부분)
+    from apps.schedules.models import FreeTime
+    user_schedule = FreeTime.objects.filter(user=request.user).order_by('day_of_week', 'start_time')
+    
     context = {
         'user': request.user,
         'profile': profile,
@@ -324,6 +341,302 @@ def mypage(request):
         'personality_keywords': personality_keywords,
         'selected_personalities': selected_personalities,
         'available_personalities': available_personalities,
+        'user_schedule': user_schedule,
+        'current_page': 'mypage',  # 네비게이션 active 상태용
+        'mbti_options': ['ISTJ', 'ISFJ', 'INFJ', 'INTJ', 'ISTP', 'ISFP', 'INFP', 'INTP', 'ESTP', 'ESFP', 'ENFP', 'ENTP', 'ESTJ', 'ESFJ', 'ENFJ', 'ENTJ'],
     }
     
     return render(request, 'users/mypage.html', context)
+
+# 마이페이지 편집 API 뷰들
+# API 명세서: API_SPECIFICATION.md - 1. 기본 정보 업데이트 API
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_basic(request):
+    """
+    기본 정보 업데이트 API
+    
+    엔드포인트: POST /users/update-basic/
+    설명: 사용자의 기본 정보(닉네임, MBTI, 성별, 자기소개)를 업데이트합니다.
+    
+    요청 파라미터:
+    - nickname (string, 필수): 사용자 닉네임
+    - mbti (string, 필수): MBTI 유형 (예: ISTJ, ENFP 등)
+    - gender (string, 필수): 성별 (M: 남성, F: 여성)
+    - introduction (string, 필수): 자기소개
+    
+    응답:
+    - 성공 (200): {"success": true, "message": "기본 정보가 성공적으로 업데이트되었습니다."}
+    - 실패 (400): {"success": false, "message": "모든 필수 필드를 입력해주세요."}
+    - 실패 (404): {"success": false, "message": "프로필을 찾을 수 없습니다."}
+    """
+    try:
+        from apps.profiles.models import Profile
+        
+        profile = Profile.objects.get(user=request.user)
+        
+        # 필수 필드 검증
+        nickname = request.data.get('nickname')
+        mbti = request.data.get('mbti')
+        gender = request.data.get('gender')
+        introduction = request.data.get('introduction')
+        
+        if not all([nickname, mbti, gender, introduction]):
+            return JsonResponse({
+                'success': False,
+                'message': '모든 필수 필드를 입력해주세요.'
+            }, status=400)
+        
+        # 프로필 업데이트
+        profile.nickname = nickname
+        profile.mbti = mbti
+        profile.gender = gender
+        profile.introduction = introduction
+        profile.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': '기본 정보가 성공적으로 업데이트되었습니다.'
+        })
+        
+    except Profile.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': '프로필을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
+
+# API 명세서: API_SPECIFICATION.md - 2. 관심사 업데이트 API
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_interests(request):
+    """
+    관심사 업데이트 API
+    
+    엔드포인트: POST /users/update-interests/
+    설명: 사용자의 관심사를 업데이트합니다. 정확한 매칭을 위해 4개의 관심사를 선택해야 합니다.
+    
+    요청 파라미터:
+    - interests (string, 필수): 선택된 관심사 ID 배열 (JSON 문자열)
+    
+    응답:
+    - 성공 (200): {"success": true, "message": "관심사가 성공적으로 업데이트되었습니다."}
+    - 실패 (400): {"success": false, "message": "관심사 데이터가 없습니다."}
+    - 실패 (404): {"success": false, "message": "프로필을 찾을 수 없습니다."}
+    """
+    try:
+        from apps.profiles.models import Profile, ProfileInterest
+        from apps.interests.models import Interest
+        import json
+        
+        profile = Profile.objects.get(user=request.user)
+        interests_data = request.data.get('interests')
+        
+        if not interests_data:
+            return JsonResponse({
+                'success': False,
+                'message': '관심사 데이터가 없습니다.'
+            }, status=400)
+        
+        # JSON 문자열을 파싱
+        try:
+            interest_ids = json.loads(interests_data)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'message': '잘못된 관심사 데이터 형식입니다.'
+            }, status=400)
+        
+        # 기존 관심사 삭제
+        ProfileInterest.objects.filter(profile=profile).delete()
+        
+        # 새로운 관심사 추가
+        for interest_id in interest_ids:
+            try:
+                interest = Interest.objects.get(id=interest_id)
+                ProfileInterest.objects.create(profile=profile, interest=interest)
+            except Interest.DoesNotExist:
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'message': '관심사가 성공적으로 업데이트되었습니다.'
+        })
+        
+    except Profile.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': '프로필을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
+
+# API 명세서: API_SPECIFICATION.md - 3. 스케줄 업데이트 API
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_schedule(request):
+    """
+    스케줄 업데이트 API
+    
+    엔드포인트: POST /users/update-schedule/
+    설명: 사용자의 만날 수 있는 시간을 업데이트합니다. 최소 1개 이상의 시간을 선택해야 합니다.
+    
+    요청 파라미터:
+    - schedule (string, 필수): 스케줄 매트릭스 (JSON 문자열) - 7x25 배열
+    
+    스케줄 매트릭스 구조:
+    - 7일 (월~일)
+    - 25개 시간 슬롯 (9:00~21:30, 30분 단위)
+    - true: 선택된 시간, false: 선택되지 않은 시간
+    
+    응답:
+    - 성공 (200): {"success": true, "message": "스케줄이 성공적으로 업데이트되었습니다."}
+    - 실패 (400): {"success": false, "message": "스케줄 데이터가 없습니다."}
+    """
+    try:
+        from apps.schedules.models import FreeTime, DayOfWeek
+        import json
+        from datetime import time
+        
+        schedule_data = request.data.get('schedule')
+        
+        if not schedule_data:
+            return JsonResponse({
+                'success': False,
+                'message': '스케줄 데이터가 없습니다.'
+            }, status=400)
+        
+        # JSON 문자열을 파싱
+        try:
+            schedule_matrix = json.loads(schedule_data)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'message': '잘못된 스케줄 데이터 형식입니다.'
+            }, status=400)
+        
+        # 기존 스케줄 삭제
+        FreeTime.objects.filter(user=request.user).delete()
+        
+        # 새로운 스케줄 추가
+        time_slots = []
+        for i in range(25):
+            hour = 9 + (i // 2)
+            minute = 30 if i % 2 else 0
+            time_slots.append(time(hour, minute))
+        
+        for day_index, day_schedule in enumerate(schedule_matrix):
+            for time_index, is_selected in enumerate(day_schedule):
+                if is_selected and time_index < len(time_slots):
+                    start_time = time_slots[time_index]
+                    # 30분 후 종료 시간
+                    end_minute = start_time.minute + 30
+                    end_hour = start_time.hour + (end_minute // 60)
+                    end_minute = end_minute % 60
+                    end_time = time(end_hour, end_minute)
+                    
+                    FreeTime.objects.create(
+                        user=request.user,
+                        day_of_week=day_index,
+                        start_time=start_time,
+                        end_time=end_time
+                    )
+        
+        return JsonResponse({
+            'success': True,
+            'message': '스케줄이 성공적으로 업데이트되었습니다.'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
+
+# API 명세서: API_SPECIFICATION.md - 4. 상세 정보 업데이트 API
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_advanced(request):
+    """
+    상세 정보 업데이트 API
+    
+    엔드포인트: POST /users/update-advanced/
+    설명: 사용자의 상세 정보(경험, 대화스타일, 활동위치, 성격키워드, 목표)를 업데이트합니다.
+    
+    요청 파라미터:
+    - experience (string, 선택): 경험과 활동
+    - conversation_style (string, 선택): 대화 스타일 (casual/deep/humor/debate)
+    - activity_location (string, 선택): 주요 활동 위치
+    - goal_or_concern (string, 선택): 현재 목표나 고민
+    - personalities (string, 선택): 선택된 성격 키워드 ID 배열 (JSON 문자열)
+    
+    대화 스타일 옵션:
+    - casual: ☕ 수다형
+    - deep: 🎯 깊은대화형
+    - humor: 😄 유머형
+    - debate: 💼 토론형
+    
+    응답:
+    - 성공 (200): {"success": true, "message": "상세 정보가 성공적으로 업데이트되었습니다."}
+    - 실패 (400): {"success": false, "message": "잘못된 성격 키워드 데이터 형식입니다."}
+    - 실패 (404): {"success": false, "message": "프로필을 찾을 수 없습니다."}
+    """
+    try:
+        from apps.profiles.models import Profile, AdditionalInfo
+        from apps.interests.models import Personality
+        import json
+        
+        profile = Profile.objects.get(user=request.user)
+        
+        # 추가 정보 가져오기 또는 생성
+        additional_info, created = AdditionalInfo.objects.get_or_create(profile=profile)
+        
+        # 데이터 업데이트
+        additional_info.experience = request.data.get('experience', '')
+        additional_info.conversation_style = request.data.get('conversation_style', '')
+        additional_info.activity_location = request.data.get('activity_location', '')
+        additional_info.goal_or_concern = request.data.get('goal_or_concern', '')
+        additional_info.save()
+        
+        # 성격 키워드 업데이트
+        personalities_data = request.data.get('personalities')
+        if personalities_data:
+            try:
+                personality_ids = json.loads(personalities_data)
+                # 기존 성격 키워드 삭제
+                additional_info.personality_keyword.clear()
+                # 새로운 성격 키워드 추가
+                for personality_id in personality_ids:
+                    try:
+                        personality = Personality.objects.get(id=personality_id)
+                        additional_info.personality_keyword.add(personality)
+                    except Personality.DoesNotExist:
+                        continue
+            except json.JSONDecodeError:
+                return JsonResponse({
+                    'success': False,
+                    'message': '잘못된 성격 키워드 데이터 형식입니다.'
+                }, status=400)
+        
+        return JsonResponse({
+            'success': True,
+            'message': '상세 정보가 성공적으로 업데이트되었습니다.'
+        })
+        
+    except Profile.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': '프로필을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
