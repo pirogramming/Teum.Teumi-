@@ -1,3 +1,62 @@
+// === Auth & HTTP helpers ===
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+function getAccessToken() {
+  return (
+    localStorage.getItem('access') ||
+    localStorage.getItem('access_token') ||
+    localStorage.getItem('token') ||
+    ''
+  );
+}
+
+async function apiFetch(url, options = {}) {
+  const token = getAccessToken();
+  const headers = Object.assign(
+    {
+      'Accept': 'application/json',
+    },
+    options.headers || {}
+  );
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD') {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) headers['X-CSRFToken'] = csrftoken;
+  }
+  const resp = await fetch(url, Object.assign({}, options, { headers }));
+  if (resp.status === 401) {
+    // 토큰 만료 등: 로그인 페이지로 유도
+    window.location.replace('/users/login/');
+    return Promise.reject(new Error('Unauthorized'));
+  }
+  return resp;
+}
+
+const MATCH_API_BASE = '/matches/api/matches';
+
+// === Page navigation(base.html에 있는) ===
+// TODO: 추후에 url이나 페이지가 변경되면 수정해야됨
+function setCurrentPage(name) {
+  const routes = {
+    home: '/profiles/profile/',
+    browse: '/explore/',
+    chat_list: '/chats/',
+    matching: '/matches/',
+    mypage: '/users/mypage/?format=html',
+  };
+  const url = routes[name] || '/profiles/profile/';
+  window.location.href = url;
+}
+// ensure global
+window.setCurrentPage = setCurrentPage;
+
 // 탭 전환 함수
     function showTab(tabName) {
         const tabs = document.querySelectorAll('.tab-content');
@@ -19,7 +78,42 @@
             activeButton.id = 'active';
         }
     }
- 
+
+// === Match actions (Accept/Reject) ===
+async function updateMatchStatus(matchId, nextStatus, payload = {}) {
+  if (!matchId) return;
+  try {
+    const resp = await apiFetch(`${MATCH_API_BASE}/${matchId}/status/`, {
+      method: 'PATCH',
+      body: JSON.stringify(Object.assign({ status: nextStatus }, payload)),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      alert(err.detail || '상태 변경에 실패했습니다.');
+      return;
+    }
+    // 성공 시 새로고침으로 가장 확실하게 반영
+    window.location.reload();
+  } catch (e) {
+    console.error(e);
+    alert('요청 중 오류가 발생했습니다.');
+  }
+}
+
+function extractMatchIdFrom(el) {
+  if (!el) return null;
+  // 우선순위: data-id, data-match-id, value, id 속성 내 숫자
+  return (
+    el.dataset?.id ||
+    el.dataset?.matchId ||
+    el.getAttribute('data-id') ||
+    el.getAttribute('data-match-id') ||
+    el.value ||
+    (el.id && el.id.match(/\d+/)?.[0]) ||
+    null
+  );
+}
+
 document.addEventListener("DOMContentLoaded", function () {
 
     showTab('request');
@@ -53,6 +147,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // 정중히 거절하기 버튼
     document.querySelectorAll(".reject").forEach(btn => {
         btn.addEventListener("click", function () {
+            const matchId = extractMatchIdFrom(this);
+            if (rejectModal) rejectModal.dataset.currentMatchId = matchId || '';
             showModal(rejectModal);
         });
     });
@@ -61,6 +157,14 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".tab-right").forEach(btn => {
         btn.addEventListener("click", function () {
             showModal(reviewModal);
+        });
+    });
+
+    // 수락하기 버튼
+    document.querySelectorAll('.accept').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const matchId = extractMatchIdFrom(this);
+            updateMatchStatus(matchId, 'ACCEPTED');
         });
     });
 
@@ -80,6 +184,16 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("review-cancle").addEventListener("click", function () {
         hideModal(reviewModal);
     })
+
+    const rejectSubmitBtn = document.getElementById('reject-submit') || document.querySelector('[data-role="reject-submit"]');
+    const rejectReasonInput = document.getElementById('reject-text') || document.getElementById('reject-textarea') || document.querySelector('[name="reject_reason"]');
+    if (rejectSubmitBtn) {
+        rejectSubmitBtn.addEventListener('click', function () {
+            const matchId = rejectModal?.dataset?.currentMatchId;
+            const reason = (rejectReasonInput && rejectReasonInput.value) ? rejectReasonInput.value.trim() : '';
+            updateMatchStatus(matchId, 'REJECTED', reason ? { reason } : {});
+        });
+    }
 
     // 오버레이 클릭 → 모달 닫기
     overlay.addEventListener("click", function () {

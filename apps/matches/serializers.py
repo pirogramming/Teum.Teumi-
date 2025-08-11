@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Matching
+from .models import Matching, MatchingStatus
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -8,14 +8,17 @@ User = get_user_model()
 class UserSimpleSerializer(serializers.ModelSerializer):
     nickname = serializers.CharField(source='profile.nickname', read_only=True)
     mbti = serializers.CharField(source='profile.mbti', read_only=True)
-    
+    username = serializers.CharField(read_only=True)
+    department_name = serializers.CharField(source='profile.department.department_name', read_only=True, allow_null=True)
+    grade = serializers.IntegerField(source='profile.grade', read_only=True, allow_null=True)
+
     class Meta:
         model = User
-        fields = ['id', 'nickname', 'mbti']
+        fields = ['id', 'username', 'nickname', 'mbti', 'department_name', 'grade']
 
 
 class MatchCreateSerializer(serializers.ModelSerializer):
-    receiver = serializers.PrimaryKeyRelatedField(read_only=False, queryset=Matching._meta.get_field('receiver').remote_field.model.objects.all())
+    receiver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     request_message = serializers.CharField(allow_blank=True, required=False)
 
     class Meta:
@@ -25,7 +28,8 @@ class MatchCreateSerializer(serializers.ModelSerializer):
 class MatchDetailSerializer(serializers.ModelSerializer):
     sender = UserSimpleSerializer(read_only=True)
     receiver = UserSimpleSerializer(read_only=True)
+    status_label = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = Matching
-        fields = ['id', 'sender', 'receiver', 'status', 'matched_at', 'request_message', 'refusal_message', 'created_at']
+        fields = ['id', 'sender', 'receiver', 'status', 'status_label', 'matched_at', 'request_message', 'refusal_message', 'created_at']   

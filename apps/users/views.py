@@ -704,8 +704,36 @@ def user_logout(request):
     
     응답: 로그인 페이지로 리다이렉트 (/users/login/)
     """
+    # 1) 세션/서버 측 상태 정리
+    refresh_in_session = request.session.pop('refresh_token', None)
     request.session.pop('access_token', None)
-    request.session.pop('refresh_token', None)
+
+    # Django 인증 세션 로그아웃
     logout(request)
-    return redirect('/users/login/')
+
+    # 2) 클라이언트 측 로컬 상태도 제거해야 완전 로그아웃 (localStorage/쿠키)
+    #    템플릿 없이도 동작하도록 스크립트를 직접 반환 후 /users/login/ 으로 이동
+    from django.http import HttpResponse
+    script = """
+    <script>
+      try {
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        sessionStorage.clear();
+      } catch (e) {}
+      // 쿠키 제거는 서버가 지시
+      window.location.replace('/users/login/');
+    </script>
+    """
+
+    response = HttpResponse(script)
+    # 3) 관련 쿠키 제거 지시 (있을 경우)
+    for name in ['access', 'refresh', 'access_token', 'refresh_token', 'csrftoken', 'sessionid']:
+        response.delete_cookie(name)
+
+    return response
+
+
 
