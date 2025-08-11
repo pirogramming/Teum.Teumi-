@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-e1s=j68yg2y^t^+0d@bd$kpf6b#u0#&hr5cqd@e03k)vshxroc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '49.50.133.212']
 
 
 # Application definition
@@ -64,6 +64,9 @@ INSTALLED_APPS = [
     'apps.chats',
     'apps.interests',
     'channels',
+
+    # Third-party apps
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [

@@ -286,7 +286,51 @@
     </div>
 
     <script>
-        // Profile data from Django template
+        // ===== JWT 템플릿 변수 → localStorage 저장 & authFetch 헬퍼 =====
+        (function(){
+          const tmplAccess = "{{ access_token|default:''|escapejs }}";
+          const tmplRefresh = "{{ refresh_token|default:''|escapejs }}";
+          if (tmplAccess) localStorage.setItem('access', tmplAccess);
+          if (tmplRefresh) localStorage.setItem('refresh', tmplRefresh);
+
+          async function refreshAccessToken() {
+            const refresh = localStorage.getItem('refresh');
+            if (!refresh) return null;
+            try {
+              const res = await fetch('/api/token/refresh/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh })
+              });
+              if (!res.ok) return null;
+              const data = await res.json();
+              if (data.access) {
+                localStorage.setItem('access', data.access);
+                return data.access;
+              }
+              return null;
+            } catch { return null; }
+          }
+
+          window.authFetch = async (url, options = {}, tryRefresh = true) => {
+            const token = localStorage.getItem('access') || '';
+            const headers = { ...(options.headers||{}), Authorization: token ? `Bearer ${token}` : '' };
+            let res = await fetch(url, { ...options, headers });
+            if (res.status === 401 && tryRefresh) {
+              const newAccess = await refreshAccessToken();
+              if (newAccess) {
+                const retryHeaders = { ...(options.headers||{}), Authorization: `Bearer ${newAccess}` };
+                res = await fetch(url, { ...options, headers: retryHeaders });
+              }
+            }
+            return res;
+          };
+
+          // 상세 페이지 대상 프로필 ID (서버 템플릿에서 주입)
+          window.TARGET_PROFILE_ID = "{{ profile.profile_id|escapejs }}";
+        })();
+        // 실제 프로필 데이터
+
         const profileData = {
             schedule: JSON.parse('{{ schedule|safe }}'),  // Django에서 전달받은 스케줄 데이터
             matching_score: {{ matching_score }},
@@ -388,20 +432,30 @@
                 return;
             }
 
-            console.log('대화 신청:', reason);
-            hideApplicationModal();
-            document.getElementById('applicationReason').value = '';
-            
-            // 채팅 기능은 아직 준비중입니다
-            alert('대화 신청이 전송되었습니다! 채팅 기능은 곧 준비될 예정입니다.');
-            // window.location.href = '/chats/';
-            
-            // 나중에 실제 API 호출
-            // fetch('/api/match-request/', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ reason: reason })
-            // });
+            const toProfileId = window.TARGET_PROFILE_ID; // 상세 대상 프로필 ID
+            const payload = { reason, to_profile_id: toProfileId };
+
+            (async () => {
+              try {
+                const res = await authFetch('/api/match-request/', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                  alert('대화 신청이 전송되었습니다!');
+                  hideApplicationModal();
+                  document.getElementById('applicationReason').value = '';
+                } else {
+                  const err = await res.json().catch(() => ({}));
+                  alert('신청 실패: ' + (err.error || JSON.stringify(err)));
+                }
+              } catch (e) {
+                console.error(e);
+                alert('네트워크 오류가 발생했습니다.');
+              }
+            })();
         }
 
         function toggleLike() {

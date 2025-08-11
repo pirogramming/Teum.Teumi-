@@ -20,4 +20,3 @@ class User(AbstractUser, BaseEntity):
     login_method = models.CharField(
         max_length=6, choices=LOGIN_CHOICES, default=LOGIN_EMAIL
     )
-

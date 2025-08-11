@@ -1,0 +1,277 @@
+.tag-container {
+    padding: 0 0 15px;
+}
+
+.tag-container > div:first-of-type {
+    font-weight: 500;
+}
+
+.tags {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin: 15px 0;
+}
+
+.tag, .small-tag, .detail-link > a {
+    color: #6366f1;
+    font-weight: 500;
+    border: 1px solid #E0E7FF;
+    border-radius: 1rem;
+    padding: 5px 15px;
+}
+
+.tag:hover, .detail-link > a:hover {
+    color: #fff;
+    background-color: #6366f1;
+}
+
+hr {
+    border: 0.5px solid rgba(99, 102, 241, 0.1);
+    margin: 15px 0;
+}
+
+.recommends {
+    display: grid;
+    grid-template-rows: 1fr;
+    gap: 15px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.recommend {
+    background-color: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 15px;
+    display: flex;
+    gap: 15px;
+}
+
+.circle {
+    background-color: rgba(99, 102, 241, 0.1);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 3px solid #E0E7FF;
+    font-weight: 500;
+    color: #3730a3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.recommend-right {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.nickname {
+    font-size: 1.1rem;
+    color: #1a1d29;
+    font-weight: 600;
+}
+
+.major {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.rating {
+    background-color: #fef9c3;
+    color: #b45309;
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    border-radius: 1rem;
+    font-weight: 500;
+}
+
+.content-bottom {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.small-tag {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+}
+
+.detail-link {
+    text-align: right;
+}
+
+svg {
+    width: 0.8rem;
+    height: 0.8rem;
+}
+
+.tab-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 반투명 검정 */
+    z-index: 999; /* 모달보다 살짝 낮거나 동일하게 */
+    /* display: none;  처음엔 숨김 */
+}
+
+.small-view {
+    width: 100%;
+    background-color: #fff;
+    border-radius: 1rem;
+    padding: 15px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    /* display: none; */
+}
+
+.close {
+    font-size: 1.2rem;
+    text-align: right;
+    color: #64748b;
+    padding: 0;
+}
+
+.close:hover {
+    cursor: pointer;
+}
+
+.small-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.small-comment {
+    text-align: center;
+    color: #64748b;
+}
+
+.interest-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.interest-title {
+    font-weight: 500;
+}
+
+.selectbox {
+    color: #64748b;
+    background-color: #f8fafc;
+    border-radius: 1rem;
+    border: none;
+    outline: none;
+    padding: 10px;
+}
+
+#tags {
+    overflow-y: auto;
+    height: 150px;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.view-tag {
+    border-radius: 1rem;
+    border: 1px solid #E0E7FF;
+    padding: 5px 10px;
+}
+
+.view-tag:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.interest-time {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.time-tags {
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin: 0;
+    gap: 5px;
+    padding: 0;
+}
+
+.submit-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+}
+
+.filter-button {
+    width: 100%;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 1rem;
+    padding: 5px 10px;
+    border: none;
+}
+
+.cancle-button {
+    width: 100%;
+    background-color: #fff;
+    border-radius: 1rem;
+    padding: 5px 10px;
+    border: 1px solid #E0E7FF;
+}
+
+.cancle-button:hover {
+    color: #3730A3;
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+@media (min-width: 400px) {
+    .small-view {
+        width: 4cqb;
+    }
+}
+
+@media (min-width: 640px) {
+    .small-view {
+        width: 500px;
+    }
+
+    .submit-button {
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: center;
+        justify-content: right;
+    }
+
+    .cancle-button, .filter-button {
+        width: auto;
+    }
+}

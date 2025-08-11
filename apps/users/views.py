@@ -20,6 +20,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 
+
 load_dotenv()
 
 GOOGLE_CALLBACK_URI = settings.GOOGLE_CALLBACK_URI
@@ -31,10 +32,34 @@ class KakaoException(Exception):
     pass
 
 def user_login(request):
-    # 이미 로그인된 사용자는 프로필 완성 상태에 따라 리디렉트
+    """
+    로그인 페이지 진입점
+    - 카카오/구글 콜백에서 `/users/login/?access=...&refresh=...`로 리다이렉트되면
+      반드시 이 템플릿을 렌더해서 프론트 JS가 토큰을 localStorage에 저장할 수 있도록 함.
+    - 세션 기반 분기에서는 Profile의 `is_completed` 대신 `current_step == 'completed'`로 판단.
+    """
+    # 0) 세션에 저장된 토큰이 있으면 템플릿 변수로 주입하여 렌더
+    access_token = request.session.get('access_token')
+    refresh_token = request.session.get('refresh_token')
+    if access_token and refresh_token:
+        form = AuthenticationForm()
+        return render(request, 'users/login.html', {'form': form, 'access_token': access_token, 'refresh_token': refresh_token})
+
+    # 2) 이미 로그인된 경우: 프로필 진행 단계에 따라 분기
     if request.user.is_authenticated:
-        return redirect('profiles:profile-home')
-    
+        if hasattr(request.user, 'profile'):
+            try:
+                if getattr(request.user.profile, 'current_step', None) == 'completed':
+                    return redirect('profiles:profile-home')
+                else:
+                    return redirect('profiles:profile_step1')
+            except Exception:
+                # profile 접근 중 예외가 나도 안전하게 step1로 보냄
+                return redirect('profiles:profile_step1')
+        else:
+            return redirect('profiles:profile_step1')
+
+    # 3) 일반 폼 로그인 처리 (선택적으로 유지)
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -43,6 +68,8 @@ def user_login(request):
             return redirect('profiles:profile-home') # 프로필 완성 상태에 따라 적절한 페이지로 리다이렉트
     else:
         form = AuthenticationForm()
+
+    # 기본: 로그인 템플릿 렌더
     return render(request, 'users/login.html', {'form': form})
 
 def kakao_login(request):
@@ -69,8 +96,17 @@ def kakao_login(request):
 @csrf_exempt
 def kakao_callback(request):
     try:
-        if request.user.is_authenticated:       # 이미 로그인한 상태라면
-            return redirect('profiles:profile-home')
+        # 이미 로그인된 사용자는 JWT 발급 후 토큰과 함께 렌더
+        if request.user.is_authenticated:
+            refresh = RefreshToken.for_user(request.user)
+            access_token_jwt = str(refresh.access_token)
+            refresh_token_jwt = str(refresh)
+            request.session['access_token'] = access_token_jwt
+            request.session['refresh_token'] = refresh_token_jwt
+            return render(request, 'users/login.html', {
+                'access_token': access_token_jwt,
+                'refresh_token': refresh_token_jwt
+            })
 
         code = request.GET.get("code")
         if not code:        # 카카오에서 제공한 인가 코드가 없다면 실패 처리
@@ -127,6 +163,14 @@ def kakao_callback(request):
         login(request, user)
 
         refresh = RefreshToken.for_user(user)
+        access_token_jwt = str(refresh.access_token)
+        refresh_token_jwt = str(refresh)
+        request.session['access_token'] = access_token_jwt
+        request.session['refresh_token'] = refresh_token_jwt
+        return render(request, 'users/login.html', {
+            'access_token': access_token_jwt,
+            'refresh_token': refresh_token_jwt
+        })
 
         '''return JsonResponse({                      #Json 응답
             'access': str(refresh.access_token),
@@ -148,6 +192,18 @@ def google_login(request):
     )
 
 def google_callback(request):
+    # 이미 로그인된 사용자는 JWT 발급 후 토큰과 함께 렌더
+    if request.user.is_authenticated:
+        refresh = RefreshToken.for_user(request.user)
+        access_token_jwt = str(refresh.access_token)
+        refresh_token_jwt = str(refresh)
+        request.session['access_token'] = access_token_jwt
+        request.session['refresh_token'] = refresh_token_jwt
+        return render(request, 'users/login.html', {
+            'access_token': access_token_jwt,
+            'refresh_token': refresh_token_jwt
+        })
+        
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("SOCIAL_AUTH_GOOGLE_SECRET")
     code = request.GET.get('code')
@@ -210,13 +266,19 @@ def google_callback(request):
     except SocialAccount.DoesNotExist:
         return JsonResponse({'err_msg': 'Email exists but not social user'}, status=400)
 
-    refresh = RefreshToken.for_user(user)   # JWT 발급
-    django_login(request, user)     # 로그인 처리
-
-    return JsonResponse({
-        'access': str(refresh.access_token),
-        'refresh': str(refresh),
-        'user_email': user.email,
+    # 로그인 처리 및 세션 설정
+    django_login(request, user)
+    request.session.set_expiry(0)  # 브라우저 세션 유지
+    
+    # JWT 토큰 생성
+    refresh = RefreshToken.for_user(user)
+    access_token_jwt = str(refresh.access_token)
+    refresh_token_jwt = str(refresh)
+    request.session['access_token'] = access_token_jwt
+    request.session['refresh_token'] = refresh_token_jwt
+    return render(request, 'users/login.html', {
+        'access_token': access_token_jwt,
+        'refresh_token': refresh_token_jwt
     })
 
 class GoogleLoginFinishView(APIView):
@@ -266,18 +328,7 @@ class GoogleLoginFinishView(APIView):
             'access': str(refresh.access_token),
         }, status=status.HTTP_200_OK)
     
-# API 명세서: API_SPECIFICATION.md - 5. 로그아웃 API
-def user_logout(request):
-    """
-    로그아웃 API
-    
-    엔드포인트: GET /users/logout/
-    설명: 사용자를 로그아웃 처리하고 로그인 페이지로 리다이렉트합니다.
-    
-    응답: 로그인 페이지로 리다이렉트 (/users/login/)
-    """
-    logout(request)
-    return redirect('/users/login/')
+###여기서 부터 프로필과 중복 확인해볼 필요 있음###
 
 # 마이페이지 뷰
 def mypage(request):
@@ -643,3 +694,18 @@ def update_advanced(request):
             'success': False,
             'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'
         }, status=500)
+
+def user_logout(request):
+     """
+    로그아웃 API
+    
+    엔드포인트: GET /users/logout/
+    설명: 사용자를 로그아웃 처리하고 로그인 페이지로 리다이렉트합니다.
+    
+    응답: 로그인 페이지로 리다이렉트 (/users/login/)
+    """
+    request.session.pop('access_token', None)
+    request.session.pop('refresh_token', None)
+    logout(request)
+    return redirect('/users/login/')
+
