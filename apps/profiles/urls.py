@@ -1,42 +1,38 @@
+# apps/profiles/urls.py
 from django.urls import path
 from . import views
-from .views import (
-    SchoolProfileAPIView,
-    FreeTimeAPIView,
-    InterestTagAPIView,
-    BasicInfoAPIView,
-    AddtionalInfoAPIView,
-    profile_home,
-    profile_detail,
-    profile_step1,
-    profile_step2,
-    profile_step3,
-    profile_step4,
-    profile_step5,
-)
+
 app_name = 'profiles'
 
 urlpatterns = [
-  
-    #홈화면,프로필정보 상세페이지
-    path('profile/', profile_home, name='profile-home'),
-    path('profile/<int:profile_id>/', profile_detail, name='profile-detail'),
-
-    # API 엔드포인트
-    path('api/school/', SchoolProfileAPIView.as_view(), name='school'),
-    path('api/free_time/', FreeTimeAPIView.as_view(), name='free-time'),
-    path('api/interests/', InterestTagAPIView.as_view(), name='interests'),
-    path('api/basic_info/', BasicInfoAPIView.as_view(), name='basic-info'),
-    path('api/additional-info/', AddtionalInfoAPIView.as_view(), name='additional-info'),
-    
-    # 프로필 단계별 페이지
-    path('step1/', profile_step1, name='profile_step1'),
-    path('step2/', profile_step2, name='profile_step2'),
-    path('step3/', profile_step3, name='profile_step3'),
-    path('step4/', profile_step4, name='profile_step4'),
-    path('step5/', profile_step5, name='profile_step5'),
-    
-    # 기타 API
+    # --- API 엔드포인트 ---
     path('api/majors/', views.get_majors_by_school, name='get_majors_by_school'),
-]
+    path('api/school/', views.SchoolProfileAPIView.as_view(), name='school_profile'),
+    path('api/interests/', views.InterestTagAPIView.as_view(), name='interests'),
+    path('api/free_time/', views.FreeTimeAPIView.as_view(), name='free_time'),
+    path('api/basic_info/', views.BasicInfoAPIView.as_view(), name='basic_info'),
+    path('api/additional-info/', views.AddtionalInfoAPIView.as_view(), name='additional-info'),
 
+    # --- 단계별(동일 뷰) ---
+    path('step1/', views.profile_step1, name='profile_step1'),
+    path('step2/', views.profile_step2, name='profile_step2'),
+    path('step3/', views.profile_step3, name='profile_step3'),
+    path('step4/', views.profile_step4, name='profile_step4'),
+    path('step5/', views.profile_step5, name='profile_step5'),
+
+    # --- 페이지 전용 URL도 동일 뷰로 연결 (별도 *_page 함수 없음) ---
+    path('step1/page/', views.profile_step1, name='profile_step1_page'),
+    path('step2/page/', views.profile_step2, name='profile_step2_page'),
+    path('step3/page/', views.profile_step3, name='profile_step3_page'),
+    path('step4/page/', views.profile_step4, name='profile_step4_page'),
+    path('step5/page/', views.profile_step5, name='profile_step5_page'),
+
+    # --- 홈/상세 ---
+    path('profile/', views.profile_home, name='profile-home'),
+    path('profile/page/', views.profile_home, name='profile_home_page'),
+    path('profile/<int:profile_id>/', views.profile_detail, name='profile-detail'),
+    path('profile/<int:profile_id>/page/', views.profile_detail, name='profile_detail_page'),
+
+    # --- 마이페이지 ---
+    path('mypage/', views.mypage, name='mypage'),
+]

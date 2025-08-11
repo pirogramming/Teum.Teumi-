@@ -114,12 +114,12 @@ body {
     margin: 0;
 }
 
-/* Main Content */
+/* Main Content - 마이페이지 전용 스타일 */
 .main-content {
     max-width: 768px;
     margin: 0 auto;
     padding: 1rem;
-    padding-bottom: 6rem; /* 하단 여백 대폭 증가 */
+    padding-bottom: 80px; /* 하단 네비게이션 공간 확보 */
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -173,14 +173,6 @@ body {
     padding: 1.25rem;
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--border-color);
-    /* 높이 제한 해제 */
-    min-height: auto;
-    overflow: visible;
-}
-
-/* 상세 정보 섹션 특별 스타일 */
-.section-card[data-section="advanced"] {
-    margin-bottom: 2rem; /* 상세 정보 섹션 하단 여백 추가 */
 }
 
 .section-header {
@@ -233,9 +225,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    /* 내용이 잘리지 않도록 */
-    overflow: visible;
-    min-height: auto;
 }
 
 .info-row {
@@ -260,10 +249,6 @@ body {
     font-size: 0.875rem;
     color: var(--text-primary);
     font-weight: 500;
-    /* 긴 텍스트가 잘리지 않도록 */
-    word-break: break-word;
-    max-width: 60%;
-    text-align: right;
 }
 
 .intro-text {
@@ -324,8 +309,6 @@ body {
     border-radius: var(--radius-2xl);
 }
 
-/* .schedule-display, .schedule-badge 제거 (미리보기에서 목록 표시 제거) */
-
 .schedule-text {
     font-size: 0.875rem;
     color: var(--text-secondary);
@@ -337,14 +320,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    /* 편집 모드에서 내용이 잘리지 않도록 */
-    overflow: visible;
-    min-height: auto;
-    padding-bottom: 2rem; /* 편집 모드 하단 여백 추가 */
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 /* Forms */
@@ -508,10 +487,9 @@ body {
 /* Schedule */
 .schedule-container {
     overflow-x: auto;
-    padding: 1rem;
+    padding: 0.5rem;
     background-color: var(--background-color);
     border-radius: var(--radius-xl);
-    border: 1px solid var(--border-color);
 }
 
 .schedule-header {
@@ -535,11 +513,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    max-height: 16rem;
+    max-height: 20rem;
     overflow-y: auto;
-    padding: 0.5rem;
-    background-color: var(--card-background);
-    border-radius: var(--radius-lg);
 }
 
 .schedule-row {
@@ -560,13 +535,10 @@ body {
 .schedule-cell {
     height: 2rem;
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    background-color: var(--card-background);
+    border-radius: var(--radius-xl);
+    background-color: #f1f5f9;
     cursor: pointer;
     transition: all 0.2s ease;
-    /* 텍스트 표시 방지 */
-    font-size: 0;
-    color: transparent;
 }
 
 .schedule-cell:hover {
@@ -627,11 +599,11 @@ body {
 }
 
 /* 반응형 디자인 */
-@media (max-width: 640px) {
+@media (max-width: 480px) {
     .main-content {
         padding: 0.75rem;
+        padding-bottom: 5.5rem; /* 모바일에서 하단 네비게이션 공간 확보 */
         gap: 1rem;
-        padding-bottom: 8rem; /* 모바일에서 더 많은 하단 여백 */
     }
     
     .section-card {
@@ -673,10 +645,6 @@ body {
         padding: 0.5rem;
     }
     
-    .schedule-grid {
-        max-height: 12rem;
-    }
-    
     .form-actions {
         flex-direction: column;
     }
@@ -698,21 +666,6 @@ body {
     .edit-button {
         align-self: flex-end;
     }
-    
-    .info-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-    
-    .info-value {
-        word-break: break-word;
-    }
-    
-    /* 모바일에서 상세 정보 섹션 여백 추가 */
-    .section-card[data-section="advanced"] {
-        margin-bottom: 3rem;
-    }
 }
 
 /* 애니메이션 */
@@ -731,98 +684,6 @@ body {
     }
 }
 
-/* 로그아웃 모달 */
-.logout-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.logout-modal.show {
-    opacity: 1;
-}
-
-.modal-content {
-    background: var(--card-background);
-    border-radius: var(--radius-3xl);
-    padding: 2rem;
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
-    box-shadow: var(--shadow-lg);
-    transform: scale(0.9);
-    transition: transform 0.3s ease;
-}
-
-.logout-modal.show .modal-content {
-    transform: scale(1);
-}
-
-.modal-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin: 0 0 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.modal-description {
-    color: var(--text-secondary);
-    margin-bottom: 2rem;
-    line-height: 1.6;
-}
-
-.modal-footer {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-}
-
-.modal-button {
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--radius-2xl);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    min-width: 100px;
-    transition: all 0.2s ease;
-}
-
-.modal-button.cancel-button {
-    background: var(--card-background);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-}
-
-.modal-button.cancel-button:hover {
-    background: var(--background-color);
-}
-
-.modal-button.logout-button {
-    background: var(--primary-color);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-}
-
-.modal-button.logout-button:hover {
-    background: var(--primary-hover);
-}
-
 /* 접근성 개선 */
 .nav-button:focus,
 .edit-button:focus,
@@ -838,22 +699,286 @@ body {
     outline: none;
 }
 
-/* 다크 모드 대응 */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background-color: #0f172a;
-        --card-background: #1e293b;
-        --border-color: #334155;
-        --text-primary: #f1f5f9;
-        --text-secondary: #94a3b8;
-        --text-muted: #64748b;
+/* ================================================ */
+/* 로그아웃 모달 스타일 */
+/* ================================================ */
+
+/**
+ * 로그아웃 확인 모달의 기본 컨테이너
+ * - 전체 화면을 덮는 고정 위치 설정
+ * - 높은 z-index로 다른 요소들 위에 표시
+ */
+.logout-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+/**
+ * 모달이 표시될 때의 상태
+ * - opacity와 transform을 통한 부드러운 애니메이션
+ */
+.logout-modal.show {
+    opacity: 1;
+}
+
+/**
+ * 모달 배경 오버레이
+ * - 반투명 검은색 배경으로 뒤쪽 컨텐츠 흐리게 처리
+ * - 클릭 시 모달 닫기 기능
+ */
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+/**
+ * 모달 메인 컨텐츠 영역
+ * - 흰색 배경에 둥근 모서리
+ * - 그림자 효과로 입체감 표현
+ * - 애니메이션을 위한 transform 설정
+ */
+.modal-content {
+    position: relative;
+    background: var(--card-background);
+    border-radius: var(--radius-3xl);
+    box-shadow: var(--shadow-lg);
+    max-width: 400px;
+    width: 90%;
+    padding: 2rem;
+    transform: scale(0.95) translateY(20px);
+    transition: all 0.3s ease;
+}
+
+/**
+ * 모달이 표시될 때 컨텐츠 애니메이션
+ */
+.logout-modal.show .modal-content {
+    transform: scale(1) translateY(0);
+}
+
+/**
+ * 모달 헤더 영역
+ * - 제목과 이모지를 포함
+ * - 하단에 구분선 효과
+ */
+.modal-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+/**
+ * 모달 제목 스타일
+ * - 이모지와 함께 표시되는 제목
+ * - 적절한 폰트 크기와 굵기로 강조
+ */
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/**
+ * 모달 제목의 이모지 스타일
+ */
+.modal-emoji {
+    font-size: 1.5rem;
+}
+
+/**
+ * 모달 본문 영역
+ * - 설명 텍스트가 들어가는 영역
+ */
+.modal-body {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+/**
+ * 모달 설명 텍스트
+ * - 사용자에게 확인을 요청하는 메시지
+ * - 적절한 줄 간격으로 가독성 확보
+ */
+.modal-description {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/**
+ * 모달 하단 버튼 영역
+ * - 취소와 확인 버튼을 가로로 배치
+ * - 버튼 간 적절한 간격 설정
+ */
+.modal-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/**
+ * 모달 버튼의 공통 스타일
+ * - 취소와 로그아웃 버튼에 공통 적용되는 기본 스타일
+ */
+.modal-button {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-2xl);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/**
+ * 취소 버튼 스타일
+ * - 연한 회색 배경에 테두리
+ * - 호버 시 배경색 변경
+ */
+.modal-button.cancel-button {
+    background: var(--card-background);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.modal-button.cancel-button:hover {
+    background: var(--background-color);
+    border-color: var(--text-secondary);
+}
+
+/**
+ * 로그아웃 버튼 스타일
+ * - 빨간색 계열로 주의를 환기
+ * - 호버 시 더 진한 빨간색으로 변경
+ */
+.modal-button.logout-button {
+    background: #ef4444;
+    color: white;
+}
+
+.modal-button.logout-button:hover {
+    background: #dc2626;
+}
+
+/**
+ * 로그아웃 버튼 비활성화 상태
+ * - 로딩 중일 때 버튼 비활성화
+ */
+.modal-button.logout-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+/**
+ * 로그아웃 이모지 스타일
+ */
+.logout-emoji {
+    font-size: 1rem;
+    color: #ef4444; /* 빨간색으로 변경 */
+    font-weight: bold;
+}
+
+/**
+ * 모달 로그아웃 SVG 아이콘 스타일
+ */
+.logout-emoji-svg {
+    width: 1rem;
+    height: 1rem;
+    color: white;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+
+
+/**
+ * 기존 로그아웃 버튼 아이콘 스타일 (하위 호환성)
+ */
+.logout-icon {
+    font-size: 1.25rem;
+    transition: all 0.2s ease;
+    color: #ef4444; /* 빨간색으로 변경 */
+    font-weight: bold;
+}
+
+/**
+ * 로그아웃 SVG 아이콘 스타일
+ */
+.logout-icon-svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #dc2626; /* red-600 */
+    transition: all 0.2s ease;
+}
+
+/**
+ * 로그아웃 버튼 호버 효과
+ */
+.nav-button:hover .logout-icon {
+    transform: scale(1.1) rotate(15deg); /* 회전 효과 추가 */
+    color: #dc2626; /* 호버 시 더 진한 빨간색 */
+}
+
+.nav-button:hover .logout-icon-svg {
+    color: #dc2626; /* red-700 */
+    transform: scale(1.1);
+}
+
+/* 숨김 상태 유틸리티 클래스 */
+.hidden {
+    display: none !important;
+}
+
+
+
+/* 태블릿 (768px 이하) */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 0.875rem;
+        padding-bottom: 5rem; /* 태블릿에서 하단 네비게이션 공간 확보 */
+        gap: 1.25rem;
     }
     
-    .schedule-cell {
-        background-color: #334155;
+    .section-card {
+        padding: 1.125rem;
     }
     
-    .schedule-cell:hover {
-        background-color: var(--primary-light);
+    .profile-header-card {
+        padding: 1.75rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .section-header {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
     }
 }

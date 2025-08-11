@@ -56,105 +56,131 @@
 </form>
 
 <script>
-    const MAX_SELECTION = 4;
-    const tags = document.querySelectorAll('.tag');
-    const tagCountText = document.getElementById('tag-count');
-    const tagComment = document.getElementById('tag-comment');
+  document.addEventListener('DOMContentLoaded', function () {
+    // 1) 템플릿 변수로 전달된 토큰을 localStorage에 저장
+    (function bootstrapToken() {
+      const tmplAccess = "{{ access_token|default:''|escapejs }}";
+      const tmplRefresh = "{{ refresh_token|default:''|escapejs }}";
+      if (tmplAccess) localStorage.setItem('access', tmplAccess);
+      if (tmplRefresh) localStorage.setItem('refresh', tmplRefresh);
+    })();
+
+    // 2) Authorization 헤더를 자동으로 붙여주는 fetch 헬퍼
+    window.authFetch = (url, options = {}) => {
+      const token = localStorage.getItem('access') || '';
+      const headers = Object.assign(
+        {},
+        options.headers || {},
+        { 'Authorization': token ? `Bearer ${token}` : '' }
+      );
+      return fetch(url, { ...options, headers });
+    };
+
+    // --- 엘리먼트 조회 (2단계 전용) ---
+    const form = document.getElementById('interest-form');
     const nextButton = document.getElementById('next-button');
-    const interestForm = document.getElementById('interest-form');
+    const tagCountEl = document.getElementById('tag-count');
+    const tagCommentEl = document.getElementById('tag-comment');
+    const tagNodes = Array.from(document.querySelectorAll('.tag[data-id]'));
 
-    // 선택 개수 업데이트 함수
-    function updateCount() {
-        const selectedCount = document.querySelectorAll('.tag.selected').length;
-        tagCountText.textContent = `선택된 관심사: ${selectedCount}/${MAX_SELECTION}`;
-
-        // 모든 태그 상태 업데이트
-        tags.forEach(tag => {
-            const isAlreadySelected = tag.classList.contains('selected');
-
-            if (selectedCount >= MAX_SELECTION && !isAlreadySelected) {
-                tag.classList.add('disabled');
-                tag.style.pointerEvents = 'none';
-                tag.style.opacity = '0.5';
-                tag.style.color = '#64748b';
-            } else {
-                tag.classList.remove('disabled');
-                tag.style.pointerEvents = 'auto';
-                tag.style.opacity = '1';
-                tag.style.color = '';
-            }
-        });
-
-        // 버튼 상태 업데이트
-        if (selectedCount === MAX_SELECTION) {
-            nextButton.disabled = false;
-            nextButton.style.pointerEvents = 'auto';
-            tagComment.innerHTML = '✅ 완성! 정확한 매칭을 위해 4개를 모두 선택해주셨어요.';
-        } else {
-            nextButton.disabled = true;
-            nextButton.style.pointerEvents = 'none';
-            tagComment.innerHTML = '정확한 매칭을 위해 관심사 4개를 모두 선택해주세요.';
-        }
+    // 필수 요소 점검
+    if (!form || !nextButton || tagNodes.length === 0) {
+      console.warn('[profile_2] 필수 엘리먼트가 없어 스크립트를 종료합니다.');
+      return;
     }
 
-    tags.forEach(tag => {
-        tag.addEventListener('click', () => {
-            const isSelected = tag.classList.contains('selected');
+    const MAX_SELECT = 4;
+    const selected = new Set(); // 선택된 관심사 id 보관
 
-            if (!isSelected) {
-                const selectedCount = document.querySelectorAll('.tag.selected').length;
-                if (selectedCount >= MAX_SELECTION) {
-                    return;
-                }
-            }
+    // --- UI 업데이트 도우미 ---
+    function updateCounterUI() {
+      const count = selected.size;
+      if (tagCountEl) tagCountEl.textContent = `선택된 관심사 : ${count}/${MAX_SELECT}`;
+      if (tagCommentEl) {
+        tagCommentEl.textContent = (count === MAX_SELECT)
+          ? '좋아요! 이제 다음 단계로 넘어갈 수 있어요.'
+          : '정확한 매칭을 위해 관심사 4개를 모두 선택해주세요.';
+      }
+      nextButton.disabled = (count !== MAX_SELECT);
+    }
 
-            tag.classList.toggle('selected');
-            const nowSelected = tag.classList.contains('selected');
-            const label = tag.dataset.label;
-            tag.innerHTML = nowSelected
-                ? `✨ #${label}`
-                : `#${label}`;
+    function applySelectionStyles() {
+      tagNodes.forEach(node => {
+        const id = node.getAttribute('data-id');
+        if (selected.has(id)) node.classList.add('selected');
+        else node.classList.remove('selected');
+      });
+    }
 
-            updateCount();
-        });
-    });
-
-    // 폼 제출 처리
-    interestForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const selectedTags = Array.from(document.querySelectorAll('.tag.selected'))
-            .map(tag => parseInt(tag.dataset.id));
-
-        const formData = {
-            interest_ids: selectedTags
-        };
-
-        try {
-            const response = await fetch('/profiles/api/interests/', {
-                method: 'PATCH',
-                credentials: 'include',  // 세션 쿠키 포함
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                alert('관심사가 성공적으로 저장되었습니다!');
-                window.location.href = '/profiles/step3/';
-            } else {
-                const error = await response.json();
-                alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(error));
-            }
-        } catch (error) {
-            console.error('저장 실패:', error);
-            alert('저장 중 오류가 발생했습니다.');
+    // --- 서버의 기존 선택값 불러와서 미리 체크 ---
+    (async function preloadSelections(){
+      try {
+        const res = await authFetch('/profiles/api/interests/', { method: 'GET' });
+        if (res.ok) {
+          const data = await res.json();
+          const ids = Array.isArray(data.interest_ids) ? data.interest_ids.map(String) : [];
+          ids.slice(0, MAX_SELECT).forEach(id => selected.add(String(id)));
+          applySelectionStyles();
+          updateCounterUI();
         }
+      } catch (e) {
+        console.warn('[profile_2] 기존 선택 로드 실패:', e);
+      }
+    })();
+
+    // --- 태그 클릭 토글 ---
+    tagNodes.forEach(node => {
+      node.addEventListener('click', () => {
+        const id = node.getAttribute('data-id');
+        if (!id) return;
+        if (selected.has(id)) {
+          selected.delete(id);
+          node.classList.remove('selected');
+        } else {
+          if (selected.size >= MAX_SELECT) {
+            // 최대 4개 제한 안내
+            node.classList.add('shake');
+            setTimeout(() => node.classList.remove('shake'), 400);
+          } else {
+            selected.add(id);
+            node.classList.add('selected');
+          }
+        }
+        updateCounterUI();
+      });
     });
 
-    updateCount(); // 초기 상태
+    // --- 제출: PATCH /profiles/api/interests/ ---
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (selected.size !== MAX_SELECT) {
+        alert('관심사는 정확히 4개를 선택해주세요.');
+        return;
+      }
+
+      const payload = { interest_ids: Array.from(selected).map(id => Number(id)) };
+
+      try {
+        const res = await authFetch('/profiles/api/interests/', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          // 3단계 페이지로 이동
+          window.location.href = '/profiles/step3/page/';
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert('저장에 실패했습니다: ' + JSON.stringify(err));
+        }
+      } catch (e) {
+        console.error('관심사 저장 실패:', e);
+        alert('네트워크 오류로 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    });
+
+    // 초기 상태
+    updateCounterUI();
+  });
 </script>
 {% endblock %}
