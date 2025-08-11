@@ -2,11 +2,11 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'matches/css/explore.css' %}">
+<link rel="stylesheet" href="{% static 'matches/css/browse.css' %}">
 {% endblock %}
 {% block extra_js %}
 {{ universities_json|json_script:"universities-data" }}
-<script src="{% static 'matches/js/explore.js' %}" defer></script>
+<script src="{% static 'matches/js/browse.js' %}" defer></script>
 {% endblock %}
 
 {% block content %}

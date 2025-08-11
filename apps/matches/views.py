@@ -99,4 +99,4 @@ def explore_list(request):
         'universities' : universities,
         'universities_json': universities_data,  # 템플릿에서 JSON으로 사용
     }
-    return render(request, 'matches/explore.html', context)
+    return render(request, 'matches/browse.html', context)
