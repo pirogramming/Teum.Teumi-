@@ -132,7 +132,8 @@ def create_test_data():
                 'Friday': [('14:30', '17:00')],
                 'Saturday': [('10:00', '18:00')],  # 주말은 비교적 자유
                 'Sunday': [('11:00', '17:00')]
-            }
+            },
+            'manner_temperature': 4.8  # 높은 매너온도
         },
         {
             'username': 'lee_dohyun',
@@ -159,7 +160,8 @@ def create_test_data():
                 'Friday': [('10:00', '13:00'), ('16:00', '18:00')],
                 'Saturday': [('12:00', '20:00')],
                 'Sunday': [('10:00', '16:00')]
-            }
+            },
+            'manner_temperature': 4.2  # 보통 매너온도
         },
         {
             'username': 'park_seojin',
@@ -186,7 +188,8 @@ def create_test_data():
                 'Friday': [('13:30', '16:00'), ('19:00', '21:00')],
                 'Saturday': [('11:00', '19:00')],
                 'Sunday': [('13:00', '18:00')]
-            }
+            },
+            'manner_temperature': 4.7  # 높은 매너온도
         },
         {
             'username': 'choi_minwoo',
@@ -213,7 +216,8 @@ def create_test_data():
                 'Friday': [('12:30', '15:00'), ('18:00', '20:00')],
                 'Saturday': [('10:30', '17:00')],  # 연구실 시간
                 'Sunday': [('14:00', '19:00')]
-            }
+            },
+            'manner_temperature': 4.0  # 보통 매너온도
         },
         {
             'username': 'jung_yuna',
@@ -240,7 +244,8 @@ def create_test_data():
                 'Friday': [('11:00', '14:30'), ('17:00', '19:30')],
                 'Saturday': [('12:00', '18:30')],
                 'Sunday': [('10:30', '17:00')]
-            }
+            },
+            'manner_temperature': 4.3  # 보통 매너온도
         },
         {
             'username': 'kang_jiseok',
@@ -267,7 +272,8 @@ def create_test_data():
                 'Friday': [('13:00', '16:30'), ('18:00', '20:30')],
                 'Saturday': [('11:30', '18:00')],
                 'Sunday': [('12:30', '19:00')]
-            }
+            },
+            'manner_temperature': 4.5  # 높은 매너온도
         }
     ]
     
@@ -385,6 +391,7 @@ def create_test_data():
                     end_time=time(end_hour, end_minute)
                 )
         print(f"   ⏰ 스케줄 추가: 주간 {len(user_data['schedule'])}일 공강시간 설정")
+        print(f"   🌡️ 매너온도: {user_data['manner_temperature']}점")
     
     print(f"\n🎉 완료! {len(complete_users_data)}명의 완전한 프로필이 생성되었습니다.")
     print("\n📊 데이터 요약:")
@@ -396,6 +403,11 @@ def create_test_data():
     print(f"   - 프로필: {Profile.objects.count()}개")
     print(f"   - 추가 정보: {AdditionalInfo.objects.count()}개")
     print(f"   - 공강 시간: {FreeTime.objects.count()}개")
+    
+    # 매너온도 요약
+    print("\n🌡️ 매너온도 요약:")
+    for user_data in complete_users_data:
+        print(f"   {user_data['nickname']}: {user_data['manner_temperature']}점")
 
 if __name__ == '__main__':
     create_test_data()

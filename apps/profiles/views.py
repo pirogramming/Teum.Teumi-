@@ -112,7 +112,7 @@ def profile_step1(request):
                 'step3': 'profiles:profile_step3',
                 'step4': 'profiles:profile_step4',
                 'step5': 'profiles:profile_step5',
-                'completed': 'profiles:profile-home',
+                'completed': 'profiles:profile-home'  # 완료되면 홈으로
             }
             next_name = step_mapping.get(current_step)
             if wants_html(request) and next_name:
@@ -517,6 +517,7 @@ def profile_home(request):
     try:
         profile = Profile.objects.get(user=request.user)
     except Profile.DoesNotExist:
+      
         if wants_html(request):
             return redirect(reverse('profiles:profile_step1'))
         return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
@@ -529,60 +530,148 @@ def profile_home(request):
     if profile.current_step != 'completed':
         step_mapping = {
             'step1': 'profiles:profile_step1',
-            'step2': 'profiles:profile_step2',
+            'step2': 'profiles:profile_step2', 
             'step3': 'profiles:profile_step3',
             'step4': 'profiles:profile_step4',
             'step5': 'profiles:profile_step5'
         }
+        
+        # 4단계 이상 완성 - 홈 페이지 렌더링
+        # AI 추천 프로필 가져오기
+        
         next_name = step_mapping.get(profile.current_step)
         if wants_html(request) and next_name:
             return redirect(reverse(next_name))
         return Response({'current_step': profile.current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
+        # 이하 추천/인기 프로필 데이터는 그대로 유지
 
-    # 이하 추천/인기 프로필 데이터는 그대로 유지
     try:
-        recommended_users = recommend_top_n(request.user, n=6)
+        from apps.matches.services.recommend import recommend_top_n, calculate_match_score
+        from apps.reviews.models import Review
+        from django.db.models import Avg
+
+        # 내 관심사(교집합 계산용)
+        my_interest_names = set(
+            Interest.objects.filter(profileinterest__profile=profile)
+            .values_list('name', flat=True)
+        )
+
+        # 추천 3명
+        recommended_users = recommend_top_n(request.user, n=3)
         recommendations = []
+
         for recommended_user in recommended_users:
-            recommended_profile = recommended_user.profile
-            profile_interests = Interest.objects.filter(profileinterest__profile=recommended_profile)[:3]
-            my_interests = Interest.objects.filter(profileinterest__profile=profile)
-            my_interest_names = set(my_interests.values_list('name', flat=True))
-            other_interest_names = set(profile_interests.values_list('name', flat=True))
+            p = recommended_user.profile
+
+            # 상대 관심사: 최대 4개 (feat 로직)
+            other_interest_names = list(
+                Interest.objects.filter(profileinterest__profile=p)
+                .values_list('name', flat=True)[:4]
+            )
+
+            # 공통 관심사
+            common_interests = list(my_interest_names & set(other_interest_names))
+
+            # 매칭 점수 (실패 시 기본값)
+            try:
+                matching_score = calculate_match_score(profile, p)
+            except Exception:
+                matching_score = 75
+
+            # 매너온도(리뷰 평균) - 없으면 4.0
+            avg_rating = Review.objects.filter(target=recommended_user).aggregate(r=Avg('rating'))['r'] or 4.0
+
+            # 모델 인스턴스 직접 append 금지 → dict로 직렬화
             recommendations.append({
-                'profile_id': recommended_profile.profile_id,
-                'nickname': recommended_profile.nickname,
-                'school': recommended_profile.school.school_name if recommended_profile.school else None,
-                'department': recommended_profile.department.department_name if recommended_profile.department else None,
-                'user_interests': [i.name for i in profile_interests],
-                'average_rating': 4.5,
-                'matching_score': 85,
-                'common_interests': list(my_interest_names & other_interest_names)
+                'profile_id': p.profile_id,
+                'nickname': p.nickname,
+                'school': p.school.school_name if p.school else None,
+                'department': p.department.department_name if p.department else None,
+                'user_interests': other_interest_names,     # 최대 4개
+                'common_interests': common_interests,       # 교집합
+                'matching_score': matching_score,
+                'average_rating': float(avg_rating),
             })
+
     except Exception as e:
         print(f"추천 시스템 오류: {e}")
         recommendations = []
-
+    
     try:
-        from django.db.models import Count
-        from apps.profiles.models import ProfileInterest
+        from django.db.models import Avg, Case, When, Value, IntegerField, F
+        from django.db.models.functions import Length
+        from apps.reviews.models import Review
+        
+        # 자기소개 길이와 리뷰 평점을 모두 고려한 가중치 계산
         popular_users = Profile.objects.filter(
             current_step='completed',
             is_active=True
         ).exclude(user=request.user).annotate(
-            interest_count=Count('interests', distinct=True)
-        ).order_by('-interest_count', '-created_at')[:6]
+
+            avg_rating=Avg('user__received_reviews__rating'),
+            intro_length=Length('introduction')
+        ).annotate(
+            # 자기소개 길이 가중치 (0-100점)
+            intro_score=Case(
+                When(intro_length__gte=200, then=Value(100)),  # 200자 이상: 100점
+                When(intro_length__gte=150, then=Value(80)),   # 150자 이상: 80점
+                When(intro_length__gte=100, then=Value(60)),   # 100자 이상: 60점
+                When(intro_length__gte=50, then=Value(40)),    # 50자 이상: 40점
+                default=Value(20),  # 50자 미만: 20점
+                output_field=IntegerField(),
+            ),
+            # 리뷰 평점 (0-100점으로 변환)
+            rating_score=Case(
+                When(avg_rating__isnull=False, then=F('avg_rating') * 20),  # 5점 만점을 100점으로 변환
+                default=Value(60),  # 리뷰 없으면 기본 60점
+                output_field=IntegerField(),
+            )
+        ).annotate(
+            # 최종 점수: 리뷰 평점 60% + 자기소개 40%
+            final_score=(F('rating_score') * 0.6) + (F('intro_score') * 0.4)
+        ).order_by('-final_score', '-created_at')[:5]
+        
+        # 만약 프로필이 부족하면, 자기소개 길이 기준으로 보완
+        if popular_users.count() < 5:
+            additional_profiles = Profile.objects.filter(
+                current_step='completed',
+                is_active=True
+            ).exclude(user=request.user).exclude(
+                user__id__in=popular_users.values_list('user_id', flat=True)
+            ).annotate(
+                intro_length=Length('introduction')
+            ).order_by('-intro_length', '-created_at')[:5-popular_users.count()]
+            
+            popular_users = list(popular_users) + list(additional_profiles)
+        
         popular_profiles = []
-        for popular_profile in popular_users:
-            profile_interests = Interest.objects.filter(profileinterest__profile=popular_profile)[:3]
+        for p in popular_users:
+            p_interests = list(
+                Interest.objects.filter(profileinterest__profile=p)
+                .values_list('name', flat=True)[:2]
+            )
+
+            manner_temperatures = {
+                'kim_haneul': 4.8,
+                'lee_dohyun': 4.2,
+                'park_seojin': 4.7,
+                'choi_minwoo': 4.0,
+                'jung_yuna': 4.3,
+                'kang_jiseok': 4.5,
+            }
+            username = p.user.username
+            avg_rating = manner_temperatures.get(username, getattr(p, 'avg_rating', None) or 4.0)
+
             popular_profiles.append({
-                'profile_id': popular_profile.profile_id,
-                'nickname': popular_profile.nickname,
-                'school': popular_profile.school.school_name if popular_profile.school else None,
-                'department': popular_profile.department.department_name if popular_profile.department else None,
-                'user_interests': [i.name for i in profile_interests],
-                'average_rating': 4.3
+                'profile_id': p.profile_id,
+                'nickname': p.nickname,
+                'school': p.school.school_name if p.school else None,
+                'department': p.department.department_name if p.department else None,
+                'user_interests': p_interests,
+                'average_rating': float(avg_rating),
+                'intro_length': int(getattr(p, 'intro_length', 0) or 0),
             })
+
     except Exception as e:
         print(f"인기 프로필 로드 오류: {e}")
         popular_profiles = []
@@ -596,6 +685,7 @@ def profile_home(request):
         },
         'recommendations': recommendations,
         'popular_profiles': popular_profiles,
+        'current_page': 'home',
     }
     if wants_html(request):
         return render(request, 'profiles/profile_home.html', {
@@ -626,61 +716,103 @@ def profile_detail(request, profile_id):
 
     try:
         additional_info = AdditionalInfo.objects.get(profile=profile)
+         # 성격 키워드 문자열만 추출해 리스트로 변환
         personality_keywords = list(additional_info.personality_keyword.values_list('keyword', flat=True))
     except AdditionalInfo.DoesNotExist:
         additional_info = None
         personality_keywords = []
 
-    from apps.schedules.models import FreeTime, DayOfWeek
-    schedule_data = [[] for _ in range(7)]
+    # AI 추천 대화 주제 생성
+    conversation_recommendations = []
+    if profile.department:
+        conversation_recommendations.append({
+            'icon': '💼',
+            'text': f'{profile.department.department_name} 전공과 관련된 진로 방향성 논의하기'
+        })
+    
+    if interests.exists():
+        first_interest = interests.first()
+        conversation_recommendations.append({
+            'icon': '📚',
+            'text': f'{first_interest.name} 분야의 실무 경험과 인사이트 공유하기'
+        })
+    
+    conversation_recommendations.append({
+        'icon': '🎯',
+        'text': '목표 달성을 위한 조언과 경험 나누기'
+    })
+    
+    # 스케줄 정보 가져오기
+    schedule_data = [[False] * 25 for _ in range(7)]  # 7일간의 스케줄
+    
+
     try:
+        from apps.schedules.models import FreeTime
         user_freetimes = FreeTime.objects.filter(user=profile.user)
+        
         for freetime in user_freetimes:
-            day_index = freetime.day_of_week.value - 1
+
+            # DayOfWeek enum의 인덱스 계산 (Monday=0, Tuesday=1, ...)
+            day_mapping = {
+                'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
+                'Friday': 4, 'Saturday': 5, 'Sunday': 6
+            }
+            day_index = day_mapping.get(freetime.day_of_week, 0)
+            
+            # 시간을 30분 단위로 분할 (9:00-21:00)
+
             start_hour = freetime.start_time.hour
             start_minute = freetime.start_time.minute
             end_hour = freetime.end_time.hour
             end_minute = freetime.end_time.minute
+            # 30분 단위 인덱스 계산
             start_index = (start_hour - 9) * 2 + (1 if start_minute >= 30 else 0)
             end_index = (end_hour - 9) * 2 + (1 if end_minute >= 30 else 0)
+            
+            # 해당 시간 슬롯들을 True로 설정
             for i in range(max(0, start_index), min(25, end_index)):
-                if len(schedule_data[day_index]) <= i:
-                    schedule_data[day_index].extend([False] * (i + 1 - len(schedule_data[day_index])))
                 schedule_data[day_index][i] = True
-            while len(schedule_data[day_index]) < 25:
-                schedule_data[day_index].append(False)
     except Exception as e:
         print(f"스케줄 로드 오류: {e}")
-        schedule_data = [[False] * 25 for _ in range(7)]
-
-    matching_score = 85
+    
+    # 디버깅: 스케줄 데이터 확인
+    print(f"스케줄 데이터: {schedule_data}")
+    print(f"사용자 FreeTime 개수: {user_freetimes.count() if 'user_freetimes' in locals() else 0}")
+    
+    # 매칭 점수 및 공통 관심사 계산
+    matching_score = 0
+    common_interests_count = 0
+    
     try:
-        my_interests = Interest.objects.filter(profileinterest__profile__user=request.user)
+        from apps.matches.services.recommend import calculate_match_score
+        
+        # 현재 로그인한 사용자의 프로필
+        my_profile = Profile.objects.get(user=request.user)
+        
+        # calculate_match_score 함수로 매칭 점수 계산
+        matching_score = calculate_match_score(my_profile, profile)
+        
+        # 공통 관심사 계산
+        my_interests = Interest.objects.filter(profileinterest__profile=my_profile)
         my_interest_names = set(my_interests.values_list('name', flat=True))
         other_interest_names = set(interests.values_list('name', flat=True))
         common_interests_count = len(my_interest_names & other_interest_names)
-        if common_interests_count > 0:
-            matching_score = min(95, 70 + (common_interests_count * 5))
+        
     except Exception as e:
         print(f"매칭 계산 오류: {e}")
+        matching_score = 70  # 기본값
         common_interests_count = 0
-
+    
+    import json
+    
     context = {
-        'profile': {
-            'profile_id': profile.profile_id,
-            'nickname': profile.nickname,
-            'school': profile.school.school_name if profile.school else None,
-            'department': profile.department.department_name if profile.department else None,
-        },
-        'interests': list(interests.values_list('name', flat=True)),
-        'additional_info': {
-            'experience': additional_info.experience if additional_info else None,
-            'conversation_style': additional_info.conversation_style if additional_info else None,
-            'activity_location': additional_info.activity_location if additional_info else None,
-            'goal_or_concern': additional_info.goal_or_concern if additional_info else None,
-            'personality_keywords': personality_keywords,
-        },
-        'schedule': schedule_data,
+        'profile': profile,
+        'interests': interests,
+        'additional_info': additional_info,
+        'personality_keywords': personality_keywords,
+        'conversation_recommendations': conversation_recommendations,
+        'schedule': json.dumps(schedule_data),  # JSON 문자열로 변환  스케줄 데이터 업로드
+
         'matching_score': matching_score,
         'common_interests_count': common_interests_count,
     }
@@ -692,7 +824,6 @@ def profile_detail(request, profile_id):
         })
     return Response(context, status=200)
     
-#
 # -------------------------------------------------------------------
 # [API] 마이페이지 데이터 반환 (관심사/성격 키워드 등)
 # -------------------------------------------------------------------

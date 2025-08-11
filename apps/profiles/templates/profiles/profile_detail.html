@@ -330,26 +330,15 @@
           window.TARGET_PROFILE_ID = "{{ profile.profile_id|escapejs }}";
         })();
         // 실제 프로필 데이터
+
         const profileData = {
-            nickname: '{{ profile.nickname|escapejs }}',
-            university: '{% if profile.school %}{{ profile.school.school_name|escapejs }}{% endif %}',
-            department: '{% if profile.department %}{{ profile.department.department_name|escapejs }}{% endif %}',
-            year: '{{ profile.grade|escapejs }}',
-            interests: [
-                {% for interest in interests %}'{{ interest.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}
-            ],
-            mbti: '{{ profile.mbti|escapejs }}',
-            gender: '{% if profile.gender == "M" %}남성{% elif profile.gender == "F" %}여성{% endif %}',
-            introduction: '{{ profile.introduction|escapejs }}',
-            schedule: {{ schedule|safe }},
-            experience: '{% if additional_info.experience %}{{ additional_info.experience|escapejs }}{% endif %}',
-            talkStyle: '{% if additional_info.conversation_style %}{{ additional_info.get_conversation_style_display|escapejs }}{% endif %}',
-            location: '{% if additional_info.activity_location %}{{ additional_info.activity_location|escapejs }}{% endif %}',
-            personality: [
-                {% for keyword in personality_keywords %}'{{ keyword.keyword|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}
-            ],
-            currentGoal: '{% if additional_info.goal_or_concern %}{{ additional_info.goal_or_concern|escapejs }}{% endif %}'
+            schedule: JSON.parse('{{ schedule|safe }}'),  // Django에서 전달받은 스케줄 데이터
+            matching_score: {{ matching_score }},
+            common_interests_count: {{ common_interests_count }}
         };
+        
+        // 디버깅: 스케줄 데이터 확인
+        console.log('페이지 로드 시 profileData:', profileData);
 
         // Navigation functions
         function goBack() {
@@ -397,6 +386,9 @@
         function renderSchedule() {
             const scheduleGrid = document.querySelector('.schedule-grid');
             if (!scheduleGrid) return;
+            
+            console.log('renderSchedule 호출됨');
+            console.log('profileData.schedule:', profileData.schedule);
 
             const days = ['월', '화', '수', '목', '금', '토', '일'];
             const timeSlots = [];
@@ -420,7 +412,10 @@
                     <div class="schedule-row">
                         <div class="time-label">${time}</div>
                         ${days.map((day, dayIndex) => {
-                            const isAvailable = profileData.schedule[dayIndex] && profileData.schedule[dayIndex][hourIndex];
+                            // Django에서 전달받은 2차원 배열에서 해당 시간대의 가용성 확인
+                            const isAvailable = profileData.schedule && 
+                                               profileData.schedule[dayIndex] && 
+                                               profileData.schedule[dayIndex][hourIndex];
                             return `<div class="schedule-cell ${isAvailable ? 'available' : ''}"></div>`;
                         }).join('')}
                     </div>
