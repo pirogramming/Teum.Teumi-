@@ -311,17 +311,26 @@
 
 {% block extra_js %}
     {% csrf_token %}
-    <script>
-        // Django에서 전달받은 기존 스케줄 데이터
-        const existingScheduleData = [
-            {% for schedule in user_schedule %}
-            {
-                day_of_week: '{{ schedule.get_day_of_week_display }}',
-                start_time: '{{ schedule.start_time|time:"H:i" }}',
-                end_time: '{{ schedule.end_time|time:"H:i" }}'
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ];
+    <script type="application/json" id="existing-schedule-data">
+[
+{% for schedule in user_schedule %}
+  {
+    "day_of_week": "{{ schedule.get_day_of_week_display }}",
+    "start_time": "{{ schedule.start_time|time:'H:i' }}",
+    "end_time": "{{ schedule.end_time|time:'H:i' }}"
+  }{% if not forloop.last %},{% endif %}
+{% endfor %}
+]
     </script>
-    <script src="{% static 'js/mypage.js' %}"></script>
+    <script>
+      (function(){
+        try {
+          const el = document.getElementById('existing-schedule-data');
+          window.existingScheduleData = el ? JSON.parse(el.textContent || '[]') : [];
+        } catch (e) {
+          window.existingScheduleData = [];
+        }
+      })();
+    </script>
+    <script src="{% static 'users/js/mypage.js' %}"></script>
 {% endblock %}

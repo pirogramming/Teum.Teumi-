@@ -330,68 +330,6 @@ class GoogleLoginFinishView(APIView):
     
 ###여기서 부터 프로필과 중복 확인해볼 필요 있음###
 
-# 마이페이지 뷰
-def mypage(request):
-    """마이페이지를 렌더링하는 뷰"""
-    
-    if not request.user.is_authenticated:
-        return redirect('/users/login/')
-    
-    # 프로필 관련 모델 import
-    from apps.profiles.models import Profile, AdditionalInfo, Personality, ProfileInterest
-    from apps.interests.models import Interest
-    
-    try:
-        # 현재 사용자의 프로필 가져오기
-        profile = Profile.objects.select_related('user', 'school', 'department').get(user=request.user)
-    except Profile.DoesNotExist:
-        # 프로필이 없으면 새로 생성
-        profile = Profile.objects.create(
-            user=request.user,
-            is_active=True
-        )
-    
-    # 사용자 관심사 가져오기 (ProfileInterest 모델 사용)
-    profile_interests = ProfileInterest.objects.filter(profile=profile).select_related('interest')
-    selected_interests = [pi.interest for pi in profile_interests]
-    
-    # 모든 관심사 가져오기
-    available_interests = Interest.objects.all()
-    
-    # 추가 정보 가져오기
-    try:
-        additional_info = AdditionalInfo.objects.get(profile=profile)
-        personality_keywords = additional_info.personality_keyword.all()
-        selected_personalities = list(personality_keywords)
-    except AdditionalInfo.DoesNotExist:
-        additional_info = None
-        personality_keywords = []
-        selected_personalities = []
-    
-    # 모든 성격 키워드 가져오기
-    available_personalities = Personality.objects.all()
-    
-    # 사용자 스케줄 데이터 가져오기(추가부분)
-    from apps.schedules.models import FreeTime
-    user_schedule = FreeTime.objects.filter(user=request.user).order_by('day_of_week', 'start_time')
-    
-    context = {
-        'user': request.user,
-        'profile': profile,
-        'user_interests': profile_interests,
-        'selected_interests': selected_interests,
-        'available_interests': available_interests,
-        'additional_info': additional_info,
-        'personality_keywords': personality_keywords,
-        'selected_personalities': selected_personalities,
-        'available_personalities': available_personalities,
-        'user_schedule': user_schedule,
-        'current_page': 'mypage',  # 네비게이션 active 상태용
-        'mbti_options': ['ISTJ', 'ISFJ', 'INFJ', 'INTJ', 'ISTP', 'ISFP', 'INFP', 'INTP', 'ESTP', 'ESFP', 'ENFP', 'ENTP', 'ESTJ', 'ESFJ', 'ENFJ', 'ENTJ'],
-    }
-    
-    return render(request, 'users/mypage.html', context)
-
 # 마이페이지 편집 API 뷰들
 # API 명세서:  1. 기본 정보 업데이트 API
 @api_view(['POST'])
@@ -486,15 +424,25 @@ def update_interests(request):
                 'message': '관심사 데이터가 없습니다.'
             }, status=400)
         
-        # JSON 문자열을 파싱
-        try:
-            interest_ids = json.loads(interests_data)
-        except json.JSONDecodeError:
+        # 입력 포맷 유연 처리 (배열 또는 JSON 문자열 모두 허용)
+        if isinstance(interests_data, list):
+            interest_ids = [int(x) for x in interests_data]
+        else:
+            try:
+                interest_ids = json.loads(interests_data)
+            except json.JSONDecodeError:
+                return JsonResponse({
+                    'success': False,
+                    'message': '잘못된 관심사 데이터 형식입니다.'
+                }, status=400)
+        
+        # 검증: 정확히 4개 선택
+        if len(interest_ids) != 4:
             return JsonResponse({
                 'success': False,
-                'message': '잘못된 관심사 데이터 형식입니다.'
+                'message': '관심사는 정확히 4개를 선택해야 합니다.'
             }, status=400)
-        
+
         # 기존 관심사 삭제
         ProfileInterest.objects.filter(profile=profile).delete()
         
@@ -661,9 +609,17 @@ def update_advanced(request):
         
         # 성격 키워드 업데이트
         personalities_data = request.data.get('personalities')
-        if personalities_data:
+        if personalities_data is not None:
             try:
-                personality_ids = json.loads(personalities_data)
+                if isinstance(personalities_data, list):
+                    personality_ids = [int(x) for x in personalities_data]
+                else:
+                    personality_ids = json.loads(personalities_data)
+                if len(personality_ids) != 3:
+                    return JsonResponse({
+                        'success': False,
+                        'message': '성격 키워드는 정확히 3개를 선택해야 합니다.'
+                    }, status=400)
                 # 기존 성격 키워드 삭제
                 additional_info.personality_keyword.clear()
                 # 새로운 성격 키워드 추가
