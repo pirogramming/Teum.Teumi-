@@ -134,15 +134,15 @@
                 <div class="edit-content hidden" id="interests-edit">
                     <div class="interests-selector">
                         <div class="interest-grid">
-                            {% for interest in available_interests %}
+                        {% for interest in available_interests %}
                             <label class="interest-item">
-                    <input type="checkbox" name="interests" value="{{ interest.id }}" {% if interest in selected_interests %}checked{% endif %}>
+                                <input type="checkbox" name="interests" value="{{ interest.id }}" {% if interest.id in selected_interest_ids %}checked{% endif %}>
                                 <span class="interest-label">#{{ interest.name }}</span>
                             </label>
-                            {% endfor %}
+                        {% endfor %}
                         </div>
                         <div class="selection-counter">
-                            <p class="counter-text">선택된 관심사: <span id="interest-count">0</span>/4</p>
+                            <p class="counter-text">선택된 관심사: <span id="interest-count">0</span>/<span id="interest-total">4</span></p>
                 <p class="required-text">정확한 매칭을 위해 관심사 4개를 모두 선택해주세요.</p>
                         </div>
                     </div>
@@ -267,7 +267,7 @@
                         <div class="personality-selector">
                             {% for personality in available_personalities %}
                             <label class="personality-item">
-                    <input type="checkbox" name="personalities" value="{{ personality.id }}" {% if personality in selected_personalities %}checked{% endif %}>
+                                <input type="checkbox" name="personalities" value="{{ personality.id }}" {% if personality.id in selected_personality_ids %}checked{% endif %}>
                                 <span class="personality-label">#{{ personality.keyword }}</span>
                             </label>
                             {% endfor %}

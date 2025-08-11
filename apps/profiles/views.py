@@ -842,6 +842,7 @@ def mypage(request):
     # 사용자 관심사
     user_interests = ProfileInterest.objects.filter(profile=profile).select_related('interest')
     selected_interests = [{'id': ui.interest.id, 'name': ui.interest.name} for ui in user_interests]
+    selected_interest_ids = [ui.interest.id for ui in user_interests]
 
     # 모든 관심사
     available_interests = [{'id': i.id, 'name': i.name} for i in Interest.objects.all()]
@@ -851,10 +852,12 @@ def mypage(request):
         additional_info = AdditionalInfo.objects.get(profile=profile)
         personality_keywords = additional_info.personality_keyword.all()
         selected_personalities = [{'id': p.id, 'keyword': p.keyword} for p in personality_keywords]
+        selected_personality_ids = [p.id for p in personality_keywords]
     except AdditionalInfo.DoesNotExist:
         additional_info = None
         personality_keywords = []
         selected_personalities = []
+        selected_personality_ids = []
 
     # 모든 성격 키워드
     available_personalities = [{'id': p.id, 'keyword': p.keyword} for p in Personality.objects.all()]
@@ -867,14 +870,16 @@ def mypage(request):
         user_schedule = []
 
     data = {
-        'user': {
-            'id': request.user.id,
-            'username': request.user.username,
-            'email': request.user.email,
-        },
-        'selected_interests': selected_interests,
+        # user는 템플릿 기본 컨텍스트의 request.user를 사용하도록 여기서 재정의하지 않음
+        'profile': profile,
+        'user_interests': user_interests,  # 뷰 모드 표시용
+        'selected_interests': selected_interests,  # 에디트 모드 표시용(이름 필요 시)
+        'selected_interest_ids': selected_interest_ids,  # 에디트 모드 체크 적용용
         'available_interests': available_interests,
+        'additional_info': additional_info,
+        'personality_keywords': personality_keywords,  # 뷰 모드 표시용
         'selected_personalities': selected_personalities,
+        'selected_personality_ids': selected_personality_ids,  # 에디트 모드 체크 적용용
         'available_personalities': available_personalities,
         'user_schedule': user_schedule,
         'mbti_options': [choice[0] for choice in Profile.MBTI_CHOICES],
