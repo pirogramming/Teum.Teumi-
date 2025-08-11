@@ -330,68 +330,6 @@ class GoogleLoginFinishView(APIView):
     
 ###여기서 부터 프로필과 중복 확인해볼 필요 있음###
 
-# 마이페이지 뷰
-def mypage(request):
-    """마이페이지를 렌더링하는 뷰"""
-    
-    if not request.user.is_authenticated:
-        return redirect('/users/login/')
-    
-    # 프로필 관련 모델 import
-    from apps.profiles.models import Profile, AdditionalInfo, Personality, ProfileInterest
-    from apps.interests.models import Interest
-    
-    try:
-        # 현재 사용자의 프로필 가져오기
-        profile = Profile.objects.select_related('user', 'school', 'department').get(user=request.user)
-    except Profile.DoesNotExist:
-        # 프로필이 없으면 새로 생성
-        profile = Profile.objects.create(
-            user=request.user,
-            is_active=True
-        )
-    
-    # 사용자 관심사 가져오기 (ProfileInterest 모델 사용)
-    profile_interests = ProfileInterest.objects.filter(profile=profile).select_related('interest')
-    selected_interests = [pi.interest for pi in profile_interests]
-    
-    # 모든 관심사 가져오기
-    available_interests = Interest.objects.all()
-    
-    # 추가 정보 가져오기
-    try:
-        additional_info = AdditionalInfo.objects.get(profile=profile)
-        personality_keywords = additional_info.personality_keyword.all()
-        selected_personalities = list(personality_keywords)
-    except AdditionalInfo.DoesNotExist:
-        additional_info = None
-        personality_keywords = []
-        selected_personalities = []
-    
-    # 모든 성격 키워드 가져오기
-    available_personalities = Personality.objects.all()
-    
-    # 사용자 스케줄 데이터 가져오기(추가부분)
-    from apps.schedules.models import FreeTime
-    user_schedule = FreeTime.objects.filter(user=request.user).order_by('day_of_week', 'start_time')
-    
-    context = {
-        'user': request.user,
-        'profile': profile,
-        'user_interests': profile_interests,
-        'selected_interests': selected_interests,
-        'available_interests': available_interests,
-        'additional_info': additional_info,
-        'personality_keywords': personality_keywords,
-        'selected_personalities': selected_personalities,
-        'available_personalities': available_personalities,
-        'user_schedule': user_schedule,
-        'current_page': 'mypage',  # 네비게이션 active 상태용
-        'mbti_options': ['ISTJ', 'ISFJ', 'INFJ', 'INTJ', 'ISTP', 'ISFP', 'INFP', 'INTP', 'ESTP', 'ESFP', 'ENFP', 'ENTP', 'ESTJ', 'ESFJ', 'ENFJ', 'ENTJ'],
-    }
-    
-    return render(request, 'users/mypage.html', context)
-
 # 마이페이지 편집 API 뷰들
 # API 명세서:  1. 기본 정보 업데이트 API
 @api_view(['POST'])

@@ -152,7 +152,7 @@ function saveSection(section) {
         data = {
             experience: document.getElementById('advanced-experience').value,
             conversation_style: document.getElementById('advanced-conversation-style').value,
-            activity_location: document.getElementById('advanced-activity-location').value,
+            activity_location: document.getElementById('advanced-location').value,
             goal_or_concern: document.getElementById('advanced-goal').value,
             personalities: JSON.stringify(Array.from(document.querySelectorAll('#advanced-edit input[name="personalities"]:checked'))
                 .map(checkbox => checkbox.value))
@@ -193,7 +193,7 @@ function saveSection(section) {
 // 관심사 카운터 업데이트
 function updateInterestCount() {
     const selectedInterests = document.querySelectorAll('#interests-edit input[name="interests"]:checked');
-    const counter = document.getElementById('interest-counter');
+    const counter = document.getElementById('interest-count');
     if (counter) {
         counter.textContent = `${selectedInterests.length}/4`;
         counter.style.color = selectedInterests.length >= 4 ? '#e74c3c' : '#2c3e50';
@@ -203,7 +203,7 @@ function updateInterestCount() {
 // 성격 키워드 카운터 업데이트
 function updatePersonalityCount() {
     const selectedPersonalities = document.querySelectorAll('#advanced-edit input[name="personalities"]:checked');
-    const counter = document.getElementById('personality-counter');
+    const counter = document.getElementById('personality-count');
     if (counter) {
         counter.textContent = `${selectedPersonalities.length}/3`;
         counter.style.color = selectedPersonalities.length >= 3 ? '#e74c3c' : '#2c3e50';

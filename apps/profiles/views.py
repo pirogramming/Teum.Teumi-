@@ -856,6 +856,13 @@ def mypage(request):
     # 모든 성격 키워드
     available_personalities = [{'id': p.id, 'keyword': p.keyword} for p in Personality.objects.all()]
 
+    # 사용자 스케줄 (템플릿에서 기존 스케줄 표시 용)
+    try:
+        from apps.schedules.models import FreeTime
+        user_schedule = FreeTime.objects.filter(user=request.user).order_by('day_of_week', 'start_time')
+    except Exception:
+        user_schedule = []
+
     data = {
         'user': {
             'id': request.user.id,
@@ -866,6 +873,8 @@ def mypage(request):
         'available_interests': available_interests,
         'selected_personalities': selected_personalities,
         'available_personalities': available_personalities,
+        'user_schedule': user_schedule,
+        'mbti_options': [choice[0] for choice in Profile.MBTI_CHOICES],
     }
 
     # 🔁 HTML 요청이면 템플릿 렌더, JSON 요청이면 그대로 반환
