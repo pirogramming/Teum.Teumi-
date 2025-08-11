@@ -45,7 +45,7 @@
                         <div class="user-details">
                             <div class="user-header">
                                 <div class="user-name" onclick="goToProfileDetail({{ profile.profile_id }})" style="cursor: pointer;">
-                                    <h3>{{ profile.nickname }}</h3>
+                                    <h3>{{ profile.nickname }}{% if profile.age %} ({{ profile.age }}세){% endif %}</h3>
                                     <p>{{ profile.school }} {{ profile.department }}</p>
                                 </div>
                                 <div class="user-rating">
@@ -53,7 +53,7 @@
                                     <span>{{ profile.average_rating|floatformat:1 }}</span>
                                 </div>
                             </div>
-                            <p class="user-intro">{{ profile.introduction|truncatewords:15 }}</p>
+                             <p class="user-intro">{{ profile.introduction|default_if_none:''|truncatewords:15 }}</p>
                             
                             <div class="user-interests">
                                 {% for interest in profile.user_interests %}
@@ -102,7 +102,7 @@
                         <div class="avatar-fallback">{{ profile.nickname|slice:":1"|upper }}</div>
                     </div>
                     <h3 class="profile-name">{{ profile.nickname }}</h3>
-                    <p class="profile-info">{{ profile.department|default:"학과" }}</p>
+                    <p class="profile-info">{% if profile.age %}{{ profile.age }}세 • {% endif %}{{ profile.department|default:"학과" }}</p>
                     <div class="profile-interest">
                         {% if profile.user_interests %}
                             {% for interest in profile.user_interests %}

@@ -587,6 +587,8 @@ def profile_home(request):
                 'nickname': p.nickname,
                 'school': p.school.school_name if p.school else None,
                 'department': p.department.department_name if p.department else None,
+                'age': p.age,
+                'introduction': p.introduction,
                 'user_interests': other_interest_names,     # 최대 4개
                 'common_interests': common_interests,       # 교집합
                 'matching_score': matching_score,
@@ -667,6 +669,7 @@ def profile_home(request):
                 'nickname': p.nickname,
                 'school': p.school.school_name if p.school else None,
                 'department': p.department.department_name if p.department else None,
+                'age': p.age,
                 'user_interests': p_interests,
                 'average_rating': float(avg_rating),
                 'intro_length': int(getattr(p, 'intro_length', 0) or 0),
