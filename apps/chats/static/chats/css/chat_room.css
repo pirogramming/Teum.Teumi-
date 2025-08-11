@@ -18,6 +18,21 @@ body {
     z-index: 100;
 }
 
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin: 10px;
+    }
+
+.back-btn:hover {
+    filter: brightness(0) saturate(100%) invert(50%) sepia(41%) saturate(733%) hue-rotate(218deg) brightness(101%) contrast(101%);
+}
+
+.back-icon {
+    color: #4f4f4f;
+}
 
 .profile-circle {
     width: 48px;
@@ -173,4 +188,11 @@ body {
 
 .other-messege .timestamp {
     color: #737881;
+}
+
+.date-separator {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 0.75rem;
+    color: #9b9b9b;
 }
