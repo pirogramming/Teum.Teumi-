@@ -175,7 +175,12 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 # CSRF Settings
 CSRF_COOKIE_SECURE = False  # 개발 환경에서는 False
 CSRF_COOKIE_HTTPONLY = False
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'https://teumteumi.site',
+    'http://teumteumi.site',
+]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

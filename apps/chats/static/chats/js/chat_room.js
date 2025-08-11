@@ -5,7 +5,8 @@ if (!token || !roomId) {
     alert("잘못된 접근입니다.");
 }
 
-const socket = new WebSocket(`ws://localhost:8000/ws/chat/${roomId}/?token=${token}`);
+// 운영 하드코딩: teumteumi.site 고정 (로컬 테스트 시 아래를 주석 처리하고 동적 생성 사용)
+const socket = new WebSocket(`wss://teumteumi.site/ws/chat/${roomId}/?token=${token}`);
 const log = document.getElementById("chat-log");
 const input = document.getElementById("chat-input");
 const sendBtn = document.getElementById("send-btn");
@@ -73,7 +74,7 @@ function formatTime(data){
     return `${ampm} ${hour}:${m}`;
 }
 
-fetch(`http://127.0.0.1:8000/chats/rooms/${roomId}/messages/`, {
+fetch(`https://teumteumi.site/chats/rooms/${roomId}/messages/`, {
     headers: {
         Authorization: `Bearer ${token}`
     }

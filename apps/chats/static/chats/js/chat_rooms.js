@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("accessToken");
 
-    fetch("http://127.0.0.1:8000/chats/rooms/list/", {
+    fetch("https://teumteumi.site/chats/rooms/list/", {
         headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

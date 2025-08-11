@@ -78,7 +78,8 @@ def kakao_login(request):
             return redirect('profiles:profile-home')
 
         client_id = os.environ.get("KAKAO_ID")
-        redirect_uri = "http://127.0.0.1:8000/users/login/kakao/callback/"
+        # 운영 도메인 고정 (요청 도메인과 무관하게 teumteumi.site 사용)
+        redirect_uri = "https://teumteumi.site/users/login/kakao/callback/"
 
         if client_id is None:
             raise KakaoException("KAKAO_ID is not set properly in .env")
@@ -114,7 +115,8 @@ def kakao_callback(request):
 
         client_id = os.environ.get("KAKAO_ID")      # .env 파일에서 가져오기
         client_secret = os.environ.get("KAKAO_SECRET")
-        redirect_uri = "http://127.0.0.1:8000/users/login/kakao/callback/"
+        # 운영 도메인 고정 콜백 URL
+        redirect_uri = "https://teumteumi.site/users/login/kakao/callback/"
 
         token_response = requests.post(     # 카카오에게 엑세스 토큰 요청
             "https://kauth.kakao.com/oauth/token",
@@ -187,8 +189,9 @@ def kakao_callback(request):
 def google_login(request):
     scope = "https://www.googleapis.com/auth/userinfo.email"
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
+    redirect_uri = "https://teumteumi.site/users/login/google/callback/"
     return redirect(
-        f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}"
+        f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={redirect_uri}&scope={scope}"
     )
 
 def google_callback(request):
@@ -215,7 +218,7 @@ def google_callback(request):
             "grant_type": "authorization_code",
             "client_id": client_id,
             "client_secret": client_secret,
-            "redirect_uri": os.environ.get("GOOGLE_CALLBACK_URI"),
+            "redirect_uri": "https://teumteumi.site/users/login/google/callback/",
             "code": code
         }
     )
