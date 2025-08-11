@@ -100,9 +100,8 @@ function setCurrentPage(page) {
             break;
             
         case 'chat-list':
-            console.log('대화 목록 페이지로 이동 - 준비중');
-            // TODO: 채팅 목록 페이지 구현 예정
-            alert('채팅 기능은 준비 중입니다!');
+            console.log('대화 목록 페이지로 이동');
+            window.location.href = '/chats/rooms/page/';
             break;
             
         case 'matching':
