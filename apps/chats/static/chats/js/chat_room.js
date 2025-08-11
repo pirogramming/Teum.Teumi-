@@ -1,4 +1,10 @@
-const token = localStorage.getItem("accessToken");
+function getAccessToken() {
+    return (
+        localStorage.getItem('access_token')
+    );
+}
+
+const token = getAccessToken();
 const roomId = ROOM_ID;
 
 if (!token || !roomId) {
@@ -20,6 +26,20 @@ socket.onmessage = (e) => {
     console.log("CURRENT_USER_ID:", CURRENT_USER_ID);
     console.log("sender_id:", sender_id);
     const isMine = sender_id == CURRENT_USER_ID; 
+        const msgDate = new Date(created_at || Date.now());
+
+    const dateStr = msgDate.toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "short"
+    });
+
+    if (lastDate !== dateStr) {
+        addDateSeparator(dateStr);
+        lastDate = dateStr;
+    }
+
     addMessage(sender, message, created_at, isMine);
 };
 
@@ -73,17 +93,40 @@ function formatTime(data){
     return `${ampm} ${hour}:${m}`;
 }
 
-fetch(`http://127.0.0.1:8000/chats/rooms/${roomId}/messages/`, {
+let lastDate = null; 
+fetch(`/chats/rooms/${roomId}/messages/`, {
     headers: {
         Authorization: `Bearer ${token}`
     }
 })
     .then(res => res.json())
     .then(messages => {
+        messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
         messages.forEach(m => {
+            const msgDate = new Date(m.created_at);
+            const dateStr = msgDate.toLocaleDateString("ko-KR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                weekday: "short"
+            });
+            
+            if (lastDate !== dateStr) {
+                addDateSeparator(dateStr);
+                lastDate = dateStr;
+            }
             addMessage(m.sender, m.content, m.created_at, m.isMine);
         });
     })
     .catch(err => {
         console.error("이전 메시지 불러오기 실패", err);
     });
+
+
+function addDateSeparator(dateText) {
+    const separator = document.createElement("div");
+    separator.className = "date-separator";
+    separator.textContent = dateText;
+    log.appendChild(separator);
+}
