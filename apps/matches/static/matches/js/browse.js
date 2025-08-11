@@ -1,3 +1,50 @@
+// 메인 페이지(홈)로 이동
+function goToHome() {
+    console.log('홈으로 이동');
+    window.location.href = '/profiles/profile/';
+}
+
+
+// 관심사 검색
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.querySelector(".search-input");
+    const recommends = document.querySelectorAll(".recommend");
+
+    searchInput.addEventListener("input", function () {
+        const keyword = searchInput.value.trim().toLowerCase();
+
+        recommends.forEach(recommend => {
+            const tags = recommend.querySelectorAll(".small-tag");
+            const tagTexts = Array.from(tags).map(tag => tag.innerText.toLowerCase());
+
+            // 입력한 키워드가 관심사 중 하나에 포함되면 표시
+            const matchFound = tagTexts.some(tagText => tagText.includes(keyword));
+
+            if (keyword === "" || matchFound) {
+                recommend.style.display = "";
+            } else {
+                recommend.style.display = "none";
+            }
+        });
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const universitySelect = document.getElementById("university");
+    const departmentSelect = document.getElementById("department");
+
+    // 처음에는 학과 선택 숨김
+    departmentSelect.style.display = "none";
+
+    universitySelect.addEventListener("change", function () {
+        if (universitySelect.value) {
+            departmentSelect.style.display = "";
+        } else {
+            departmentSelect.style.display = "none";
+        }
+    });
+});
+
 document.addEventListener("DOMContentLoaded", function () {
     const filterBtn = document.getElementById("filter");
     const smallView = document.querySelector(".small-view");

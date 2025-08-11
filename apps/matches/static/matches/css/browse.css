@@ -1,3 +1,103 @@
+#header {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.header-context > div > strong {
+    font-size: 1.2rem;
+}
+
+.div-container {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    gap: 15px;
+}
+
+.nav-button {
+    background: none;
+    border: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+.nav-button:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.chevron-left {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.header-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.header-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.search {
+    display: flex;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.search-input {
+    background-color: rgba(156, 163, 175, 0.1);
+    width: 100%;
+    border-radius: var(--radius-xl);
+    padding: 15px;
+    border: 0.5px solid #E0E7FF;
+    outline: none;
+}
+
+.search-svg {
+    color: var(--primary-color);
+    width: 35px;
+    height: 30px;
+    border-radius: var(--radius-xl);
+    border: 1px solid #E0E7FF;
+    padding: 5px;
+}
+
+.search-svg:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+    cursor: pointer;
+}
+
+.main-content {
+    font-size: 14px;
+    font-family: 'Noto Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+    word-break: keep-all;
+    word-wrap: break-word;
+    padding: 1rem 1rem 6rem;
+}
+
 .tag-container {
     padding: 0 0 15px;
 }
@@ -15,16 +115,16 @@
 }
 
 .tag, .small-tag, .detail-link > a {
-    color: #6366f1;
+    color: var(--primary-color);
     font-weight: 500;
     border: 1px solid #E0E7FF;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     padding: 5px 15px;
 }
 
 .tag:hover, .detail-link > a:hover {
-    color: #fff;
-    background-color: #6366f1;
+    color: var(--card-background);
+    background-color: var(--primary-color);
 }
 
 hr {
@@ -44,9 +144,9 @@ a {
 }
 
 .recommend {
-    background-color: #fff;
-    border-radius: 1rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    background-color: var(--card-background);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
     padding: 15px;
     display: flex;
     gap: 15px;
@@ -88,7 +188,7 @@ a {
 .major {
     font-size: 0.9rem;
     font-weight: 500;
-    color: #64748b;
+    color: var(--secondary-color);
 }
 
 .rating {
@@ -96,7 +196,7 @@ a {
     color: #b45309;
     font-size: 0.8rem;
     padding: 5px 10px;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     font-weight: 500;
 }
 
@@ -139,8 +239,8 @@ svg {
 
 .small-view {
     width: 100%;
-    background-color: #fff;
-    border-radius: 1rem;
+    background-color: var(--card-background);
+    border-radius: var(--radius-xl);
     padding: 15px;
     position: fixed;
     top: 50%;
@@ -153,7 +253,7 @@ svg {
 .close {
     font-size: 1.2rem;
     text-align: right;
-    color: #64748b;
+    color: var(--secondary-color);
     padding: 0;
 }
 
@@ -169,7 +269,7 @@ svg {
 
 .small-comment {
     text-align: center;
-    color: #64748b;
+    color: var(--secondary-color);
 }
 
 .interest-container {
@@ -184,9 +284,9 @@ svg {
 }
 
 .selectbox {
-    color: #64748b;
-    background-color: #f8fafc;
-    border-radius: 1rem;
+    color: var(--secondary-color);
+    background-color: var(--background-color);
+    border-radius: var(--radius-xl);
     border: none;
     outline: none;
     padding: 10px;
@@ -204,10 +304,11 @@ svg {
 }
 
 .view-tag {
+    font-size: 0.8rem;
     font-weight: 500;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     border: 1px solid #E0E7FF;
-    padding: 5px 10px;
+    padding: 5px 8px;
 }
 
 .view-tag:hover {
@@ -216,12 +317,12 @@ svg {
 }
 
 .view-tag.selected {
-    color: #fff;
-    background-color: #6366f1;
+    color: var(--card-background)f;
+    background-color: var(--primary-color);
 }
 
 .interest-time {
-    color: #64748b;
+    color: var(--secondary-color);
     font-size: 0.8rem;
     font-weight: 500;
 }
@@ -244,17 +345,17 @@ svg {
 
 .filter-button {
     width: 100%;
-    color: #fff;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    border-radius: 1rem;
+    color: var(--card-background);
+    background: linear-gradient(135deg, var(--primary-color), #a855f7);
+    border-radius: var(--radius-xl);
     padding: 5px 10px;
     border: none;
 }
 
 .cancle-button {
     width: 100%;
-    background-color: #fff;
-    border-radius: 1rem;
+    background-color: var(--card-background);
+    border-radius: var(--radius-xl);
     padding: 5px 10px;
     border: 1px solid #E0E7FF;
 }
@@ -264,13 +365,13 @@ svg {
     background-color: rgba(99, 102, 241, 0.1);
 }
 
-@media (min-width: 400px) {
+@media (min-width: 480px) {
     .small-view {
         width: 400px;
     }
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
     .small-view {
         width: 500px;
     }
