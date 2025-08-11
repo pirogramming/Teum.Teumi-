@@ -696,7 +696,7 @@ def update_advanced(request):
         }, status=500)
 
 def user_logout(request):
-     """
+    """
     로그아웃 API
     
     엔드포인트: GET /users/logout/
