@@ -141,21 +141,36 @@ function saveSection(section) {
         };
         url = '/users/update-basic/';
     } else if (section === 'interests') {
-        const selectedInterests = Array.from(document.querySelectorAll('#interests-edit input[name="interests"]:checked'))
-            .map(checkbox => checkbox.value);
+        const selectedInterests = getSelectedValues('#interests-edit', 'interests');
+        if (selectedInterests.length !== 4) {
+            alert('관심사는 정확히 4개를 선택해야 저장할 수 있어요.');
+            if (saveButton) {
+                saveButton.disabled = false;
+                saveButton.innerHTML = '<span>💾</span> 저장';
+            }
+            return;
+        }
         data = { interests: JSON.stringify(selectedInterests) };
         url = '/users/update-interests/';
     } else if (section === 'schedule') {
         data = { schedule: JSON.stringify(scheduleData) };
         url = '/users/update-schedule/';
     } else if (section === 'advanced') {
+        const selectedPersonalities = getSelectedValues('#advanced-edit', 'personalities');
+        if (selectedPersonalities.length !== 3) {
+            alert('성격 키워드는 정확히 3개를 선택해야 저장할 수 있어요.');
+            if (saveButton) {
+                saveButton.disabled = false;
+                saveButton.innerHTML = '<span>💾</span> 저장';
+            }
+            return;
+        }
         data = {
             experience: document.getElementById('advanced-experience').value,
             conversation_style: document.getElementById('advanced-conversation-style').value,
             activity_location: document.getElementById('advanced-location').value,
             goal_or_concern: document.getElementById('advanced-goal').value,
-            personalities: JSON.stringify(Array.from(document.querySelectorAll('#advanced-edit input[name="personalities"]:checked'))
-                .map(checkbox => checkbox.value))
+            personalities: JSON.stringify(selectedPersonalities)
         };
         url = '/users/update-advanced/';
     }
@@ -195,8 +210,9 @@ function updateInterestCount() {
     const selectedInterests = document.querySelectorAll('#interests-edit input[name="interests"]:checked');
     const counter = document.getElementById('interest-count');
     if (counter) {
-        counter.textContent = `${selectedInterests.length}/4`;
-        counter.style.color = selectedInterests.length >= 4 ? '#e74c3c' : '#2c3e50';
+        const count = selectedInterests.length;
+        counter.textContent = String(count);
+        counter.style.color = count === 4 ? '#3b82f6' : '#e74c3c';
     }
 }
 
@@ -205,10 +221,35 @@ function updatePersonalityCount() {
     const selectedPersonalities = document.querySelectorAll('#advanced-edit input[name="personalities"]:checked');
     const counter = document.getElementById('personality-count');
     if (counter) {
-        counter.textContent = `${selectedPersonalities.length}/3`;
-        counter.style.color = selectedPersonalities.length >= 3 ? '#e74c3c' : '#2c3e50';
+        const count = selectedPersonalities.length;
+        counter.textContent = String(count);
+        counter.style.color = count === 3 ? '#3b82f6' : '#e74c3c';
     }
 }
+
+// 공통 유틸: 선택된 값 배열 반환
+function getSelectedValues(containerSelector, inputName) {
+    return Array.from(document.querySelectorAll(`${containerSelector} input[name="${inputName}"]:checked`))
+        .map(cb => cb.value);
+}
+
+// 공통 유틸: 프로필 2단계 방식 - 초과 선택 시 원복 + 흔들림
+function enforceMaxSelectionSoft(containerSelector, inputName, max, itemClass, targetInput) {
+    const container = document.querySelector(containerSelector);
+    if (!container || !targetInput) return;
+    const checkedNow = container.querySelectorAll(`input[name="${inputName}"]:checked`).length;
+    if (checkedNow > max) {
+        // 방금 체크된 항목을 원복
+        targetInput.checked = false;
+        const item = targetInput.closest(`.${itemClass}`);
+        if (item) {
+            item.classList.add('shake');
+            setTimeout(() => item.classList.remove('shake'), 400);
+        }
+    }
+}
+
+// 개별 제한 함수는 공통 유틸 enforceMaxSelection으로 대체됨
 
 // 스케줄 초기화
 function initializeSchedule() {
@@ -351,8 +392,10 @@ function updateScheduleValidation() {
 // 이벤트 리스너들
 document.addEventListener('change', function(e) {
     if (e.target.name === 'interests') {
+        enforceMaxSelectionSoft('#interests-edit', 'interests', 4, 'interest-item', e.target);
         updateInterestCount();
     } else if (e.target.name === 'personalities') {
+        enforceMaxSelectionSoft('#advanced-edit', 'personalities', 3, 'personality-item', e.target);
         updatePersonalityCount();
     }
 });

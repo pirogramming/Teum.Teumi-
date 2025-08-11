@@ -424,15 +424,25 @@ def update_interests(request):
                 'message': '관심사 데이터가 없습니다.'
             }, status=400)
         
-        # JSON 문자열을 파싱
-        try:
-            interest_ids = json.loads(interests_data)
-        except json.JSONDecodeError:
+        # 입력 포맷 유연 처리 (배열 또는 JSON 문자열 모두 허용)
+        if isinstance(interests_data, list):
+            interest_ids = [int(x) for x in interests_data]
+        else:
+            try:
+                interest_ids = json.loads(interests_data)
+            except json.JSONDecodeError:
+                return JsonResponse({
+                    'success': False,
+                    'message': '잘못된 관심사 데이터 형식입니다.'
+                }, status=400)
+        
+        # 검증: 정확히 4개 선택
+        if len(interest_ids) != 4:
             return JsonResponse({
                 'success': False,
-                'message': '잘못된 관심사 데이터 형식입니다.'
+                'message': '관심사는 정확히 4개를 선택해야 합니다.'
             }, status=400)
-        
+
         # 기존 관심사 삭제
         ProfileInterest.objects.filter(profile=profile).delete()
         
@@ -599,9 +609,17 @@ def update_advanced(request):
         
         # 성격 키워드 업데이트
         personalities_data = request.data.get('personalities')
-        if personalities_data:
+        if personalities_data is not None:
             try:
-                personality_ids = json.loads(personalities_data)
+                if isinstance(personalities_data, list):
+                    personality_ids = [int(x) for x in personalities_data]
+                else:
+                    personality_ids = json.loads(personalities_data)
+                if len(personality_ids) != 3:
+                    return JsonResponse({
+                        'success': False,
+                        'message': '성격 키워드는 정확히 3개를 선택해야 합니다.'
+                    }, status=400)
                 # 기존 성격 키워드 삭제
                 additional_info.personality_keyword.clear()
                 # 새로운 성격 키워드 추가
