@@ -10,6 +10,8 @@ from apps.matches.services.recommend import recommend_top_n
 from apps.profiles.ProfileSerializer import ProfileSimpleSerializer
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from apps.profiles.models import School
+from apps.interests.models import Interest
 
 # 1. 매칭 목록 조회(GET) & 매칭 신청(POST)
 class MatchListCreateView(generics.ListCreateAPIView):
@@ -75,3 +77,26 @@ def matching_list(request):
         'user' : user,
     }
     return render(request, 'matches/matches.html', context)
+
+def explore_list(request):
+    interests = Interest.objects.all()
+    universities = School.objects.prefetch_related('departments').all()
+
+    # 직렬화하여 학과 포함한 JSON 생성
+    universities_data = []
+    for uni in universities:
+        universities_data.append({
+            'school_id': uni.school_id,
+            'school_name': uni.school_name,
+            'departments': [
+                {'department_id': dept.department_id, 'department_name': dept.department_name}
+                for dept in uni.departments.all()
+            ]
+        })
+
+    context = {
+        'interests' : interests,
+        'universities' : universities,
+        'universities_json': universities_data,  # 템플릿에서 JSON으로 사용
+    }
+    return render(request, 'matches/explore.html', context)

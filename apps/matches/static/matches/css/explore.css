@@ -266,7 +266,7 @@ svg {
 
 @media (min-width: 400px) {
     .small-view {
-        width: 4cqb;
+        width: 400px;
     }
 }
 
