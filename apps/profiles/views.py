@@ -894,3 +894,139 @@ def mypage(request):
         })
 
     return Response(data)
+
+# -------------------------------------------------------------------
+# [API] 마이페이지 편집 API들 (users.views에서 이동)
+# -------------------------------------------------------------------
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_basic(request):
+    try:
+        profile = Profile.objects.get(user=request.user)
+        nickname = request.data.get('nickname')
+        mbti = request.data.get('mbti')
+        gender = request.data.get('gender')
+        introduction = request.data.get('introduction')
+        if not all([nickname, mbti, gender, introduction]):
+            return JsonResponse({'success': False, 'message': '모든 필수 필드를 입력해주세요.'}, status=400)
+        profile.nickname = nickname
+        profile.mbti = mbti
+        profile.gender = gender
+        profile.introduction = introduction
+        profile.save()
+        return JsonResponse({'success': True, 'message': '기본 정보가 성공적으로 업데이트되었습니다.'})
+    except Profile.DoesNotExist:
+        return JsonResponse({'success': False, 'message': '프로필을 찾을 수 없습니다.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_interests(request):
+    try:
+        from apps.interests.models import Interest
+        import json
+        profile = Profile.objects.get(user=request.user)
+        interests_data = request.data.get('interests')
+        if not interests_data:
+            return JsonResponse({'success': False, 'message': '관심사 데이터가 없습니다.'}, status=400)
+        if isinstance(interests_data, list):
+            interest_ids = [int(x) for x in interests_data]
+        else:
+            try:
+                interest_ids = json.loads(interests_data)
+            except json.JSONDecodeError:
+                return JsonResponse({'success': False, 'message': '잘못된 관심사 데이터 형식입니다.'}, status=400)
+        if len(interest_ids) != 4:
+            return JsonResponse({'success': False, 'message': '관심사는 정확히 4개를 선택해야 합니다.'}, status=400)
+        ProfileInterest.objects.filter(profile=profile).delete()
+        for interest_id in interest_ids:
+            try:
+                interest = Interest.objects.get(id=interest_id)
+                ProfileInterest.objects.create(profile=profile, interest=interest)
+            except Interest.DoesNotExist:
+                continue
+        return JsonResponse({'success': True, 'message': '관심사가 성공적으로 업데이트되었습니다.'})
+    except Profile.DoesNotExist:
+        return JsonResponse({'success': False, 'message': '프로필을 찾을 수 없습니다.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_schedule(request):
+    try:
+        from apps.schedules.models import FreeTime, DayOfWeek
+        import json
+        from datetime import time
+        schedule_data = request.data.get('schedule')
+        if not schedule_data:
+            return JsonResponse({'success': False, 'message': '스케줄 데이터가 없습니다.'}, status=400)
+        try:
+            schedule_matrix = json.loads(schedule_data) if not isinstance(schedule_data, list) else schedule_data
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': '잘못된 스케줄 데이터 형식입니다.'}, status=400)
+        FreeTime.objects.filter(user=request.user).delete()
+        time_slots = []
+        for i in range(25):
+            hour = 9 + (i // 2)
+            minute = 30 if i % 2 else 0
+            time_slots.append(time(hour, minute))
+        day_choices = [
+            DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+            DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY,
+        ]
+        for day_index, day_schedule in enumerate(schedule_matrix):
+            for time_index, is_selected in enumerate(day_schedule):
+                if is_selected and time_index < len(time_slots):
+                    start_time = time_slots[time_index]
+                    end_minute = start_time.minute + 30
+                    end_hour = start_time.hour + (end_minute // 60)
+                    end_minute = end_minute % 60
+                    end_time = time(end_hour, end_minute)
+                    FreeTime.objects.create(
+                        user=request.user,
+                        day_of_week=day_choices[day_index],
+                        start_time=start_time,
+                        end_time=end_time
+                    )
+        return JsonResponse({'success': True, 'message': '스케줄이 성공적으로 업데이트되었습니다.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_advanced(request):
+    try:
+        from apps.profiles.models import Personality
+        import json
+        profile = Profile.objects.get(user=request.user)
+        additional_info, _ = AdditionalInfo.objects.get_or_create(profile=profile)
+        additional_info.experience = request.data.get('experience', '')
+        additional_info.conversation_style = request.data.get('conversation_style', '')
+        additional_info.activity_location = request.data.get('activity_location', '')
+        additional_info.goal_or_concern = request.data.get('goal_or_concern', '')
+        additional_info.save()
+        personalities_data = request.data.get('personalities')
+        if personalities_data is not None:
+            try:
+                if isinstance(personalities_data, list):
+                    personality_ids = [int(x) for x in personalities_data]
+                else:
+                    personality_ids = json.loads(personalities_data)
+                if len(personality_ids) != 3:
+                    return JsonResponse({'success': False, 'message': '성격 키워드는 정확히 3개를 선택해야 합니다.'}, status=400)
+                additional_info.personality_keyword.clear()
+                for personality_id in personality_ids:
+                    try:
+                        personality = Personality.objects.get(id=personality_id)
+                        additional_info.personality_keyword.add(personality)
+                    except Personality.DoesNotExist:
+                        continue
+            except json.JSONDecodeError:
+                return JsonResponse({'success': False, 'message': '잘못된 성격 키워드 데이터 형식입니다.'}, status=400)
+        return JsonResponse({'success': True, 'message': '상세 정보가 성공적으로 업데이트되었습니다.'})
+    except Profile.DoesNotExist:
+        return JsonResponse({'success': False, 'message': '프로필을 찾을 수 없습니다.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'}, status=500)

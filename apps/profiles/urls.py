@@ -35,4 +35,9 @@ urlpatterns = [
 
     # --- 마이페이지 ---
     path('mypage/', views.mypage, name='mypage'),
+    # 마이페이지 편집 API (users에서 이동)
+    path('update-basic/', views.update_basic, name='update-basic'),
+    path('update-interests/', views.update_interests, name='update-interests'),
+    path('update-schedule/', views.update_schedule, name='update-schedule'),
+    path('update-advanced/', views.update_advanced, name='update-advanced'),
 ]
