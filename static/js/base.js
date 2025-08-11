@@ -43,7 +43,7 @@ function goToChat(userId) {
  */
 function goToBrowse() {
     console.log('친구 찾기 페이지로 이동');
-    window.location.href = '/matches/explore/';
+    window.location.href = '/matches/browse/';
 }
 
 /**
@@ -96,7 +96,7 @@ function setCurrentPage(page) {
         case 'browse':
             console.log('탐색 페이지로 이동');
             // 탐색 페이지로 이동
-            window.location.href = '/matches/explore/';
+            window.location.href = '/matches/browse/';
             break;
             
         case 'chat-list':

@@ -78,7 +78,7 @@ def matching_list(request):
     }
     return render(request, 'matches/matches.html', context)
 
-def explore_list(request):
+def matching_browse(request):
     interests = Interest.objects.all()
     universities = School.objects.prefetch_related('departments').all()
 
