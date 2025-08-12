@@ -34,7 +34,7 @@
         </div>
         <div class="tag-container">
             {% for interest in interests %}
-            <div class="tag" data-label="{{ interest.name }}" data-id="{{ interest.id }}">#{{ interest.name }}</div>
+            <div class="tag" data-id="{{ interest.id }}" data-keyword="{{ interest.name }}">#{{ interest.name }}</div>
             {% endfor %}
         </div>
         <div class="comment">
@@ -101,14 +101,36 @@
           ? '좋아요! 이제 다음 단계로 넘어갈 수 있어요.'
           : '정확한 매칭을 위해 관심사 4개를 모두 선택해주세요.';
       }
+      // 5단계 스타일과 동일: 최대치 도달 시 나머지 비활성화/투명도 처리
+      tagNodes.forEach(node => {
+        const id = node.getAttribute('data-id');
+        const isSelected = selected.has(id);
+        if (count >= MAX_SELECT && !isSelected) {
+          node.classList.add('disabled');
+          node.style.pointerEvents = 'none';
+          node.style.opacity = '0.5';
+          node.style.color = '#64748b';
+        } else {
+          node.classList.remove('disabled');
+          node.style.pointerEvents = 'auto';
+          node.style.opacity = '1';
+          node.style.color = '';
+        }
+      });
       nextButton.disabled = (count !== MAX_SELECT);
     }
 
     function applySelectionStyles() {
       tagNodes.forEach(node => {
         const id = node.getAttribute('data-id');
-        if (selected.has(id)) node.classList.add('selected');
-        else node.classList.remove('selected');
+        const keyword = node.getAttribute('data-keyword');
+        if (selected.has(id)) {
+          node.classList.add('selected');
+          node.innerHTML = `✨ #${keyword}`;
+        } else {
+          node.classList.remove('selected');
+          node.innerHTML = `#${keyword}`;
+        }
       });
     }
 
@@ -136,6 +158,8 @@
         if (selected.has(id)) {
           selected.delete(id);
           node.classList.remove('selected');
+          const keyword = node.getAttribute('data-keyword');
+          node.innerHTML = `#${keyword}`;
         } else {
           if (selected.size >= MAX_SELECT) {
             // 최대 4개 제한 안내
@@ -144,6 +168,8 @@
           } else {
             selected.add(id);
             node.classList.add('selected');
+            const keyword = node.getAttribute('data-keyword');
+            node.innerHTML = `✨ #${keyword}`;
           }
         }
         updateCounterUI();
