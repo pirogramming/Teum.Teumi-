@@ -46,7 +46,7 @@ const MATCH_API_BASE = '/matches/api/matches';
 function setCurrentPage(name) {
   const routes = {
     home: '/profiles/profile/',
-    browse: '/explore/',
+    browse: '/matches/browse/',
     chat_list: '/chats/',
     matching: '/matches/',
     mypage: '/users/mypage/?format=html',

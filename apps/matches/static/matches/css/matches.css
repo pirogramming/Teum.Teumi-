@@ -1,6 +1,50 @@
+#header {
+    background-color: var(--card-background);
+    padding: 15px;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    border-bottom: 0.5px solid rgba(99, 102, 241, 0.1);
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.div-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 15px;
+}
+
+.icon {
+    font-size: 1.4rem;
+}
+
+.header-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.comment {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.main-content {
+    font-size: 14px;
+    font-family: 'Noto Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+    word-break: keep-all;
+    word-wrap: break-word;
+    padding: 1rem 1rem 6rem;
+}
+
 .tabs {
     background-color: rgba(156, 163, 175, 0.1);
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     padding: 3px;
     display: flex;
     align-items: center;
@@ -8,7 +52,7 @@
 }
 
 .tab-button {
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     background: none;
     border: none;
     font-weight: 500;
@@ -18,7 +62,7 @@
 }
 
 #active {
-    background-color: #fff;
+    background-color: var(--card-background);
 }
 
 #tab-request, #tab-completed {
@@ -28,8 +72,8 @@
 
 .tab-container {
     width: 100%;
-    background-color: #fff;
-    border-radius: 1rem;
+    background-color: var(--card-background);
+    border-radius: var(--radius-xl);
     display: flex;
     gap: 15px;
     padding: 15px;
@@ -69,7 +113,7 @@
 .major {
     font-size: 0.9rem;
     font-weight: 500;
-    color: #64748b;
+    color: var;
 }
 
 .status {
@@ -77,7 +121,7 @@
     color: #b45309;
     font-size: 0.8rem;
     padding: 5px;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     font-weight: 500;
 }
 
@@ -93,14 +137,14 @@
 .accept, .reject {
     width: 100%;
     font-weight: 500;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     padding: 5px;
     border: none;
 }
 
 .accept {
-    color: #fff;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: var(--card-background);
+    background: linear-gradient(135deg, var(--primary-color), #a855f7);
 }
 
 .reject {
@@ -120,7 +164,7 @@
     padding: 5px 10px;
     font-size: 0.8rem;
     font-weight: 500;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
 }
 
 .tab-left {
@@ -136,20 +180,20 @@
     border-radius: 50%;
     border: 3px solid #bbf7d0;
     font-weight: 500;
-    color: #10b981;
+    color: var(--success-color);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .matching-complete {
-    color: #10b981;
+    color: var(--success-color);
     background-color: #ecfdf5;
     display: flex;
     align-items: center;
     font-size: 0.8rem;
     font-weight: 500;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     padding: 5px 8px;
     margin-top: 10px;
 }
@@ -172,12 +216,12 @@ svg {
     font-size: 0.9rem;
     font-weight: 500;
     padding: 5px 15px;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
 }
 
 .tab-right > div:hover {
-    background-color: #6366f1;
-    color: #fff;
+    background-color: var(--primary-color);
+    color: var(--card-background);
     cursor: pointer;
 }
 
@@ -198,8 +242,8 @@ svg {
 
 .small-view {
     width: 100%;
-    background-color: #fff;
-    border-radius: 1rem;
+    background-color: var(--card-background);
+    border-radius: var(--radius-xl);
     padding: 15px;
     position: fixed;
     top: 50%;
@@ -211,7 +255,7 @@ svg {
 .close {
     font-size: 1.2rem;
     text-align: right;
-    color: #64748b;
+    color: var(--secondary-color);
     padding: 0;
 }
 
@@ -226,7 +270,7 @@ svg {
 }
 
 .small-comment {
-    color: #64748b;
+    color: var(--secondary-color);
 }
 
 .reject-radio {
@@ -269,7 +313,7 @@ input[type="radio"]:checked {
 
 .reject-comment {
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--secondary-color);
 }
 
 .submit-button {
@@ -282,8 +326,8 @@ input[type="radio"]:checked {
 
 .cancle-button {
     width: 100%;
-    background-color: #fff;
-    border-radius: 1rem;
+    background-color: var(--card-background);
+    border-radius: var(--radius-xl);
     padding: 5px 10px;
     border: 1px solid #E0E7FF;
 }
@@ -295,9 +339,9 @@ input[type="radio"]:checked {
 
 .reject-button {
     width: 100%;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     padding: 5px 10px;
-    color: #fff;
+    color: var(--card-background);
     background-color: red;
     border: 1px solid red;
 }
@@ -347,8 +391,8 @@ input[type="radio"]:checked {
     width: 1rem;
     height: 1rem;
     border-radius: 50%;
-    background: #fff;
-    border: 1px solid #6366f1;
+    background: var(--card-background);
+    border: 1px solid var(--primary-color);
     cursor: pointer;
 }
 
@@ -361,7 +405,7 @@ input[type="radio"]:checked {
 
 .slider-value {
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--secondary-color);
 }
 
 #value {
@@ -373,14 +417,14 @@ input[type="checkbox"] {
     width: 1rem;
     height: 1rem;
     border-radius: 0.3rem;
-    background-color: #fff;
+    background-color: var(--card-background);
     border: 1px solid #E0E7FF;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08)
 }
 
 input[type="checkbox"]:checked {
-    color: #fff;
-    background-color: #6366f1;
+    color: var(--card-background);
+    background-color: var(--primary-color);
 }
 
 .attitude > div:nth-of-type(2), .value > div:nth-of-type(2), .meet > div:nth-of-type(2) {
@@ -391,7 +435,7 @@ textarea {
     padding: 10px;
     width: 100%;
     margin-top: 15px;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     background-color: rgba(156, 163, 175, 0.1);
     border: none;
     resize: none;
@@ -400,9 +444,9 @@ textarea {
 
 .review-button {
     width: 100%;
-    color: #fff;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    border-radius: 1rem;
+    color: var(--card-background);
+    background: linear-gradient(135deg, var(--primary-color), #a855f7);
+    border-radius: var(--radius-xl);
     padding: 5px 10px;
     border: none;
 }
