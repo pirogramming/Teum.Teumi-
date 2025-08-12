@@ -286,6 +286,23 @@
     </div>
 
     <script>
+        // ==== 대화 신청 시 textarea에 한 글자라도 입력해야 신청 버튼 활성화 ====
+        document.addEventListener("DOMContentLoaded", function () {
+            const textarea = document.getElementById("applicationReason");
+            const submitButton = document.querySelector(".submit-button");
+
+            // 초기에는 버튼 비활성화
+            submitButton.disabled = true;
+
+            textarea.addEventListener("input", function () {
+                if (textarea.value.trim().length > 0) {
+                    submitButton.disabled = false;
+                } else {
+                    submitButton.disabled = true;
+                }
+            });
+        });
+
         // ===== JWT 템플릿 변수 → localStorage 저장 & authFetch 헬퍼 =====
         (function(){
           const tmplAccess = "{{ access_token|default:''|escapejs }}";
