@@ -1,7 +1,13 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const token = localStorage.getItem("accessToken");
+function getAccessToken() {
+    return (
+        localStorage.getItem('access_token')
+    );
+}
 
-    fetch("https://teumteumi.site/chats/rooms/list/", {
+document.addEventListener("DOMContentLoaded", () => {
+    const token = getAccessToken();
+
+    fetch("/chats/rooms/list/", {
         headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

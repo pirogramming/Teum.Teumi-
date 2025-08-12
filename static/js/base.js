@@ -42,9 +42,8 @@ function goToChat(userId) {
  * 사용처: 하단 네비게이션의 탐색 버튼, 빠른 액션의 친구 찾기 버튼
  */
 function goToBrowse() {
-    console.log('친구 찾기 페이지로 이동 - 준비중');
-    // TODO: 실제 탐색 페이지 구현 후 URL 연결 예정
-    alert('친구 찾기 기능은 준비 중입니다!');
+    console.log('친구 찾기 페이지로 이동');
+    window.location.href = '/matches/browse/';
 }
 
 /**
@@ -95,15 +94,14 @@ function setCurrentPage(page) {
             break;
             
         case 'browse':
-            console.log('탐색 페이지로 이동 - 준비중');
-            // TODO: 사용자 탐색/검색 페이지 구현 예정
-            alert('탐색 기능은 준비 중입니다!');
+            console.log('탐색 페이지로 이동');
+            // 탐색 페이지로 이동
+            window.location.href = '/matches/browse/';
             break;
             
         case 'chat-list':
-            console.log('대화 목록 페이지로 이동 - 준비중');
-            // TODO: 채팅 목록 페이지 구현 예정
-            alert('채팅 기능은 준비 중입니다!');
+            console.log('대화 목록 페이지로 이동');
+            window.location.href = '/chats/rooms/page/';
             break;
             
         case 'matching':
