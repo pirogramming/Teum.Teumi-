@@ -10,4 +10,5 @@ urlpatterns = [
     
     path("rooms/page/", chat_rooms_page, name="chat_rooms_page"), # 채팅방 리스트 페이지
     path("rooms/page/<int:room_id>/", chat_room_page, name="chat_room_page"), # 특정 채팅방 상세 페이지
+    path('rooms/<int:room_id>/complete/', complete_meeting, name='complete_meeting'),
 ]
