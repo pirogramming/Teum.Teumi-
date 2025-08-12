@@ -38,6 +38,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+function goToChat(userId) {
+    // 프로필 상세 페이지로 이동 (대화 신청을 위해)
+    console.log('프로필 상세 페이지로 이동, User ID:', userId);
+    window.location.href = `/profiles/profile/${userId}/`;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     const popularTags = document.querySelectorAll(".tag");
     const recommends = document.querySelectorAll(".recommend");

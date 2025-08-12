@@ -114,8 +114,9 @@
     margin: 15px 0;
 }
 
-.tag, .small-tag, .detail-link > a {
+.tag, .small-tag, .detail-link > button {
     color: var(--primary-color);
+    background-color: var(--card-background);
     font-weight: 500;
     border: 1px solid #E0E7FF;
     border-radius: var(--radius-xl);
@@ -129,7 +130,7 @@
     transform: scale(1.1);
 }
 
-.tag:hover, .detail-link > a:hover {
+.tag:hover, .detail-link > button:hover {
     color: var(--card-background);
     background-color: var(--primary-color);
     cursor: pointer;
@@ -223,6 +224,10 @@ a {
     text-align: right;
 }
 
+.detail-link > button {
+    background-color: var(--background-color);
+}
+
 svg {
     width: 0.8rem;
     height: 0.8rem;
@@ -247,6 +252,7 @@ svg {
 
 .small-view {
     width: 100%;
+    font-size: 0.8rem;
     background-color: var(--card-background);
     border-radius: var(--radius-xl);
     padding: 15px;
@@ -325,7 +331,7 @@ svg {
 }
 
 .view-tag.selected {
-    color: var(--card-background)f;
+    color: var(--card-background);
     background-color: var(--primary-color);
 }
 
