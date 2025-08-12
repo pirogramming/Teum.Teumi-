@@ -5,7 +5,8 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class ChatRoom(BaseEntity):
-    pass
+    is_completed = models.BooleanField(default=False)  # 만남 완료 여부
+    completed_at = models.DateTimeField(null=True, blank=True)  # 만남 완료 누른 시각
 
 class ChatParticipation(BaseEntity):
     chatroom = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name = 'participations')

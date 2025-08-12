@@ -1,11 +1,11 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
 from django.contrib.auth import get_user_model
 from .models import ChatRoom, ChatParticipation, Chat
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -68,10 +68,18 @@ def get_chat_messages(request, room_id):
     # 참여자인지 확인
     if not ChatParticipation.objects.filter(chatroom_id=room_id, user=user).exists():
         return Response({"detail": "접근 권한이 없습니다."}, status=403)
+    
+    try:
+        chatroom = ChatRoom.objects.get(id=room_id)
+    except ChatRoom.DoesNotExist:
+        return Response({"detail": "채팅방이 존재하지 않습니다."}, status=404)    
 
     messages = Chat.objects.filter(chatroom_id=room_id).select_related("sender").order_by("created_at")
 
-    data = [
+    data = {
+    "is_completed": chatroom.is_completed,
+    "completed_at": chatroom.completed_at,
+    "messages": [
         {
             "id": msg.id,
             "sender": msg.sender.profile.nickname,
@@ -81,7 +89,7 @@ def get_chat_messages(request, room_id):
         }
         for msg in messages
     ]
-
+    }
     return Response(data)
 
 def chat_rooms_page(request):
@@ -101,3 +109,23 @@ def chat_room_page(request, room_id):
         'opponent_nicknames': opponent_nicknames,
         'opponent_initials': opponent_initials,
     })
+
+# 만남 완료
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def complete_meeting(request, room_id):
+    user = request.user
+
+    # 참여자인지 확인
+    if not ChatParticipation.objects.filter(chatroom_id=room_id, user=user).exists():
+        return Response({"detail": "접근 권한이 없습니다."}, status=403)
+
+    try:
+        chatroom = ChatRoom.objects.get(id=room_id)
+    except ChatRoom.DoesNotExist:
+        return Response({"detail": "채팅방이 존재하지 않습니다."}, status=404)
+    
+    chatroom.is_completed = True
+    chatroom.completed_at = timezone.now()
+    chatroom.save()
+    return Response({"message": "만남 완료 처리되었습니다."})

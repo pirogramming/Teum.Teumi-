@@ -1,19 +1,21 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>채팅방 목록</title>
-  <link rel="stylesheet" href="{% static 'chats/css/chat_rooms.css' %}">
-</head>
-<body>
-  <div class="chat-rooms-header">
-    <h1 class="chat-rooms-title">💬 대화방</h1>
-    <p class="chat-rooms-subtitle">진행 중인 대화들을 확인해보세요</p>
-  </div>
 
-  <ul id="room-list"></ul>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<link rel="stylesheet" href="{% static 'chats/css/chat_rooms.css' %}">
+{% endblock %}
 
-  <script src="{% static 'chats/js/chat_rooms.js' %}"></script>
-</body>
-</html>
+{% block content %}
+<div class="chat-rooms-header">
+  <h1 class="chat-rooms-title">💬 대화방</h1>
+  <p class="chat-rooms-subtitle">진행 중인 대화들을 확인해보세요</p>
+</div>
+
+<ul id="room-list"></ul>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/base.js' %}"></script>
+<script src="{% static 'chats/js/chat_rooms.js' %}"></script>
+{% endblock %}

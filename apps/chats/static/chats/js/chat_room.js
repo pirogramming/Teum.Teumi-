@@ -12,7 +12,7 @@ if (!token || !roomId) {
 }
 
 // 운영 하드코딩: teumteumi.site 고정 (로컬 테스트 시 아래를 주석 처리하고 동적 생성 사용)
-const socket = new WebSocket(`wss://teumteumi.site/ws/chat/${roomId}/?token=${token}`);
+const socket = new WebSocket(`ws://localhost:8000/ws/chat/${roomId}/?token=${token}`);
 const log = document.getElementById("chat-log");
 const input = document.getElementById("chat-input");
 const sendBtn = document.getElementById("send-btn");
@@ -102,17 +102,19 @@ fetch(`/chats/rooms/${roomId}/messages/`, {
     }
 })
     .then(res => res.json())
-    .then(messages => {
-        messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    .then(data => {
+        // 메시지 렌더링
+        data.messages
+            .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+            .forEach(m => {
+                const msgDate = new Date(m.created_at);
+                const dateStr = msgDate.toLocaleDateString("ko-KR", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    weekday: "short"
+                });
 
-        messages.forEach(m => {
-            const msgDate = new Date(m.created_at);
-            const dateStr = msgDate.toLocaleDateString("ko-KR", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                weekday: "short"
-            });
             
             if (lastDate !== dateStr) {
                 addDateSeparator(dateStr);
@@ -131,4 +133,63 @@ function addDateSeparator(dateText) {
     separator.className = "date-separator";
     separator.textContent = dateText;
     log.appendChild(separator);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    checkMeetingStatus();
+
+    const meetingBtn = document.getElementById("meeting-complete-btn");
+    if (meetingBtn) {
+        meetingBtn.addEventListener("click", () => {
+            if (!confirm("정말 '만남 완료'로 표시하시겠습니까?")) return;
+
+            fetch(`/chats/rooms/${ROOM_ID}/complete/`, {
+                method: "POST", 
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                showMeetingBanner();
+                meetingBtn.disabled = true;
+            })
+            .catch(err => {
+                console.error(err);
+                alert("만남 완료 변경에 실패했습니다.");
+            });
+        });
+    }
+});
+
+function checkMeetingStatus() {
+    fetch(`/chats/rooms/${ROOM_ID}/messages/`, {
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.is_completed) {
+            showMeetingBanner();
+            document.getElementById("meeting-complete-btn").disabled = true;
+        }
+    });
+}
+
+function showMeetingBanner() {
+    const container = document.querySelector(".meeting-complete-container");
+    if (!container) return;
+
+    const btn = document.getElementById("meeting-complete-btn");
+    if (btn) btn.remove();
+
+    if (!document.querySelector(".meeting-completed-banner")) {
+        const banner = document.createElement("div");
+        banner.className = "meeting-completed-banner";
+        banner.textContent = "✅ 만남 완료";
+        container.appendChild(banner);
+    }
 }
