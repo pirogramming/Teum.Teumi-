@@ -139,7 +139,7 @@ function saveSection(section) {
             gender: document.getElementById('basic-gender').value,
             introduction: document.getElementById('basic-introduction').value
         };
-        url = '/users/update-basic/';
+        url = '/profiles/update-basic/';
     } else if (section === 'interests') {
         const selectedInterests = getSelectedValues('#interests-edit', 'interests');
         if (selectedInterests.length !== 4) {
@@ -151,10 +151,10 @@ function saveSection(section) {
             return;
         }
         data = { interests: JSON.stringify(selectedInterests) };
-        url = '/users/update-interests/';
+        url = '/profiles/update-interests/';
     } else if (section === 'schedule') {
         data = { schedule: JSON.stringify(scheduleData) };
-        url = '/users/update-schedule/';
+        url = '/profiles/update-schedule/';
     } else if (section === 'advanced') {
         const selectedPersonalities = getSelectedValues('#advanced-edit', 'personalities');
         if (selectedPersonalities.length !== 3) {
@@ -172,7 +172,7 @@ function saveSection(section) {
             goal_or_concern: document.getElementById('advanced-goal').value,
             personalities: JSON.stringify(selectedPersonalities)
         };
-        url = '/users/update-advanced/';
+        url = '/profiles/update-advanced/';
     }
     
     fetch(url, {
