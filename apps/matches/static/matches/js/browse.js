@@ -39,6 +39,40 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+    const popularTags = document.querySelectorAll(".tag");
+    const recommends = document.querySelectorAll(".recommend");
+    let activeTags = [];
+
+    popularTags.forEach(tag => {
+        tag.addEventListener("click", function () {
+            const selectedTag = tag.textContent.trim().toLowerCase();
+
+            // 배열에 있으면 제거, 없으면 추가
+            if (activeTags.includes(selectedTag)) {
+                activeTags = activeTags.filter(t => t !== selectedTag);
+                tag.classList.remove("active");
+            } else {
+                activeTags.push(selectedTag);
+                tag.classList.add("active");
+            }
+
+            // 필터링
+            recommends.forEach(recommend => {
+                const userTags = Array.from(recommend.querySelectorAll(".small-tag"))
+                    .map(t => t.textContent.trim().toLowerCase());
+
+                // activeTags가 비어 있으면 전체 표시
+                if (activeTags.length === 0 || activeTags.some(tag => userTags.includes(tag))) {
+                    recommend.style.display = "";
+                } else {
+                    recommend.style.display = "none";
+                }
+            });
+        });
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
     const universitySelect = document.getElementById("university");
     const departmentSelect = document.getElementById("department");
 

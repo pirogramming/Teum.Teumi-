@@ -120,11 +120,19 @@
     border: 1px solid #E0E7FF;
     border-radius: var(--radius-xl);
     padding: 5px 15px;
+    transition: background-color 0.3s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tag.active {
+    color: var(--card-background);
+    background-color: var(--primary-color);
+    transform: scale(1.1);
 }
 
 .tag:hover, .detail-link > a:hover {
     color: var(--card-background);
     background-color: var(--primary-color);
+    cursor: pointer;
 }
 
 hr {
