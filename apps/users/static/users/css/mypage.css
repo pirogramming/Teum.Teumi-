@@ -621,6 +621,20 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
+.save-button:disabled {
+    background: linear-gradient(135deg, #9ca3af, #d1d5db);
+    color: #6b7280;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+.save-button:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 .cancel-button {
     flex: 1;
     background: var(--card-background);
