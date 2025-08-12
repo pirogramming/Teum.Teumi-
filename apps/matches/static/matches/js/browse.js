@@ -4,21 +4,30 @@ function goToHome() {
     window.location.href = '/profiles/profile/';
 }
 
-
-// 관심사 검색
+// ==== 관심사&학교 검색 기능 ====
 document.addEventListener("DOMContentLoaded", function () {
     const searchInput = document.querySelector(".search-input");
     const recommends = document.querySelectorAll(".recommend");
+
+    // universities JSON 로드
+    const universities = JSON.parse(document.getElementById('universities-data').textContent);
 
     searchInput.addEventListener("input", function () {
         const keyword = searchInput.value.trim().toLowerCase();
 
         recommends.forEach(recommend => {
+            // 관심사 텍스트
             const tags = recommend.querySelectorAll(".small-tag");
             const tagTexts = Array.from(tags).map(tag => tag.innerText.toLowerCase());
 
-            // 입력한 키워드가 관심사 중 하나에 포함되면 표시
-            const matchFound = tagTexts.some(tagText => tagText.includes(keyword));
+            // school_id → school_name 변환
+            const schoolId = recommend.dataset.schoolId;
+            const schoolName = universities.find(u => u.school_id == schoolId)?.school_name.toLowerCase() || "";
+
+            // 검색 조건: 관심사 OR 학교명
+            const matchFound =
+                tagTexts.some(tagText => tagText.includes(keyword)) ||
+                schoolName.includes(keyword);
 
             if (keyword === "" || matchFound) {
                 recommend.style.display = "";
