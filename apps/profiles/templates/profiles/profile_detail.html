@@ -426,42 +426,77 @@
         }
 
         function submitApplication() {
-            const reason = document.getElementById('applicationReason').value.trim();
+            const textarea = document.getElementById('applicationReason');
+            const reason = (textarea.value || '').trim();
             if (!reason) {
                 alert('대화 신청 이유를 입력해주세요.');
                 return;
             }
 
-            const receiverUserId = {{ profile.user.id }}; // 수신자(상대) User ID
-            const payload = { receiver: receiverUserId, request_message: reason };
+            const toProfileId = window.TARGET_PROFILE_ID; // 상세 대상 프로필 ID
+            // 1) Change the payload to satisfy backend serializer expecting `receiver`
+            const payload = { receiver: toProfileId, reason, message: reason, to_profile_id: toProfileId };
+
+            // 전송 버튼 로딩 상태 처리
+            const button = document.querySelector('#applicationModal .submit-button');
+            const originalHTML = button ? button.innerHTML : null;
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '전송 중...';
+            }
 
             (async () => {
-              try {
-                const res = await authFetch('/matches/api/matches/', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(payload)
-                });
+                // 매칭 신청 API 엔드포인트 (POST)
+                const endpoints = ['/matches/api/matches/'];
+                let lastError = null;
 
-                if (res.ok) {
-                  alert('대화 신청이 전송되었습니다!');
-                  hideApplicationModal();
-                  document.getElementById('applicationReason').value = '';
-                } else {
-                  const err = await res.json().catch(() => ({}));
-                  // DRF 에러 포맷 우선순위로 메시지 추출
-                  const msg = (err.non_field_errors && err.non_field_errors[0])
-                           || (err.receiver && err.receiver[0])
-                           || err.detail
-                           || err.error
-                           || JSON.stringify(err);
-                  alert('신청 실패: ' + msg);
+                for (const url of endpoints) {
+                    try {
+                        // 3) Optional console debugging(디버깅용이어서 나중에 지워도 됨)
+                        console.log('POST', url, payload);
+                        const res = await authFetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        // 2) Improve error debug visibility (status + raw text fallback)
+                        if (res.ok) {
+                            alert('대화 신청이 전송되었습니다!');
+                            hideApplicationModal();
+                            textarea.value = '';
+                            // 성공 시 매치 리스트 페이지로 이동
+                            window.location.href = '/matches/';
+                            return;
+                        } else {
+                            let errText = '';
+                            try {
+                                const ct = res.headers.get('Content-Type') || '';
+                                if (ct.includes('application/json')) {
+                                    const errJson = await res.json();
+                                    errText = errJson.error || errJson.detail || JSON.stringify(errJson);
+                                } else {
+                                    errText = await res.text();
+                                }
+                            } catch (_) {
+                                errText = '';
+                            }
+                            lastError = `[${res.status}] ${errText || '응답 본문 없음'}`;
+                            // 404면 다음 후보 엔드포인트 시도
+                            if (res.status === 404) continue;
+                        }
+                    } catch (e) {
+                        lastError = e && e.message ? e.message : '네트워크 오류';
+                    }
                 }
-              } catch (e) {
-                console.error(e);
-                alert('네트워크 오류가 발생했습니다.');
-              }
-            })();
+
+                alert('신청 실패: ' + (lastError || '알 수 없는 오류가 발생했습니다.'));
+            })().finally(() => {
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalHTML || '<span>💌</span> 신청하기';
+                }
+            });
         }
 
         function toggleLike() {

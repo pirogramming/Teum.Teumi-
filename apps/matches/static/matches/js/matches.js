@@ -87,12 +87,22 @@ async function updateMatchStatus(matchId, nextStatus, payload = {}) {
       method: 'PATCH',
       body: JSON.stringify(Object.assign({ status: nextStatus }, payload)),
     });
+
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
       alert(err.detail || '상태 변경에 실패했습니다.');
       return;
     }
-    // 성공 시 새로고침으로 가장 확실하게 반영
+
+    const data = await resp.json().catch(() => ({}));
+
+    // 서버가 채팅방 URL을 주면 바로 이동
+    if (data && data.room_url) {
+      window.location.href = data.room_url;
+      return;
+    }
+
+    // 안전망: URL이 없으면 새로고침
     window.location.reload();
   } catch (e) {
     console.error(e);
