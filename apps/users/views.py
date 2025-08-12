@@ -189,7 +189,8 @@ def kakao_callback(request):
 def google_login(request):
     scope = "https://www.googleapis.com/auth/userinfo.email"
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
-    redirect_uri = "https://teumteumi.site/users/login/google/callback/"
+    redirect_uri = os.environ.get("GOOGLE_CALLBACK_URI")
+
     return redirect(
         f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={redirect_uri}&scope={scope}"
     )
@@ -209,6 +210,7 @@ def google_callback(request):
         
     client_id = os.environ.get("SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("SOCIAL_AUTH_GOOGLE_SECRET")
+    redirect_uri = os.environ.get("GOOGLE_CALLBACK_URI")
     code = request.GET.get('code')
 
     token_req = requests.post(      # 엑세스 토큰 받아옴
@@ -218,7 +220,7 @@ def google_callback(request):
             "grant_type": "authorization_code",
             "client_id": client_id,
             "client_secret": client_secret,
-            "redirect_uri": "https://teumteumi.site/users/login/google/callback/",
+            "redirect_uri": redirect_uri,
             "code": code
         }
     )
