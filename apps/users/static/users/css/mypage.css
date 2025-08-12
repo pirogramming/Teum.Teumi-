@@ -865,22 +865,3 @@ body {
     outline: none;
 }
 
-/* 다크 모드 대응 */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background-color: #0f172a;
-        --card-background: #1e293b;
-        --border-color: #334155;
-        --text-primary: #f1f5f9;
-        --text-secondary: #94a3b8;
-        --text-muted: #64748b;
-    }
-    
-    .schedule-cell {
-        background-color: #334155;
-    }
-    
-    .schedule-cell:hover {
-        background-color: var(--primary-light);
-    }
-}
