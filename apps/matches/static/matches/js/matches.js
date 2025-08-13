@@ -81,6 +81,64 @@ window.setCurrentPage = setCurrentPage;
     }
 
 // === Match actions (Accept/Reject) ===
+// 비동기적으로 매치를 가져오는 함수
+async function loadMatches(statusFilter) {
+  const url = `${MATCH_API_BASE}/mine/?status=${statusFilter}`;
+  try {
+    const resp = await apiFetch(url);
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch matches: ${resp.status}`);
+    }
+    const data = await resp.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+// 수정된 showTab 함수 (비동기 로딩 처리)
+async function showTab(tabName) {
+  const tabs = document.querySelectorAll('.tab-content');
+  const buttons = document.querySelectorAll('.tab-button');
+  
+  tabs.forEach(tab => tab.style.display = 'none');
+  buttons.forEach(btn => btn.removeAttribute('id'));
+
+  const activeTab = document.getElementById(`tab-${tabName}`);
+  const activeButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+  if (activeButton) activeButton.id = 'active';
+
+  // 기존 콘텐츠를 지우고 로딩 상태를 표시
+  activeTab.innerHTML = '<p>로딩 중...</p>';
+  activeTab.style.display = 'block';
+
+  let statusFilter;
+  if (tabName === 'request') {
+      statusFilter = '대기중';
+  } else if (tabName === 'completed') {
+      statusFilter = '수락됨';
+  }
+
+  const matches = await loadMatches(statusFilter);
+
+  // 매치를 렌더링
+  if (matches && matches.length > 0) {
+      activeTab.innerHTML = ''; // 로딩 텍스트 제거
+      matches.forEach(match => {
+          // TODO: match 객체를 사용해 동적으로 HTML을 생성하는 로직 추가
+          // activeTab.innerHTML += renderMatchItem(match, user);
+      });
+  } else {
+      activeTab.innerHTML = `<p>${tabName === 'request' ? '대화 신청 내역이 없습니다.' : '완료된 만남이 없습니다.'}</p>`;
+  }
+}
+
+// ... DOMContentLoaded 이벤트 리스너 ...
+document.addEventListener("DOMContentLoaded", function () {
+    // ... 기존 코드 ...
+    showTab('request');
+});
 async function updateMatchStatus(matchId, nextStatus, payload = {}) {
   if (!matchId) {
     alert('매칭 ID를 찾을 수 없습니다.');

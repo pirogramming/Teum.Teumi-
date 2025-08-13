@@ -1,28 +1,25 @@
-#apps.profiles.views.py
-# 안쓰는 모듈 
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Q, Count, Avg
-from django.http import Http404
-from django.shortcuts import redirect
-from django.shortcuts import render
+# apps.profiles.views.py (수정본)
+
+# 안 쓰는 모듈 정리 (수정 후 코드에서는 삭제)
+from django.shortcuts import render, get_object_or_404, redirect
+from django.db.models import Avg
+from django.http import Http404, JsonResponse # JsonResponse는 이제 필요 없어짐
+from django.urls import reverse
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-
-from .models import Profile, School, Department, AdditionalInfo, ProfileInterest
-from apps.users.models import User
-from apps.interests.models import Interest
-from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.http import JsonResponse
-from django.urls import reverse
 
-from .models import School, Department, Profile, Personality
+from .models import Profile, School, Department, AdditionalInfo, Personality
+from apps.users.models import User
+from apps.interests.models import Interest
+from apps.matches.services.recommend import recommend_top_n, calculate_match_score
+from apps.reviews.models import Review
+from apps.schedules.models import FreeTime
 
-from apps.matches.services.recommend import recommend_top_n
-
+from .ProfileSerializer import SchoolProfileSerializer, FreeTimeListSerializer, InterestSerializer, BasicInfoSerializer, AddtionalInfoSerializer
 
 # ---- helpers ----
 def wants_html(request):
@@ -35,8 +32,6 @@ def wants_html(request):
 
 # -------------------------------------------------------------------
 # [페이지 전용] 프로필 단계 1 화면 렌더 (인증 없음, 템플릿만 반환)
-#  - 세션의 access/refresh 토큰을 템플릿 변수로 주입
-#  - 실제 데이터는 프론트 JS가 /profiles/step1/ API로 호출
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -94,9 +89,7 @@ def profile_step5_page(request):
 
 #
 # -------------------------------------------------------------------
-# [API] 프로필 1단계 데이터 조회/분기
-#  - HTML 요청: 템플릿 렌더 (wants_html 참일 때)
-#  - JSON 요청: 단계/다음 경로(next_step) 응답
+# [API] 프로필 1단계 데이터 조회 (리디렉션 제거)
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -104,44 +97,21 @@ def profile_step1(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        access_token = request.session.get('access_token')
-        refresh_token = request.session.get('refresh_token')
-        if current_step != 'step1':
-            step_mapping = {
-                'step2': 'profiles:profile_step2',
-                'step3': 'profiles:profile_step3',
-                'step4': 'profiles:profile_step4',
-                'step5': 'profiles:profile_step5',
-                'completed': 'profiles:profile-home'  # 완료되면 홈으로
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({
-                'current_step': current_step,
-                'next_step': reverse(next_name) if next_name else None
-            }, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            universities = School.objects.all()
-            return render(request, 'profiles/profile_1.html', {
-                'universities': universities,
-                'current_step': 'step1',
-                'access_token': request.session.get('access_token'),
-                'refresh_token': request.session.get('refresh_token'),
-            })
-        return Response({'current_step': 'step1', 'note': 'profile not found; proceed with step1'}, status=200)
-
-    universities = School.objects.all()
+        current_step = 'step1'
+        
     if wants_html(request):
+        universities = School.objects.all()
         return render(request, 'profiles/profile_1.html', {
             'universities': universities,
-            'current_step': 'step1',
+            'current_step': current_step,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
+    
+    universities = School.objects.all()
     universities_data = [{'id': u.id, 'school_name': u.school_name} for u in universities]
-    return Response({'current_step': 'step1', 'universities': universities_data}, status=200)
+    return Response({'current_step': current_step, 'universities': universities_data}, status=200)
 
 #
 # -------------------------------------------------------------------
@@ -160,7 +130,7 @@ def get_majors_by_school(request):
 
 #
 # -------------------------------------------------------------------
-# [API] 프로필 2단계 데이터 조회/분기
+# [API] 프로필 2단계 데이터 조회 (리디렉션 제거)
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -168,40 +138,23 @@ def profile_step2(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        if current_step == 'step1':
-            if wants_html(request):
-                return redirect(reverse('profiles:profile_step1'))
-            return Response({'current_step': current_step, 'next_step': reverse('profiles:profile_step1')}, status=200)
-        if current_step not in ['step1', 'step2']:
-            step_mapping = {
-                'step3': 'profiles:profile_step3',
-                'step4': 'profiles:profile_step4',
-                'step5': 'profiles:profile_step5',
-                'completed': 'profiles:profile-home'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            return redirect(reverse('profiles:profile_step1'))
-        return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
+        current_step = 'step1'
 
     interests = Interest.objects.all()
     if wants_html(request):
         return render(request, 'profiles/profile_2.html', {
             'interests': interests,
-            'current_step': 'step2',
+            'current_step': current_step,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
     interests_data = [{'id': i.id, 'name': i.name} for i in interests]
-    return Response({'current_step': 'step2', 'interests': interests_data}, status=200)
+    return Response({'current_step': current_step, 'interests': interests_data}, status=200)
 
 #
 # -------------------------------------------------------------------
-# [API] 프로필 3단계 데이터 조회/분기
+# [API] 프로필 3단계 데이터 조회 (리디렉션 제거)
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -209,41 +162,20 @@ def profile_step3(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        if current_step in ['step1', 'step2']:
-            step_mapping = {
-                'step1': 'profiles:profile_step1',
-                'step2': 'profiles:profile_step2'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
-        if current_step not in ['step1', 'step2', 'step3']:
-            step_mapping = {
-                'step4': 'profiles:profile_step4',
-                'step5': 'profiles:profile_step5',
-                'completed': 'profiles:profile-home'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            return redirect(reverse('profiles:profile_step1'))
-        return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
-
+        current_step = 'step1'
+    
     if wants_html(request):
         return render(request, 'profiles/profile_3.html', {
-            'current_step': 'step3',
+            'current_step': current_step,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
-    return Response({'current_step': 'step3', 'message': 'Step 3: Please enter your free time.'}, status=200)
+    return Response({'current_step': current_step, 'message': 'Step 3: Please enter your free time.'}, status=200)
 
 #
 # -------------------------------------------------------------------
-# [API] 프로필 4단계 데이터 조회/분기
+# [API] 프로필 4단계 데이터 조회 (리디렉션 제거)
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -251,41 +183,20 @@ def profile_step4(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        if current_step in ['step1', 'step2', 'step3']:
-            step_mapping = {
-                'step1': 'profiles:profile_step1',
-                'step2': 'profiles:profile_step2',
-                'step3': 'profiles:profile_step3'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
-        if current_step not in ['step1', 'step2', 'step3', 'step4']:
-            step_mapping = {
-                'step5': 'profiles:profile_step5',
-                'completed': 'profiles:profile-home'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            return redirect(reverse('profiles:profile_step1'))
-        return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
+        current_step = 'step1'
 
     if wants_html(request):
         return render(request, 'profiles/profile_4.html', {
-            'current_step': 'step4',
+            'current_step': current_step,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
-    return Response({'current_step': 'step4', 'message': 'Step 4: Please enter your basic info.'}, status=200)
+    return Response({'current_step': current_step, 'message': 'Step 4: Please enter your basic info.'}, status=200)
 
 #
 # -------------------------------------------------------------------
-# [API] 프로필 5단계 데이터 조회/분기
+# [API] 프로필 5단계 데이터 조회 (리디렉션 제거)
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -293,28 +204,10 @@ def profile_step5(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        if current_step in ['step1', 'step2', 'step3', 'step4']:
-            step_mapping = {
-                'step1': 'profiles:profile_step1',
-                'step2': 'profiles:profile_step2',
-                'step3': 'profiles:profile_step3',
-                'step4': 'profiles:profile_step4'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
-        if current_step == 'completed':
-            if wants_html(request):
-                return redirect(reverse('profiles:profile-home'))
-            return Response({'current_step': current_step, 'next_step': reverse('profiles:profile-home')}, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            return redirect(reverse('profiles:profile_step1'))
-        return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
-
+        current_step = 'step1'
+        
     try:
-        profile = Profile.objects.get(user=request.user)
         additional_info = getattr(profile, 'additional_info', None)
         additional_info_data = {
             'experience': additional_info.experience if additional_info else None,
@@ -323,13 +216,13 @@ def profile_step5(request):
             'goal_or_concern': additional_info.goal_or_concern if additional_info else None,
             'personality_keywords': list(additional_info.personality_keyword.values_list('keyword', flat=True)) if additional_info else [],
         }
-    except Profile.DoesNotExist:
+    except (Profile.DoesNotExist, AttributeError):
         additional_info_data = {}
     personality_keywords = list(Personality.objects.values_list('keyword', flat=True))
 
     if wants_html(request):
         return render(request, 'profiles/profile_5.html', {
-            'current_step': 'step5',
+            'current_step': current_step,
             'additional_info': additional_info_data,
             'personality_keywords': personality_keywords,
             'access_token': request.session.get('access_token'),
@@ -337,15 +230,10 @@ def profile_step5(request):
         })
 
     return Response({
-        'current_step': 'step5',
+        'current_step': current_step,
         'additional_info': additional_info_data,
         'personality_keywords': personality_keywords,
     }, status=200)
-
-# 프로필 5단계 후 홈화면 보여주는 뷰
-
-# 프로필 5단계의 요청 데이터를 검증할 시리얼라이저
-from .ProfileSerializer import SchoolProfileSerializer, FreeTimeListSerializer, InterestSerializer, BasicInfoSerializer, AddtionalInfoSerializer
 
 #
 # -------------------------------------------------------------------
@@ -355,7 +243,8 @@ class SchoolProfileAPIView(APIView):
     def post(self, request):
         serializer = SchoolProfileSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()   
+            serializer.save()
+            # 이 시점에서 profile.current_step이 'step2'로 업데이트 됨
             return Response({"message": "학교 및 학과, 학년, 나이 정보가 성공적으로 저장되었습니다."}, status=200)
         else:
             return Response(serializer.errors, status=400)
@@ -376,11 +265,12 @@ class InterestTagAPIView(APIView):
             return Response(data, status=status.HTTP_200_OK)
         except Profile.DoesNotExist:
             return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     def patch(self, request):
         serializer = InterestSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
+            # 이 시점에서 profile.current_step이 'step3'로 업데이트 됨
             return Response({"message": "관심사가 성공적으로 저장되었습니다."}, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -393,7 +283,6 @@ class FreeTimeAPIView(APIView):
     def get(self, request):
         """기존 공강시간 조회"""
         try:
-            from apps.schedules.models import FreeTime
             free_times = FreeTime.objects.filter(user=request.user)
             
             data = {
@@ -409,15 +298,16 @@ class FreeTimeAPIView(APIView):
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def post(self, request):
         serializer = FreeTimeListSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
+            # 이 시점에서 profile.current_step이 'step4'로 업데이트 됨
             return Response({"message": "공강 시간이 성공적으로 등록되었습니다."}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
 #
 # -------------------------------------------------------------------
 # [API] 기본 정보(MBTI/성별/자기소개 등) 조회/수정
@@ -436,12 +326,13 @@ class BasicInfoAPIView(APIView):
             return Response(data, status=status.HTTP_200_OK)
         except Profile.DoesNotExist:
             return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     def patch(self, request):
         profile = get_object_or_404(Profile, user=request.user)
         serializer = BasicInfoSerializer(profile, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
+            # 이 시점에서 profile.current_step이 'step5'로 업데이트 됨
             return Response({"message": "기본 프로필 정보가 저장되었습니다."}, status=status.HTTP_200_OK)
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -457,7 +348,7 @@ class AddtionalInfoAPIView(APIView):
         try:
             profile = Profile.objects.get(user=request.user)
             additional_info = getattr(profile, 'additional_info', None)
-            
+
             if additional_info:
                 data = {
                     'experience': additional_info.experience,
@@ -471,7 +362,7 @@ class AddtionalInfoAPIView(APIView):
                 return Response({'message': '추가 정보가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
         except Profile.DoesNotExist:
             return Response({'error': '프로필을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     def post(self, request):
         """새로운 추가 정보 생성"""
         profile = get_object_or_404(Profile, user=request.user)
@@ -483,13 +374,13 @@ class AddtionalInfoAPIView(APIView):
             return Response({"message": "추가 정보가 성공적으로 저장되었습니다."}, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def patch(self, request):
         """기존 추가 정보 수정"""
         try:
             profile = Profile.objects.get(user=request.user)
             additional_info = getattr(profile, 'additional_info', None)
-            
+
             if additional_info:
                 serializer = AddtionalInfoSerializer(additional_info, data=request.data, partial=True, context={'request': request})
                 if serializer.is_valid():
@@ -507,9 +398,7 @@ class AddtionalInfoAPIView(APIView):
 
 #
 # -------------------------------------------------------------------
-# [API] 프로필 홈 데이터 (추천/인기) + 단계 분기
-#  - current_step != 'completed' 이면 next_step 안내 또는 HTML 리다이렉트
-#  - completed 이면 추천/인기 프로필 데이터 제공
+# [API] 프로필 홈 데이터 (추천/인기) + 단계 분기 (리디렉션 제거)
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -517,71 +406,60 @@ def profile_home(request):
     try:
         profile = Profile.objects.get(user=request.user)
     except Profile.DoesNotExist:
-      
+        # 프로필이 없는 경우, step1으로 유도
         if wants_html(request):
             return redirect(reverse('profiles:profile_step1'))
-        return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
+        return Response({'error': 'profile_not_found', 'current_step': 'step1'}, status=404)
 
     if not profile.is_active:
         if wants_html(request):
             return redirect(reverse('home'))
-        return Response({'error': 'inactive_profile', 'next_step': reverse('home')}, status=403)
-
-    if profile.current_step != 'completed':
-        step_mapping = {
-            'step1': 'profiles:profile_step1',
-            'step2': 'profiles:profile_step2', 
-            'step3': 'profiles:profile_step3',
-            'step4': 'profiles:profile_step4',
-            'step5': 'profiles:profile_step5'
-        }
+        return Response({'error': 'inactive_profile', 'current_step': 'inactive'}, status=403)
         
-        # 4단계 이상 완성 - 홈 페이지 렌더링
-        # AI 추천 프로필 가져오기
-        
-        next_name = step_mapping.get(profile.current_step)
-        if wants_html(request) and next_name:
-            return redirect(reverse(next_name))
-        return Response({'current_step': profile.current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
-        # 이하 추천/인기 프로필 데이터는 그대로 유지
+    current_step = profile.current_step
 
+    # 프로필이 완성되지 않았다면, 단계 정보만 반환
+    if current_step != 'completed':
+        if wants_html(request):
+            step_mapping = {
+                'step1': 'profiles/profile_1.html',
+                'step2': 'profiles/profile_2.html',
+                'step3': 'profiles/profile_3.html',
+                'step4': 'profiles/profile_4.html',
+                'step5': 'profiles/profile_5.html',
+            }
+            template_name = step_mapping.get(current_step)
+            return render(request, template_name, {
+                'current_step': current_step,
+                'access_token': request.session.get('access_token'),
+                'refresh_token': request.session.get('refresh_token'),
+            })
+
+        return Response({'current_step': current_step}, status=200)
+
+    # 프로필이 완성된 경우, 추천/인기 프로필 데이터 제공
     try:
-        from apps.matches.services.recommend import recommend_top_n, calculate_match_score
-        from apps.reviews.models import Review
-        from django.db.models import Avg
-
-        # 내 관심사(교집합 계산용)
         my_interest_names = set(
             Interest.objects.filter(profileinterest__profile=profile)
             .values_list('name', flat=True)
         )
 
-        # 추천 3명
         recommended_users = recommend_top_n(request.user, n=3)
         recommendations = []
 
         for recommended_user in recommended_users:
             p = recommended_user.profile
-
-            # 상대 관심사: 최대 4개 (feat 로직)
             other_interest_names = list(
                 Interest.objects.filter(profileinterest__profile=p)
                 .values_list('name', flat=True)[:4]
             )
-
-            # 공통 관심사
             common_interests = list(my_interest_names & set(other_interest_names))
-
-            # 매칭 점수 (실패 시 기본값)
             try:
                 matching_score = calculate_match_score(profile, p)
             except Exception:
                 matching_score = 75
-
-            # 매너온도(리뷰 평균) - 없으면 4.0
             avg_rating = Review.objects.filter(target=recommended_user).aggregate(r=Avg('rating'))['r'] or 4.0
 
-            # 모델 인스턴스 직접 append 금지 → dict로 직렬화
             recommendations.append({
                 'profile_id': p.profile_id,
                 'nickname': p.nickname,
@@ -589,51 +467,43 @@ def profile_home(request):
                 'department': p.department.department_name if p.department else None,
                 'age': p.age,
                 'introduction': p.introduction,
-                'user_interests': other_interest_names,     # 최대 4개
-                'common_interests': common_interests,       # 교집합
+                'user_interests': other_interest_names,
+                'common_interests': common_interests,
                 'matching_score': matching_score,
                 'average_rating': float(avg_rating),
             })
-
     except Exception as e:
         print(f"추천 시스템 오류: {e}")
         recommendations = []
-    
+
     try:
-        from django.db.models import Avg, Case, When, Value, IntegerField, F
         from django.db.models.functions import Length
-        from apps.reviews.models import Review
-        
-        # 자기소개 길이와 리뷰 평점을 모두 고려한 가중치 계산
+        from django.db.models import Case, When, Value, IntegerField, F
+
         popular_users = Profile.objects.filter(
             current_step='completed',
             is_active=True
         ).exclude(user=request.user).annotate(
-
             avg_rating=Avg('user__received_reviews__rating'),
             intro_length=Length('introduction')
         ).annotate(
-            # 자기소개 길이 가중치 (0-100점)
             intro_score=Case(
-                When(intro_length__gte=200, then=Value(100)),  # 200자 이상: 100점
-                When(intro_length__gte=150, then=Value(80)),   # 150자 이상: 80점
-                When(intro_length__gte=100, then=Value(60)),   # 100자 이상: 60점
-                When(intro_length__gte=50, then=Value(40)),    # 50자 이상: 40점
-                default=Value(20),  # 50자 미만: 20점
+                When(intro_length__gte=200, then=Value(100)),
+                When(intro_length__gte=150, then=Value(80)),
+                When(intro_length__gte=100, then=Value(60)),
+                When(intro_length__gte=50, then=Value(40)),
+                default=Value(20),
                 output_field=IntegerField(),
             ),
-            # 리뷰 평점 (0-100점으로 변환)
             rating_score=Case(
-                When(avg_rating__isnull=False, then=F('avg_rating') * 20),  # 5점 만점을 100점으로 변환
-                default=Value(60),  # 리뷰 없으면 기본 60점
+                When(avg_rating__isnull=False, then=F('avg_rating') * 20),
+                default=Value(60),
                 output_field=IntegerField(),
             )
         ).annotate(
-            # 최종 점수: 리뷰 평점 60% + 자기소개 40%
             final_score=(F('rating_score') * 0.6) + (F('intro_score') * 0.4)
         ).order_by('-final_score', '-created_at')[:5]
-        
-        # 만약 프로필이 부족하면, 자기소개 길이 기준으로 보완
+
         if popular_users.count() < 5:
             additional_profiles = Profile.objects.filter(
                 current_step='completed',
@@ -643,9 +513,9 @@ def profile_home(request):
             ).annotate(
                 intro_length=Length('introduction')
             ).order_by('-intro_length', '-created_at')[:5-popular_users.count()]
-            
+
             popular_users = list(popular_users) + list(additional_profiles)
-        
+
         popular_profiles = []
         for p in popular_users:
             p_interests = list(
@@ -674,7 +544,6 @@ def profile_home(request):
                 'average_rating': float(avg_rating),
                 'intro_length': int(getattr(p, 'intro_length', 0) or 0),
             })
-
     except Exception as e:
         print(f"인기 프로필 로드 오류: {e}")
         popular_profiles = []
@@ -689,6 +558,7 @@ def profile_home(request):
         'recommendations': recommendations,
         'popular_profiles': popular_profiles,
         'current_page': 'home',
+        'current_step': current_step,
     }
     if wants_html(request):
         return render(request, 'profiles/profile_home.html', {
@@ -701,7 +571,6 @@ def profile_home(request):
 #
 # -------------------------------------------------------------------
 # [API] 특정 프로필 상세 정보 + 스케줄/매칭 점수 계산
-#  - HTML 요청: 템플릿 렌더, JSON 요청: 상세 데이터 반환
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -748,285 +617,47 @@ def profile_detail(request, profile_id):
     # 스케줄 정보 가져오기
     schedule_data = [[False] * 25 for _ in range(7)]  # 7일간의 스케줄
     
-
     try:
-        from apps.schedules.models import FreeTime
         user_freetimes = FreeTime.objects.filter(user=profile.user)
-        
-        for freetime in user_freetimes:
-
-            # DayOfWeek enum의 인덱스 계산 (Monday=0, Tuesday=1, ...)
-            day_mapping = {
-                'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
-                'Friday': 4, 'Saturday': 5, 'Sunday': 6
-            }
-            day_index = day_mapping.get(freetime.day_of_week, 0)
-            
-            # 시간을 30분 단위로 분할 (9:00-21:00)
-
-            start_hour = freetime.start_time.hour
-            start_minute = freetime.start_time.minute
-            end_hour = freetime.end_time.hour
-            end_minute = freetime.end_time.minute
-            # 30분 단위 인덱스 계산
-            start_index = (start_hour - 9) * 2 + (1 if start_minute >= 30 else 0)
-            end_index = (end_hour - 9) * 2 + (1 if end_minute >= 30 else 0)
-            
-            # 해당 시간 슬롯들을 True로 설정
-            for i in range(max(0, start_index), min(25, end_index)):
-                schedule_data[day_index][i] = True
+        for free_time in user_freetimes:
+            day = free_time.day_of_week
+            start_hour = free_time.start_time.hour
+            end_hour = free_time.end_time.hour
+            for hour in range(start_hour, end_hour):
+                if 0 <= day < 7 and 0 <= hour < 25:
+                    schedule_data[day][hour] = True
     except Exception as e:
-        print(f"스케줄 로드 오류: {e}")
-    
-    # 디버깅: 스케줄 데이터 확인
-    print(f"스케줄 데이터: {schedule_data}")
-    print(f"사용자 FreeTime 개수: {user_freetimes.count() if 'user_freetimes' in locals() else 0}")
-    
-    # 매칭 점수 및 공통 관심사 계산
-    matching_score = 0
-    common_interests_count = 0
-    
-    try:
-        from apps.matches.services.recommend import calculate_match_score
-        
-        # 현재 로그인한 사용자의 프로필
-        my_profile = Profile.objects.get(user=request.user)
-        
-        # calculate_match_score 함수로 매칭 점수 계산
-        matching_score = calculate_match_score(my_profile, profile)
-        
-        # 공통 관심사 계산
-        my_interests = Interest.objects.filter(profileinterest__profile=my_profile)
-        my_interest_names = set(my_interests.values_list('name', flat=True))
-        other_interest_names = set(interests.values_list('name', flat=True))
-        common_interests_count = len(my_interest_names & other_interest_names)
-        
-    except Exception as e:
-        print(f"매칭 계산 오류: {e}")
-        matching_score = 70  # 기본값
-        common_interests_count = 0
-    
-    import json
-    
-    context = {
-        'profile': profile,
-        'interests': interests,
-        'additional_info': additional_info,
-        'personality_keywords': personality_keywords,
+        print(f"스케줄 정보 로드 오류: {e}")
+
+    profile_data = {
+        'profile_id': profile.profile_id,
+        'nickname': profile.nickname,
+        'age': profile.age,
+        'gender': profile.gender,
+        'mbti': profile.mbti,
+        'introduction': profile.introduction,
+        'school': profile.school.school_name if profile.school else None,
+        'department': profile.department.department_name if profile.department else None,
+        'student_id': profile.student_id,
+        'interests': list(interests.values_list('name', flat=True)),
+        'additional_info': {
+            'experience': additional_info.experience if additional_info else None,
+            'conversation_style': additional_info.conversation_style if additional_info else None,
+            'activity_location': additional_info.activity_location if additional_info else None,
+            'goal_or_concern': additional_info.goal_or_concern if additional_info else None,
+            'personality_keywords': personality_keywords,
+        },
         'conversation_recommendations': conversation_recommendations,
-        'schedule': json.dumps(schedule_data),  # JSON 문자열로 변환  스케줄 데이터 업로드
-
-        'matching_score': matching_score,
-        'common_interests_count': common_interests_count,
+        'schedule_data': schedule_data,
+        'is_me': profile.user == request.user,
     }
+
     if wants_html(request):
+        # HTML 요청 시에는 profile_data를 context로 넘겨줍니다.
         return render(request, 'profiles/profile_detail.html', {
-            **context,
-            'access_token': request.session.get('access_token'),
-            'refresh_token': request.session.get('refresh_token'),
-        })
-    return Response(context, status=200)
-    
-# -------------------------------------------------------------------
-# [API] 마이페이지 데이터 반환 (관심사/성격 키워드 등)
-# -------------------------------------------------------------------
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def mypage(request):
-    """마이페이지를 반환하는 API 뷰"""
-    if not request.user.is_authenticated:
-        return redirect('/users/login/')
-
-    profile = Profile.objects.select_related('user', 'school', 'department').get(user=request.user)
-
-    # 사용자 관심사
-    user_interests = ProfileInterest.objects.filter(profile=profile).select_related('interest')
-    selected_interests = [{'id': ui.interest.id, 'name': ui.interest.name} for ui in user_interests]
-    selected_interest_ids = [ui.interest.id for ui in user_interests]
-
-    # 모든 관심사
-    available_interests = [{'id': i.id, 'name': i.name} for i in Interest.objects.all()]
-
-    # 추가 정보 및 성격 키워드
-    try:
-        additional_info = AdditionalInfo.objects.get(profile=profile)
-        personality_keywords = additional_info.personality_keyword.all()
-        selected_personalities = [{'id': p.id, 'keyword': p.keyword} for p in personality_keywords]
-        selected_personality_ids = [p.id for p in personality_keywords]
-    except AdditionalInfo.DoesNotExist:
-        additional_info = None
-        personality_keywords = []
-        selected_personalities = []
-        selected_personality_ids = []
-
-    # 모든 성격 키워드
-    available_personalities = [{'id': p.id, 'keyword': p.keyword} for p in Personality.objects.all()]
-
-    # 사용자 스케줄 (템플릿에서 기존 스케줄 표시 용)
-    try:
-        from apps.schedules.models import FreeTime
-        user_schedule = FreeTime.objects.filter(user=request.user).order_by('day_of_week', 'start_time')
-    except Exception:
-        user_schedule = []
-
-    data = {
-        # user는 템플릿 기본 컨텍스트의 request.user를 사용하도록 여기서 재정의하지 않음
-        'profile': profile,
-        'user_interests': user_interests,  # 뷰 모드 표시용
-        'selected_interests': selected_interests,  # 에디트 모드 표시용(이름 필요 시)
-        'selected_interest_ids': selected_interest_ids,  # 에디트 모드 체크 적용용
-        'available_interests': available_interests,
-        'additional_info': additional_info,
-        'personality_keywords': personality_keywords,  # 뷰 모드 표시용
-        'selected_personalities': selected_personalities,
-        'selected_personality_ids': selected_personality_ids,  # 에디트 모드 체크 적용용
-        'available_personalities': available_personalities,
-        'user_schedule': user_schedule,
-        'mbti_options': [choice[0] for choice in Profile.MBTI_CHOICES],
-    }
-
-    # 🔁 HTML 요청이면 템플릿 렌더, JSON 요청이면 그대로 반환
-    if wants_html(request):
-        return render(request, 'users/mypage.html', {
-            **data,
+            'profile_data': profile_data,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
 
-    return Response(data)
-
-# -------------------------------------------------------------------
-# [API] 마이페이지 편집 API들 (users.views에서 이동)
-# -------------------------------------------------------------------
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def update_basic(request):
-    try:
-        profile = Profile.objects.get(user=request.user)
-        nickname = request.data.get('nickname')
-        mbti = request.data.get('mbti')
-        gender = request.data.get('gender')
-        introduction = request.data.get('introduction')
-        if not all([nickname, mbti, gender, introduction]):
-            return JsonResponse({'success': False, 'message': '모든 필수 필드를 입력해주세요.'}, status=400)
-        profile.nickname = nickname
-        profile.mbti = mbti
-        profile.gender = gender
-        profile.introduction = introduction
-        profile.save()
-        return JsonResponse({'success': True, 'message': '기본 정보가 성공적으로 업데이트되었습니다.'})
-    except Profile.DoesNotExist:
-        return JsonResponse({'success': False, 'message': '프로필을 찾을 수 없습니다.'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'}, status=500)
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def update_interests(request):
-    try:
-        from apps.interests.models import Interest
-        import json
-        profile = Profile.objects.get(user=request.user)
-        interests_data = request.data.get('interests')
-        if not interests_data:
-            return JsonResponse({'success': False, 'message': '관심사 데이터가 없습니다.'}, status=400)
-        if isinstance(interests_data, list):
-            interest_ids = [int(x) for x in interests_data]
-        else:
-            try:
-                interest_ids = json.loads(interests_data)
-            except json.JSONDecodeError:
-                return JsonResponse({'success': False, 'message': '잘못된 관심사 데이터 형식입니다.'}, status=400)
-        if len(interest_ids) != 4:
-            return JsonResponse({'success': False, 'message': '관심사는 정확히 4개를 선택해야 합니다.'}, status=400)
-        ProfileInterest.objects.filter(profile=profile).delete()
-        for interest_id in interest_ids:
-            try:
-                interest = Interest.objects.get(id=interest_id)
-                ProfileInterest.objects.create(profile=profile, interest=interest)
-            except Interest.DoesNotExist:
-                continue
-        return JsonResponse({'success': True, 'message': '관심사가 성공적으로 업데이트되었습니다.'})
-    except Profile.DoesNotExist:
-        return JsonResponse({'success': False, 'message': '프로필을 찾을 수 없습니다.'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'}, status=500)
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def update_schedule(request):
-    try:
-        from apps.schedules.models import FreeTime, DayOfWeek
-        import json
-        from datetime import time
-        schedule_data = request.data.get('schedule')
-        if not schedule_data:
-            return JsonResponse({'success': False, 'message': '스케줄 데이터가 없습니다.'}, status=400)
-        try:
-            schedule_matrix = json.loads(schedule_data) if not isinstance(schedule_data, list) else schedule_data
-        except json.JSONDecodeError:
-            return JsonResponse({'success': False, 'message': '잘못된 스케줄 데이터 형식입니다.'}, status=400)
-        FreeTime.objects.filter(user=request.user).delete()
-        time_slots = []
-        for i in range(25):
-            hour = 9 + (i // 2)
-            minute = 30 if i % 2 else 0
-            time_slots.append(time(hour, minute))
-        day_choices = [
-            DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
-            DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY,
-        ]
-        for day_index, day_schedule in enumerate(schedule_matrix):
-            for time_index, is_selected in enumerate(day_schedule):
-                if is_selected and time_index < len(time_slots):
-                    start_time = time_slots[time_index]
-                    end_minute = start_time.minute + 30
-                    end_hour = start_time.hour + (end_minute // 60)
-                    end_minute = end_minute % 60
-                    end_time = time(end_hour, end_minute)
-                    FreeTime.objects.create(
-                        user=request.user,
-                        day_of_week=day_choices[day_index],
-                        start_time=start_time,
-                        end_time=end_time
-                    )
-        return JsonResponse({'success': True, 'message': '스케줄이 성공적으로 업데이트되었습니다.'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'}, status=500)
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def update_advanced(request):
-    try:
-        from apps.profiles.models import Personality
-        import json
-        profile = Profile.objects.get(user=request.user)
-        additional_info, _ = AdditionalInfo.objects.get_or_create(profile=profile)
-        additional_info.experience = request.data.get('experience', '')
-        additional_info.conversation_style = request.data.get('conversation_style', '')
-        additional_info.activity_location = request.data.get('activity_location', '')
-        additional_info.goal_or_concern = request.data.get('goal_or_concern', '')
-        additional_info.save()
-        personalities_data = request.data.get('personalities')
-        if personalities_data is not None:
-            try:
-                if isinstance(personalities_data, list):
-                    personality_ids = [int(x) for x in personalities_data]
-                else:
-                    personality_ids = json.loads(personalities_data)
-                if len(personality_ids) != 3:
-                    return JsonResponse({'success': False, 'message': '성격 키워드는 정확히 3개를 선택해야 합니다.'}, status=400)
-                additional_info.personality_keyword.clear()
-                for personality_id in personality_ids:
-                    try:
-                        personality = Personality.objects.get(id=personality_id)
-                        additional_info.personality_keyword.add(personality)
-                    except Personality.DoesNotExist:
-                        continue
-            except json.JSONDecodeError:
-                return JsonResponse({'success': False, 'message': '잘못된 성격 키워드 데이터 형식입니다.'}, status=400)
-        return JsonResponse({'success': True, 'message': '상세 정보가 성공적으로 업데이트되었습니다.'})
-    except Profile.DoesNotExist:
-        return JsonResponse({'success': False, 'message': '프로필을 찾을 수 없습니다.'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'}, status=500)
+    return Response(profile_data, status=200)
