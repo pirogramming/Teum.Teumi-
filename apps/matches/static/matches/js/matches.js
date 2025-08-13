@@ -1,3 +1,4 @@
+
 // === Auth & HTTP helpers ===
 function getCookie(name) {
   const value = `; ${document.cookie}`;
