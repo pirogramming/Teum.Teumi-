@@ -114,7 +114,7 @@
     margin: 15px 0;
 }
 
-.tag, .small-tag, .detail-link > button {
+.tag, .small-tag, .detail-link > a {
     color: var(--primary-color);
     background-color: var(--card-background);
     font-weight: 500;
@@ -130,7 +130,7 @@
     transform: scale(1.1);
 }
 
-.tag:hover, .detail-link > button:hover {
+.tag:hover, .detail-link > a:hover {
     color: var(--card-background);
     background-color: var(--primary-color);
     cursor: pointer;
@@ -222,10 +222,6 @@ a {
 
 .detail-link {
     text-align: right;
-}
-
-.detail-link > button {
-    background-color: var(--background-color);
 }
 
 svg {

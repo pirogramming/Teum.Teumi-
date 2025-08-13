@@ -23,6 +23,7 @@ from rest_framework.response import Response
 from apps.matches.models import Matching, MatchingStatus
 from apps.matches.serializers import MatchDetailSerializer
 from apps.chats.models import ChatRoom, ChatParticipation
+from apps.profiles.models import Profile, Interest, School
 
 
 # 1. 매칭 목록 조회(GET) & 매칭 신청(POST)
@@ -185,12 +186,12 @@ def matching_list(request):
     return render(request, 'matches/matches.html', context)
 
 
+# 탐색 페이지
 def matching_browse(request):
     interests = Interest.objects.all()
     universities = School.objects.prefetch_related('departments').all()
 
     # 실제 프로필 데이터 가져오기 (완료된 프로필만)
-    from apps.profiles.models import Profile
     profiles = Profile.objects.filter(
         current_step='completed',
         is_active=True
@@ -202,7 +203,52 @@ def matching_browse(request):
         'department'
     ).prefetch_related(
         'interests__interest'
-    )[:10]  # 최대 10개만 표시
+    )
+
+    # --- GET 파라미터로 필터링 ---
+    # 관심사
+    selected_interests = request.GET.getlist('interests')
+    if selected_interests:
+        profiles = profiles.filter(interests__interest_id__in=selected_interests)
+
+    # 시간대
+    selected_times = request.GET.getlist('times')  # 예: ["09:00~12:00"]
+    selected_days = request.GET.getlist('days')    # 예: ["Monday", "Tuesday"]
+
+    if selected_times or selected_days:
+        time_filters = Q()
+        if selected_days:
+            time_filters &= Q(user__free_times__day_of_week__in=selected_days)
+        if selected_times:
+            time_q = Q()
+            for t in selected_times:
+                # 괄호 제거
+                if "(" in t and ")" in t:
+                    t = t[t.find("(")+1 : t.find(")")]
+                
+                if "~" not in t:
+                    continue
+
+                start_str, end_str = t.split("~")
+                time_q |= Q(
+                    user__free_times__start_time__lt=end_str.strip(),
+                    user__free_times__end_time__gt=start_str.strip()
+                )
+            time_filters &= time_q
+        profiles = profiles.filter(time_filters)
+
+    # 대학교
+    school_id = request.GET.get('school_name')
+    if school_id:
+        profiles = profiles.filter(school_id=school_id)
+
+    # 학과
+    department_id = request.GET.get('department_name')
+    if department_id:
+        profiles = profiles.filter(department_id=department_id)
+
+    # distinct 먼저, 그 다음 슬라이스
+    profiles = profiles.distinct()[:10]
 
     # 직렬화하여 학과 포함한 JSON 생성
     universities_data = []

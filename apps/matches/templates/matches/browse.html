@@ -105,19 +105,19 @@
 
 <div class="modal-overlay" id="modal-overlay"></div>
 <div class="small-view">        <!--작은 창-->
-    <form action="#" method="GET">
+    <form action="/matches/browse/" method="GET">
         <div class="close"><span>&times;</span></div>
         <div class="small-title">🔍 필터 검색</div>
         <div class="small-comment">🙋 나와 맞는 사람을 찾고 싶다면 아래 조건을 선택해보세요!</div>
         <div class="interest-container">
             <div class="interest-title">📍 학교 / 학과</div>
-            <select name="school_name" id="university" class="selectbox" required>
+            <select name="school_name" id="university" class="selectbox">
                 <option selected disabled hidden value="">대학교 선택</option>
                 {% for uni in universities %}
                 <option value="{{ uni.school_id }}">{{ uni.school_name }}</option>
                 {% endfor %}
             </select>
-            <select name="department_name" id="department" class="selectbox" required>
+            <select name="department_name" id="department" class="selectbox">
                 <option selected disabled hidden value="">학과 선택</option>
             </select>
         </div>
@@ -125,7 +125,9 @@
             <div class="interest-title">💬 관심사 선택</div>
             <div id="tags" class="tags">
                 {% for interest in interests %}
-                <div class="view-tag">#{{ interest.name }}</div>
+                <label class="view-tag">
+                    <input type="checkbox" name="interests" value="{{ interest.id }}" hidden class="view-tag">#{{ interest.name }}
+                </label>
                 {% endfor %}
             </div>
         </div>
@@ -133,14 +135,26 @@
             <div class="interest-title">🕒 시간 선호 필터</div>
             <div class="interest-time">시간대</div>
             <div class="tags time-tags">
-                <div class="view-tag">오전 (09:00~12:00)</div>
-                <div class="view-tag">오후 (12:00~18:00)</div>
-                <div class="view-tag">저녁 (18:00~21:00)</div>
+                <label class="view-tag">
+                        <input type="checkbox" name="times" value="morning" hidden>오전 (09:00~12:00)
+                    </label>
+                <label class="view-tag">
+                    <input type="checkbox" name="times" value="afternoon" hidden>오후 (12:00~18:00)
+                </label>
+                <label class="view-tag">
+                    <input type="checkbox" name="times" value="evening" hidden>저녁 (18:00~21:00)
+                </label>
             </div>
             <div class="interest-time">요일</div>
             <div class="tags time-tags">
-                <div class="view-tag">평일</div>
-                <div class="view-tag">주말</div>
+                <label class="view-tag">
+                    <input type="checkbox" name="days" value="weekday" hidden>
+                    평일
+                </label>
+                <label class="view-tag">
+                    <input type="checkbox" name="days" value="weekend" hidden>
+                    주말
+                </label>
             </div>
         </div>
         <div class="submit-button">
