@@ -5,6 +5,38 @@ let scheduleData = Array(7).fill(null).map(() => Array(25).fill(false));
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    // 자기소개 50자 카운터 즉시 반영
+    const introArea = document.getElementById('basic-introduction');
+    const countEl = document.getElementById('basic-intro-count');
+    const msgEl = document.getElementById('basic-intro-message');
+    if (introArea && countEl && msgEl) {
+        // 프로필 4단계와 동일한 50자 이상 로직 적용
+        const MIN_TEXT = 50;
+        
+        function updateTextCount() {
+            const length = introArea.value.length;
+            countEl.textContent = `${length}/${MIN_TEXT}자`;
+            msgEl.innerHTML = length >= MIN_TEXT ? '✅ 완성!' : '📝 조금 더 써주세요';
+        }
+        
+        function updateButtonState() {
+            const saveButton = document.querySelector('#basic-edit .save-button');
+            if (saveButton) {
+                const isTextareaLongEnough = introArea.value.length >= MIN_TEXT;
+                saveButton.disabled = !isTextareaLongEnough;
+            }
+        }
+        
+        // 이벤트 리스너 추가
+        introArea.addEventListener('input', () => { 
+            updateTextCount(); 
+            updateButtonState(); 
+        });
+        
+        // 초기 상태 설정
+        updateTextCount();
+        updateButtonState();
+    }
     console.log('마이페이지 로드됨');
     
     // 기존 스케줄 데이터 로드 (가장 먼저 실행)
@@ -92,6 +124,41 @@ function toggleEditSection(section) {
         if (section === 'basic') {
             // 기본 정보는 이미 HTML에서 value로 설정되어 있음
             console.log('기본 정보 편집 모드 활성화');
+            
+            // 자기소개 50자 검증 로직 재초기화
+            const introArea = document.getElementById('basic-introduction');
+            const countEl = document.getElementById('basic-intro-count');
+            const msgEl = document.getElementById('basic-intro-message');
+            if (introArea && countEl && msgEl) {
+                const MIN_TEXT = 50;
+                
+                function updateTextCount() {
+                    const length = introArea.value.length;
+                    countEl.textContent = `${length}/${MIN_TEXT}자`;
+                    msgEl.innerHTML = length >= MIN_TEXT ? '✅ 완성!' : '📝 조금 더 써주세요';
+                }
+                
+                function updateButtonState() {
+                    const saveButton = document.querySelector('#basic-edit .save-button');
+                    if (saveButton) {
+                        const isTextareaLongEnough = introArea.value.length >= MIN_TEXT;
+                        saveButton.disabled = !isTextareaLongEnough;
+                    }
+                }
+                
+                // 기존 이벤트 리스너 제거 후 다시 추가
+                introArea.removeEventListener('input', updateTextCount);
+                introArea.removeEventListener('input', updateButtonState);
+                
+                introArea.addEventListener('input', () => { 
+                    updateTextCount(); 
+                    updateButtonState(); 
+                });
+                
+                // 초기 상태 설정
+                updateTextCount();
+                updateButtonState();
+            }
         } else if (section === 'interests') {
             updateInterestCount();
         } else if (section === 'schedule') {
@@ -139,6 +206,25 @@ function saveSection(section) {
             gender: document.getElementById('basic-gender').value,
             introduction: document.getElementById('basic-introduction').value
         };
+        
+        // 50자 검증 및 UI 피드백 (프로필 4단계와 동일한 로직)
+        const intro = (data.introduction || '').trim();
+        const countEl = document.getElementById('basic-intro-count');
+        const msgEl = document.getElementById('basic-intro-message');
+        const MIN_TEXT = 50;
+        
+        if (countEl) countEl.textContent = `${intro.length}/${MIN_TEXT}자`;
+        if (msgEl) msgEl.innerHTML = intro.length >= MIN_TEXT ? '✅ 완성!' : '📝 조금 더 써주세요';
+        
+        if (intro.length < MIN_TEXT) {
+            alert('자기소개는 최소 50자 이상 작성해주세요.');
+            if (saveButton) {
+                saveButton.disabled = false;
+                saveButton.innerHTML = '<span>💾</span> 저장';
+            }
+            return;
+        }
+        
         url = '/profiles/update-basic/';
     } else if (section === 'interests') {
         const selectedInterests = getSelectedValues('#interests-edit', 'interests');
