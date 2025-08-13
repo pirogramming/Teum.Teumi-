@@ -399,6 +399,7 @@ svg {
     .main-content {
         padding: 1.5rem;
         gap: 1.5rem;
+        margin-bottom: 7rem;
     }
 
     .small-view {
@@ -422,5 +423,6 @@ svg {
     .main-content {
         margin: 0 auto;
         padding: 2rem;
+        margin-bottom: 7rem;
     }
 }
