@@ -189,6 +189,21 @@ def matching_browse(request):
     interests = Interest.objects.all()
     universities = School.objects.prefetch_related('departments').all()
 
+    # 실제 프로필 데이터 가져오기 (완료된 프로필만)
+    from apps.profiles.models import Profile
+    profiles = Profile.objects.filter(
+        current_step='completed',
+        is_active=True
+    ).exclude(
+        user=request.user  # 본인 제외
+    ).select_related(
+        'user',
+        'school',
+        'department'
+    ).prefetch_related(
+        'interests__interest'
+    )[:10]  # 최대 10개만 표시
+
     # 직렬화하여 학과 포함한 JSON 생성
     universities_data = []
     for uni in universities:
@@ -205,5 +220,6 @@ def matching_browse(request):
         'interests': interests,
         'universities': universities,
         'universities_json': universities_data,  # 템플릿에서 JSON으로 사용
+        'profiles': profiles,  # 실제 프로필 데이터
     }
     return render(request, 'matches/browse.html', context)
