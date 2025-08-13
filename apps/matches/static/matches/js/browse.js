@@ -4,27 +4,70 @@ function goToHome() {
     window.location.href = '/profiles/profile/';
 }
 
-
-// 관심사 검색
+// ==== 관심사&학교 검색 기능 ====
 document.addEventListener("DOMContentLoaded", function () {
     const searchInput = document.querySelector(".search-input");
     const recommends = document.querySelectorAll(".recommend");
+
+    // universities JSON 로드
+    const universities = JSON.parse(document.getElementById('universities-data').textContent);
 
     searchInput.addEventListener("input", function () {
         const keyword = searchInput.value.trim().toLowerCase();
 
         recommends.forEach(recommend => {
+            // 관심사 텍스트
             const tags = recommend.querySelectorAll(".small-tag");
             const tagTexts = Array.from(tags).map(tag => tag.innerText.toLowerCase());
 
-            // 입력한 키워드가 관심사 중 하나에 포함되면 표시
-            const matchFound = tagTexts.some(tagText => tagText.includes(keyword));
+            // school_id → school_name 변환
+            const schoolId = recommend.dataset.schoolId;
+            const schoolName = universities.find(u => u.school_id == schoolId)?.school_name.toLowerCase() || "";
+
+            // 검색 조건: 관심사 OR 학교명
+            const matchFound =
+                tagTexts.some(tagText => tagText.includes(keyword)) ||
+                schoolName.includes(keyword);
 
             if (keyword === "" || matchFound) {
                 recommend.style.display = "";
             } else {
                 recommend.style.display = "none";
             }
+        });
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const popularTags = document.querySelectorAll(".tag");
+    const recommends = document.querySelectorAll(".recommend");
+    let activeTags = [];
+
+    popularTags.forEach(tag => {
+        tag.addEventListener("click", function () {
+            const selectedTag = tag.textContent.trim().toLowerCase();
+
+            // 배열에 있으면 제거, 없으면 추가
+            if (activeTags.includes(selectedTag)) {
+                activeTags = activeTags.filter(t => t !== selectedTag);
+                tag.classList.remove("active");
+            } else {
+                activeTags.push(selectedTag);
+                tag.classList.add("active");
+            }
+
+            // 필터링
+            recommends.forEach(recommend => {
+                const userTags = Array.from(recommend.querySelectorAll(".small-tag"))
+                    .map(t => t.textContent.trim().toLowerCase());
+
+                // activeTags가 비어 있으면 전체 표시
+                if (activeTags.length === 0 || activeTags.some(tag => userTags.includes(tag))) {
+                    recommend.style.display = "";
+                } else {
+                    recommend.style.display = "none";
+                }
+            });
         });
     });
 });
@@ -84,7 +127,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const viewTags = document.querySelectorAll(".view-tag");
     viewTags.forEach(tag => {
         tag.addEventListener("click", function () {
-            tag.classList.toggle("selected");
+            const input = this.querySelector('input');
+            input.checked = !input.checked;
+            this.classList.toggle('selected', input.checked);
         });
     });
 

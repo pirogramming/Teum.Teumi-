@@ -52,9 +52,8 @@ function goToBrowse() {
  * 사용처: 하단 네비게이션의 매칭 버튼, 빠른 액션의 매칭 현황 버튼
  */
 function goToMatching() {
-    console.log('매칭 현황 페이지로 이동 - 준비중');
-    // TODO: 실제 매칭 페이지 구현 후 URL 연결 예정
-    alert('매칭 기능은 준비 중입니다!');
+    console.log('매칭 현황 페이지로 이동');
+    window.location.href = '/matches/';
 }
 
 /* ========================================= */
@@ -105,9 +104,8 @@ function setCurrentPage(page) {
             break;
             
         case 'matching':
-            console.log('매칭 페이지로 이동 - 준비중');
-            // TODO: 매칭 현황 및 관리 페이지 구현 예정
-            alert('매칭 기능은 준비 중입니다!');
+            console.log('매칭 페이지로 이동');
+            window.location.href = '/matches/';
             break;
             
         case 'mypage':
