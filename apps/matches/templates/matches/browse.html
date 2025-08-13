@@ -43,40 +43,64 @@
 </div><hr>
 
 <div class="recommends">
-    {# {% for match in matchings %} #}
-        <div class="recommend">
-            <div class="recommend-left">
-                <div class="circle">
-                    닉
+    {% if profiles %}
+        {% for profile in profiles %}
+            <div class="recommend">
+                <div class="recommend-left">
+                    <div class="circle">
+                        {{ profile.nickname|default:profile.user.username|first|upper }}
+                    </div>
+                </div>
+                <div class="recommend-right">
+                    <div class="content-top">
+                        <div class="information">
+                            <div class="nickname">
+                                {{ profile.nickname|default:profile.user.username }} ({{ profile.age|default:"?" }})
+                            </div>
+                            <div class="major">
+                                {% if profile.department %}
+                                    {{ profile.department.department_name }}
+                                    {% if profile.grade %}{{ profile.grade }}{% endif %}
+                                {% else %}
+                                    {% if profile.school %}{{ profile.school.school_name }}{% endif %}
+                                {% endif %}
+                                {% if profile.mbti %}• {{ profile.mbti }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="rating">⭐ 4.5</div>
+                    </div>
+                    <div class="content-bottom">
+                        <div class="interest-comment">
+                            {% if profile.introduction %}
+                                {{ profile.introduction|truncatechars:100 }}
+                            {% else %}
+                                새로운 친구를 만나고 싶어요! 함께 대화하며 서로 배워가고 싶습니다.
+                            {% endif %}
+                        </div>
+                        <div class="tags">
+                            {% for profile_interest in profile.interests.all|slice:":4" %}
+                                <div class="small-tag">#{{ profile_interest.interest.name }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="detail-link">
+                            <a href="{% url 'profiles:profile-detail' profile.profile_id %}">자세히 보기</a>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="recommend-right">
-                <div class="content-top">
-                    <div class="information">
-                        <div class="nickname">
-                            창업왕 철수 (22)
-                        </div>
-                        <div class="major">
-                            경영학과 3학년 • ENFP
-                        </div>
-                    </div>
-                    <div class="rating">⭐ 4.8</div>
-                </div>
-                <div class="content-bottom">
-                    <div class="interest-comment">스타트업에 관심이 많고, 창업 아이디어를 나누고 싶어요! 함께 성장할 수 있는 분과 가벼운 대화를 나누며 서로 배워가고 싶습니다.</div>
-                    <div class="tags">
-                        <div class="small-tag">#창업</div>
-                        <div class="small-tag">#마케팅</div>
-                        <div class="small-tag">#스타트업</div>
-                        <div class="small-tag">#투자</div>
-                    </div>
-                    <div class="detail-link">
-                        <a href="#">자세히 보기</a>
-                    </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-profiles">
+            <div class="no-profiles-content">
+                <div class="no-profiles-icon">👥</div>
+                <div class="no-profiles-title">아직 프로필이 없어요</div>
+                <div class="no-profiles-description">
+                    다른 사용자들이 프로필을 완성하면 여기에 표시됩니다.<br>
+                    먼저 나의 프로필을 완성해보세요!
                 </div>
             </div>
         </div>
-    {# {% endfor %} #}
+    {% endif %}
 </div>
 
 <div class="modal-overlay" id="modal-overlay"></div>
