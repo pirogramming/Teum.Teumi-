@@ -1,3 +1,6 @@
+// 전역변수 설정
+let currentMatchId = null;
+
 // === Auth & HTTP helpers ===
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -83,7 +86,7 @@ window.setCurrentPage = setCurrentPage;
 // === Match actions (Accept/Reject) ===
 async function updateMatchStatus(matchId, nextStatus, payload = {}) {
   if (!matchId) {
-    alert('매칭 ID를 찾을 수 없습니다.');
+    console.log('매칭 ID를 찾을 수 없습니다.');
     return;
   }
 
@@ -126,13 +129,13 @@ async function updateMatchStatus(matchId, nextStatus, payload = {}) {
       window.location.href = `/chats/rooms/page/${data.room_id}/`;
       return;
     }
-    
+
     // 안전망: URL이 없으면 새로고침
     window.location.reload();
   } catch (e) {
     console.error(e);
     alert('요청 중 오류가 발생했습니다.');
-  }
+    }
 }
 
 function extractMatchIdFrom(el) {
@@ -188,18 +191,19 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // 매너온도 남기기 버튼
-    document.querySelectorAll(".tab-right").forEach(btn => {
-        btn.addEventListener("click", function () {
-            showModal(reviewModal);
-        });
-    });
-
     // 수락하기 버튼
     document.querySelectorAll('.accept').forEach(btn => {
         btn.addEventListener('click', function () {
             const matchId = extractMatchIdFrom(this);
             updateMatchStatus(matchId, STATUS.ACCEPTED);
+        });
+    });
+
+    // 매너온도 남기기 버튼
+    document.querySelectorAll(".tab-right").forEach(btn => {
+        btn.addEventListener("click", function (event) {
+          currentMatchId = this.dataset.id;
+          showModal(reviewModal);
         });
     });
 
@@ -259,4 +263,64 @@ document.addEventListener("DOMContentLoaded", function () {
         updateValue(slider);
         updateRangeBackground(slider);
     }
+});
+
+// 매너온도 남기기 버튼(비동기식으로 처리)
+document.addEventListener('click', async function (event) {
+
+  // 클릭된 요소가 'review-button' 클래스를 가진 버튼인지 확인
+  if (event.target.matches('.review-button')) {
+      event.preventDefault();
+
+     
+      const matchId = currentMatchId;
+
+      if (!matchId) {
+          alert('매칭 ID를 찾을 수 없습니다.');
+          return;
+      }
+
+      const attitudeElements = document.querySelectorAll('input[name="attitude"]:checked');
+      const attitudeValues = [];
+      for (const el of attitudeElements) {
+          if (el && el.value) {
+              attitudeValues.push(el.value);
+          }
+      }
+            
+      const degreeElements = document.querySelectorAll('input[name="value"]:checked');
+      const degreeValues = [];
+      for (const el of degreeElements) {
+          if (el && el.value) {
+              degreeValues.push(el.value);
+          }
+      }
+
+      const reviewData = {
+          rating: document.getElementById('myRange').value,
+          attitude: attitudeValues,
+          degree: degreeValues,
+          comment: document.querySelector('#online-review') ? document.querySelector('#online-review').value : '', // 한줄 후기가 없다면 빈 문자열 전송
+          meeting: document.querySelector('input[name="meet"]:checked').value,
+          match_id: matchId,
+      };
+
+      try {
+          const response = await apiFetch('/reviews/', {
+              method: 'POST',
+              body: JSON.stringify(reviewData)
+          });
+
+          if (response.ok) {
+              const result = await response.json();
+              alert('리뷰가 성공적으로 저장되었습니다!');
+              window.location.href = '/matches/';
+          } else {
+              const result = await response.json();
+              alert(`리뷰 저장에 실패했습니다: ${result.detail || '알 수 없는 오류'}`);
+          }
+      } catch (error) {
+          alert('요청 처리 중 오류가 발생했습니다.');
+      }
+  }
 });

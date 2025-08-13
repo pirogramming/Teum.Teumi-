@@ -5,6 +5,7 @@ from apps.matches.models import Matching
 
 
 class ConversationAttitude(models.Model):
+    id = models.BigAutoField(primary_key=True)
     content = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
@@ -21,6 +22,7 @@ class ConversationAttitude(models.Model):
         ]
 
 class ConversationValue(models.Model):
+    id = models.BigAutoField(primary_key=True)
     content = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
@@ -40,11 +42,24 @@ class Review(BaseEntity):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="written_reviews")
     target = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="received_reviews")
     match = models.ForeignKey(Matching, on_delete=models.CASCADE, related_name="reviews")
-    attitude = models.ManyToManyField(ConversationAttitude)
-    degree = models.ManyToManyField(ConversationValue)
     rating = models.DecimalField(max_digits=2, decimal_places=1)
-    meeting = models.BooleanField(null=True, blank=True)  
+    meeting = models.BooleanField(null=True, blank=True)  # True면 재만남
     comment = models.CharField(max_length=100, null=True, blank=True) #필수는 앙님
     
     def __str__(self):
         return f"Review from {self.user} to {self.target}"
+    
+class ReviewAttitude(BaseEntity):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='attitudes')
+    attitude = models.ForeignKey(ConversationAttitude, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('review', 'attitude')
+
+
+class ReviewValue(BaseEntity):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='values')
+    value = models.ForeignKey(ConversationValue, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('review', 'value')
