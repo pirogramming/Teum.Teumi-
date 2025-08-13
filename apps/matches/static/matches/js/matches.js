@@ -50,7 +50,7 @@ function setCurrentPage(name) {
     browse: '/matches/browse/',
     chat_list: '/chats/',
     matching: '/matches/',
-    mypage: '/users/mypage/?format=html',
+    mypage: '/users/mypage/',
   };
   const url = routes[name] || '/profiles/profile/';
   window.location.href = url;
