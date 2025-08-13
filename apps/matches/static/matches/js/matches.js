@@ -122,11 +122,11 @@ async function updateMatchStatus(matchId, nextStatus, payload = {}) {
     console.debug('← PATCH ok', data);
 
     // 서버가 채팅방 URL을 주면 바로 이동
-    if (data && data.room_url) {
-      window.location.href = data.room_url;
+    if (data && data.room_id) {
+      window.location.href = `/chats/rooms/page/${data.room_id}/`;
       return;
     }
-
+    
     // 안전망: URL이 없으면 새로고침
     window.location.reload();
   } catch (e) {

@@ -23,7 +23,13 @@ from rest_framework.response import Response
 from apps.matches.models import Matching, MatchingStatus
 from apps.matches.serializers import MatchDetailSerializer
 from apps.chats.models import ChatRoom, ChatParticipation
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
+
+def wants_html(request):
+    """클라이언트가 HTML을 원하는지 확인하는 헬퍼 함수"""
+    return request.headers.get('Accept', '').find('text/html') != -1
 
 # 1. 매칭 목록 조회(GET) & 매칭 신청(POST)
 class MatchListCreateView(generics.ListCreateAPIView):
@@ -134,6 +140,10 @@ class MatchStatusUpdateView(generics.UpdateAPIView):
                 room = ChatRoom.objects.create()
                 ChatParticipation.objects.get_or_create(chatroom=room, user=sender)
                 ChatParticipation.objects.get_or_create(chatroom=room, user=receiver)
+                
+            # ✅ 추가된 로직: Matching 객체에 ChatRoom 연결
+            match.chatroom = room
+            match.save()  # 변경사항을 DB에 저장
 
         # 기본 응답 + room info
         data = self.get_serializer(serializer.instance).data
@@ -174,8 +184,8 @@ class MatchRecommendationView(APIView):
         return Response(data)
 
 
-# 매칭 리스트 페이지
-@login_required
+@api_view(['GET']) # 이 데코레이터를 추가하여 API 뷰로 만듭니다.
+@permission_classes([IsAuthenticated])
 def matching_list(request):
     user = request.user
 
@@ -186,25 +196,33 @@ def matching_list(request):
         'receiver__profile__department'
     ).order_by('-created_at')
 
-    request_matchings = base_qs.filter(status=MatchingStatus.PENDING)
-    accepted_matchings = base_qs.filter(status=MatchingStatus.ACCEPTED)
-    rejected_matchings = base_qs.filter(status=MatchingStatus.REJECTED)
+    chat_qs = ChatRoom.objects.filter(
+        participations__user=user
+    ).distinct().select_related(
+        'iscompleted__chatroom',
+    ).order_by('-completed_at')
 
-    context = {
-        # 기존 호환용
-        'matchings': base_qs,
-        'MatchingStatus': MatchingStatus,
-        'user': user,
-        # 탭별 분리 데이터
-        'request_matchings': request_matchings,
-        'accepted_matchings': accepted_matchings,
-        'rejected_matchings': rejected_matchings,
-        # 카운트 뱃지
-        'count_request': request_matchings.count(),
-        'count_accepted': accepted_matchings.count(),
-        'count_rejected': rejected_matchings.count(),
-    }
-    return render(request, 'matches/matches.html', context)
+    # 클라이언트가 HTML 페이지를 요청한 경우
+    if wants_html(request):
+        context = {
+            'matchings': base_qs,
+            'MatchingStatus': MatchingStatus,
+            'chatrooms': chat_qs,
+            'user': user,
+        }
+        return render(request, 'matches/matches.html', context)
+    
+    # 클라이언트가 JSON 데이터를 요청한 경우 (비동기 요청)
+    else:
+        status_filter = request.GET.get('status')
+        if status_filter:
+            qs = base_qs.filter(status=status_filter)
+        else:
+            qs = base_qs
+
+        # Serializer를 사용하여 데이터를 JSON으로 변환
+        serializer = MatchDetailSerializer(qs, many=True)
+        return Response(serializer.data, status=200)
 
 
 def matching_browse(request):

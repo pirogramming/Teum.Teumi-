@@ -10,7 +10,7 @@ class UserSimpleSerializer(serializers.ModelSerializer):
     mbti = serializers.CharField(source='profile.mbti', read_only=True)
     username = serializers.CharField(read_only=True)
     department_name = serializers.CharField(source='profile.department.department_name', read_only=True, allow_null=True)
-    grade = serializers.IntegerField(source='profile.grade', read_only=True, allow_null=True)
+    grade = serializers.CharField(source='profile.grade', read_only=True, allow_null=True)
 
     class Meta:
         model = User
