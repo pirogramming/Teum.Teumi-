@@ -6,7 +6,7 @@ from django.core.exceptions import PermissionDenied
 from rest_framework.exceptions import PermissionDenied
 from rest_framework import serializers
 from rest_framework.views import APIView
-from django.db.models import Q
+from django.db.models import Q, Avg
 from .models import Matching, MatchingStatus
 from .serializers import MatchCreateSerializer, MatchDetailSerializer
 from apps.matches.services.recommend import recommend_top_n
@@ -24,6 +24,7 @@ from apps.matches.models import Matching, MatchingStatus
 from apps.matches.serializers import MatchDetailSerializer
 from apps.chats.models import ChatRoom, ChatParticipation
 from apps.profiles.models import Profile, Interest, School
+from apps.reviews.models import Review
 from datetime import datetime
 
 
@@ -242,6 +243,8 @@ def matching_browse(request):
         'department'
     ).prefetch_related(
         'interests__interest'
+    ).annotate(
+        avg_rating=Avg('user__received_reviews__rating')  # ★ 평균 평점 추가
     )
 
     # --- GET 파라미터로 필터링 ---
