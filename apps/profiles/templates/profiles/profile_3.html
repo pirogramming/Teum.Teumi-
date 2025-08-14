@@ -292,6 +292,29 @@
 </form>
 
 <script>
+
+  const time = document.getElementById('time');
+  const day = document.getElementById('day');
+
+  let isSyncing1 = false;
+  let isSyncing2 = false;
+
+  time.addEventListener('scroll', () => {
+    if (!isSyncing1) {
+      isSyncing2 = true;
+      day.scrollLeft = time.scrollLeft;
+    }
+    isSyncing1 = false;
+  });
+
+  day.addEventListener('scroll', () => {
+    if (!isSyncing2) {
+      isSyncing1 = true;
+      time.scrollLeft = day.scrollLeft;
+    }
+    isSyncing2 = false;
+  });
+
 document.addEventListener('DOMContentLoaded', function() {
   // --------------------------------------
   // 0) 템플릿 변수 → localStorage 저장

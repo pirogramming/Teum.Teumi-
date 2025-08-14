@@ -122,7 +122,8 @@ h2 {
     padding: 15px 20px;
 }
 
-.timetable > div:first-of-type {  
+.timetable > div:first-of-type { 
+    width: 100%; 
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -132,15 +133,26 @@ h2 {
 }
 
 #day, #time {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    margin-bottom: 10px;
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     align-items: center;
-    width: 100%;
+}
+
+#day {
+    scrollbar-width: none; /* Firefox */
+}
+
+#day::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }
 
 #time {
     overflow-y: auto;
-    overflow-x: none;
+    max-height: 350px;
 }
 
 .day, .cell {
