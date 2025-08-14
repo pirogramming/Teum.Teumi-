@@ -1,15 +1,16 @@
 #header {
-    position: fixed;
+    position: sticky;
     top: 0;
-    left: 0;
-    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #fff;
+    width: 100%;
     margin: 0;
     padding: 15px;
-    border-top: 0.5px solid rgba(99, 102, 241, 0.1);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 100;
 }
 
 #header-div {
@@ -22,6 +23,26 @@
     align-items: center;
     justify-content: space-between;
     margin: 0 0 15px;
+}
+
+a {
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+a:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
 }
 
 svg {
@@ -122,7 +143,8 @@ h2 {
     padding: 15px 20px;
 }
 
-.timetable > div:first-of-type {  
+.timetable > div:first-of-type { 
+    width: 100%; 
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -132,15 +154,26 @@ h2 {
 }
 
 #day, #time {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    margin-bottom: 10px;
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     align-items: center;
-    width: 100%;
+}
+
+#day {
+    scrollbar-width: none; /* Firefox */
+}
+
+#day::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }
 
 #time {
     overflow-y: auto;
-    overflow-x: none;
+    max-height: 350px;
 }
 
 .day, .cell {
@@ -210,7 +243,7 @@ h2 {
     position: fixed;
     bottom: 0;
     left: 0;
-    width: 100%;
+    right: 0;
     background-color: #fff;
     bottom: 0;
     border-top: 0.5px solid rgba(99, 102, 241, 0.1);

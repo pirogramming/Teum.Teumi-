@@ -1,15 +1,16 @@
 #header {
-    position: fixed;
+    position: sticky;
     top: 0;
-    left: 0;
-    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #fff;
+    width: 100%;
     margin: 0;
     padding: 15px;
-    border-bottom: 0.5px solid rgba(99, 102, 241, 0.1);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 100;
 }
 
 #header-div {
@@ -152,7 +153,7 @@ option:first-of-type {
 #footer {
     position: fixed;
     left: 0;
-    width: 100%;
+    right: 0;
     background-color: #fff;
     bottom: 0;
     border-top: 0.5px solid rgba(99, 102, 241, 0.1);
