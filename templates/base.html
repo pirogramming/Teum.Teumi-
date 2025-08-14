@@ -48,6 +48,11 @@
 
     <!-- Base JavaScript -->
     <script src="{% static 'js/base.js' %}"></script>
+
+    {% if request.user.is_authenticated %}
+    <script src = "{% static 'js/token_check.js' %}"></script>
+    {% endif %}
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
