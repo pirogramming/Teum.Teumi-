@@ -1,10 +1,9 @@
 // 전역변수 설정
 let currentMatchId = null;
+const MATCH_API_BASE = '/matches/api/matches';
+const STATUS = { PENDING: '대기중', ACCEPTED: '수락됨', REJECTED: '거절됨' };
 
-// 페이지 비동기 로딩 -> 지금은 우선 간단하게 1분마다 새로고침함
-setInterval(() => {
-  window.location.reload();
-}, 10);  // 10ms마다 새로고침
+window.setCurrentPage = setCurrentPage;
 
 // === Auth & HTTP helpers ===
 function getCookie(name) {
@@ -47,11 +46,7 @@ async function apiFetch(url, options = {}) {
   return resp;
 }
 
-const MATCH_API_BASE = '/matches/api/matches';
-const STATUS = { PENDING: '대기중', ACCEPTED: '수락됨', REJECTED: '거절됨' };
-
 // === Page navigation(base.html에 있는) ===
-// TODO: 추후에 url이나 페이지가 변경되면 수정해야됨
 function setCurrentPage(name) {
   const routes = {
     home: '/profiles/profile/',
@@ -60,11 +55,9 @@ function setCurrentPage(name) {
     matching: '/matches/',
     mypage: '/users/mypage/',
   };
-  const url = routes[name] || '/profiles/profile/';
+  const url = routes[name] || '/profiles/profile/'; // 기본값은 프로필 페이지로 이동
   window.location.href = url;
 }
-// ensure global
-window.setCurrentPage = setCurrentPage;
 
 // 탭 전환 함수
     function showTab(tabName) {
@@ -109,8 +102,6 @@ async function updateMatchStatus(matchId, nextStatus, payload = {}) {
 
   try {
     const url = `${MATCH_API_BASE}/${matchId}/status/`;
-    // 디버그 로그 (필요 시 제거)
-    console.debug('→ PATCH', url, { status: statusToSend, ...normalizedPayload });
 
     const resp = await apiFetch(url, {
       method: 'PATCH',
@@ -127,15 +118,13 @@ async function updateMatchStatus(matchId, nextStatus, payload = {}) {
     }
 
     const data = await resp.json().catch(() => ({}));
-    console.debug('← PATCH ok', data);
 
     // 서버가 채팅방 URL을 주면 바로 이동
     if (data && data.room_id) {
       window.location.href = `/chats/rooms/page/${data.room_id}/`;
       return;
     }
-
-    // 안전망: URL이 없으면 새로고침
+    // 아니면 매칭 페이지 리로드
     window.location.reload();
   } catch (e) {
     console.error(e);
@@ -285,6 +274,8 @@ document.addEventListener('click', async function (event) {
           return;
       }
 
+
+      // 선택된 태도와 정도 값 가져오기
       const attitudeElements = document.querySelectorAll('input[name="attitude"]:checked');
       const attitudeValues = [];
       for (const el of attitudeElements) {
@@ -292,7 +283,6 @@ document.addEventListener('click', async function (event) {
               attitudeValues.push(el.value);
           }
       }
-            
       const degreeElements = document.querySelectorAll('input[name="value"]:checked');
       const degreeValues = [];
       for (const el of degreeElements) {

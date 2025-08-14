@@ -442,6 +442,7 @@
             scheduleGrid.innerHTML = scheduleHTML;
         }
 
+        // 매칭신청
         function submitApplication() {
             const textarea = document.getElementById('applicationReason');
             const reason = (textarea.value || '').trim();
@@ -486,17 +487,17 @@
                             window.location.href = '/matches/';
                             return;
                         } else {
-                            let errText = '';
                             try {
-                                const ct = res.headers.get('Content-Type') || '';
-                                if (ct.includes('application/json')) {
-                                    const errJson = await res.json();
-                                    errText = errJson.error || errJson.detail || JSON.stringify(errJson);
+                                const errJson = await res.json();
+                                if (errJson.receiver) {
+                                    alert(errJson.receiver.join('\n'));
+                                } else if (errJson.non_field_errors) {
+                                    alert(errJson.non_field_errors.join('\n'));
                                 } else {
-                                    errText = await res.text();
+                                    alert(errJson.detail || 'MatchListCreateView에서 다루지 않는 에러가 발생했습니다');
                                 }
-                            } catch (_) {
-                                errText = '';
+                            } catch (e) {
+                                alert('신청 실패: MatchListCreateView에서 응답을 JSON으로 파싱할 수 없습니다. 서버 오류일 수 있습니다.');
                             }
                             lastError = `[${res.status}] ${errText || '응답 본문 없음'}`;
                             // 404면 다음 후보 엔드포인트 시도
