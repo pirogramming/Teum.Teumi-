@@ -120,7 +120,8 @@
 </div>
 
 <div id="tab-completed" class="tab-content">        <!--내부 텍스트는 나중에 수정 필요-->
-    {% for match in accepted_matchings %}
+    {% for match in matchings %}
+    {% if match.status == MatchingStatus.ACCEPTED and match.chatroom.is_completed %}
     <div class="tab-container" id="completed">
         <div class="tab-left">
             <div>
@@ -150,10 +151,17 @@
                 </div>
             </div>
         </div>
-        <div class="tab-right">
+        <div class="tab-right" 
+            data-id="{{ match.id }}"
+            {% if match.sender == user %}
+                data-target-user-id="{{ match.receiver.id }}"
+            {% else %}
+                data-target-user-id="{{ match.sender.id }}"
+            {% endif %}>
             <div>⭐ 매너온도 남기기</div>
         </div>
     </div>
+    {% endif %}
     {% empty %}
     <p>완료된 만남이 없습니다.</p>
     {% endfor %}
@@ -209,12 +217,11 @@
             </div>
         </div>
         <div class="submit-button">
-            <button type="submit" class="review-button">
+            <button type="submit" class="review-button" >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
                     <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"/>
-                </svg> 평가 완료
+                </svg> 평가 완료 </button>
             <button type="button" id="review-cancle" class="cancle-button">취소</button>
-            </button>
         </div>
     </div>
 </div>

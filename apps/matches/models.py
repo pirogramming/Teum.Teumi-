@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from apps.core.models import BaseEntity
+from apps.chats.models import ChatRoom
 
 User = get_user_model()
 
@@ -12,6 +13,7 @@ class MatchingStatus(models.TextChoices):
 class Matching(BaseEntity):
     sender = models.ForeignKey(User, related_name='sent_matches', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='received_matches', on_delete=models.CASCADE)
+    chatroom = models.ForeignKey(ChatRoom, related_name='matching', on_delete=models.SET_NULL, null=True, blank=True)
 
     status = models.CharField(
         max_length=10,
