@@ -2,9 +2,7 @@
 let currentMatchId = null;
 
 // 페이지 비동기 로딩 -> 지금은 우선 간단하게 1분마다 새로고침함
-setInterval(() => {
-  window.location.reload();
-}, 10);  // 10ms마다 새로고침
+
 
 // === Auth & HTTP helpers ===
 function getCookie(name) {
