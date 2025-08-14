@@ -25,6 +25,26 @@
     margin: 0 0 15px;
 }
 
+a {
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+a:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
 svg {
     width: 0.8rem;
     height: 0.8rem;
