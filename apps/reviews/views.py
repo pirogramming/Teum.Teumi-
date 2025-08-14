@@ -18,20 +18,3 @@ class ReviewCreateView(APIView):
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ReviewListView(APIView):
-    def get(self, request):
-        user = request.user
-        reviews = Review.objects.filter(target=user).select_related("user")
-        data = []
-        for review in reviews:
-            data.append({
-                "review_id": review.id,
-                "match_id": review.match.id,
-                "reviewer_nickname": review.user.nickname if hasattr(review.user, "nickname") else "",
-                "rating": review.rating,
-                "comment": review.comment,
-                "created_at": review.created_at,
-            })
-        return Response(data, status=status.HTTP_200_OK)
