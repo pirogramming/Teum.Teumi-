@@ -51,7 +51,7 @@ function setCurrentPage(name) {
   const routes = {
     home: '/profiles/profile/',
     browse: '/matches/browse/',
-    chat_list: '/chats/',
+    'chat-list': '/chats/',
     matching: '/matches/',
     mypage: '/users/mypage/',
   };
