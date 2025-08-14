@@ -1,3 +1,6 @@
+// 전역변수 설정
+let currentMatchId = null;
+
 // === Auth & HTTP helpers ===
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -40,6 +43,7 @@ async function apiFetch(url, options = {}) {
 }
 
 const MATCH_API_BASE = '/matches/api/matches';
+const STATUS = { PENDING: '대기중', ACCEPTED: '수락됨', REJECTED: '거절됨' };
 
 // === Page navigation(base.html에 있는) ===
 // TODO: 추후에 url이나 페이지가 변경되면 수정해야됨
@@ -49,7 +53,7 @@ function setCurrentPage(name) {
     browse: '/matches/browse/',
     chat_list: '/chats/',
     matching: '/matches/',
-    mypage: '/users/mypage/?format=html',
+    mypage: '/users/mypage/',
   };
   const url = routes[name] || '/profiles/profile/';
   window.location.href = url;
@@ -81,24 +85,48 @@ window.setCurrentPage = setCurrentPage;
 
 // === Match actions (Accept/Reject) ===
 async function updateMatchStatus(matchId, nextStatus, payload = {}) {
-  if (!matchId) return;
+  if (!matchId) {
+    console.log('매칭 ID를 찾을 수 없습니다.');
+    return;
+  }
+
+  // 백엔드 한글 TextChoices로 매핑
+  const statusToSend = STATUS[nextStatus] || nextStatus; // 이미 한글이면 그대로
+
+  // 거절 사유 키 정규화 (reason -> refusal_message)
+  const normalizedPayload = { ...payload };
+  if (Object.prototype.hasOwnProperty.call(normalizedPayload, 'reason') && normalizedPayload.reason) {
+    normalizedPayload.refusal_message = normalizedPayload.reason;
+    delete normalizedPayload.reason;
+  }
+
+  const body = JSON.stringify({ status: statusToSend, ...normalizedPayload });
+
   try {
-    const resp = await apiFetch(`${MATCH_API_BASE}/${matchId}/status/`, {
+    const url = `${MATCH_API_BASE}/${matchId}/status/`;
+    // 디버그 로그 (필요 시 제거)
+    console.debug('→ PATCH', url, { status: statusToSend, ...normalizedPayload });
+
+    const resp = await apiFetch(url, {
       method: 'PATCH',
-      body: JSON.stringify(Object.assign({ status: nextStatus }, payload)),
+      body,
     });
 
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      alert(err.detail || '상태 변경에 실패했습니다.');
+      const raw = await resp.text().catch(() => '');
+      console.warn('← PATCH error', resp.status, raw);
+      let err;
+      try { err = JSON.parse(raw); } catch { err = {}; }
+      alert(err.detail || `상태 변경에 실패했습니다. (HTTP ${resp.status})`);
       return;
     }
 
     const data = await resp.json().catch(() => ({}));
+    console.debug('← PATCH ok', data);
 
     // 서버가 채팅방 URL을 주면 바로 이동
-    if (data && data.room_url) {
-      window.location.href = data.room_url;
+    if (data && data.room_id) {
+      window.location.href = `/chats/rooms/page/${data.room_id}/`;
       return;
     }
 
@@ -107,7 +135,7 @@ async function updateMatchStatus(matchId, nextStatus, payload = {}) {
   } catch (e) {
     console.error(e);
     alert('요청 중 오류가 발생했습니다.');
-  }
+    }
 }
 
 function extractMatchIdFrom(el) {
@@ -163,18 +191,19 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // 매너온도 남기기 버튼
-    document.querySelectorAll(".tab-right").forEach(btn => {
-        btn.addEventListener("click", function () {
-            showModal(reviewModal);
-        });
-    });
-
     // 수락하기 버튼
     document.querySelectorAll('.accept').forEach(btn => {
         btn.addEventListener('click', function () {
             const matchId = extractMatchIdFrom(this);
-            updateMatchStatus(matchId, 'ACCEPTED');
+            updateMatchStatus(matchId, STATUS.ACCEPTED);
+        });
+    });
+
+    // 매너온도 남기기 버튼
+    document.querySelectorAll(".tab-right").forEach(btn => {
+        btn.addEventListener("click", function (event) {
+          currentMatchId = this.dataset.id;
+          showModal(reviewModal);
         });
     });
 
@@ -201,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
         rejectSubmitBtn.addEventListener('click', function () {
             const matchId = rejectModal?.dataset?.currentMatchId;
             const reason = (rejectReasonInput && rejectReasonInput.value) ? rejectReasonInput.value.trim() : '';
-            updateMatchStatus(matchId, 'REJECTED', reason ? { reason } : {});
+            updateMatchStatus(matchId, STATUS.REJECTED, reason ? { refusal_message: reason } : {});
         });
     }
 
@@ -234,4 +263,64 @@ document.addEventListener("DOMContentLoaded", function () {
         updateValue(slider);
         updateRangeBackground(slider);
     }
+});
+
+// 매너온도 남기기 버튼(비동기식으로 처리)
+document.addEventListener('click', async function (event) {
+
+  // 클릭된 요소가 'review-button' 클래스를 가진 버튼인지 확인
+  if (event.target.matches('.review-button')) {
+      event.preventDefault();
+
+     
+      const matchId = currentMatchId;
+
+      if (!matchId) {
+          alert('매칭 ID를 찾을 수 없습니다.');
+          return;
+      }
+
+      const attitudeElements = document.querySelectorAll('input[name="attitude"]:checked');
+      const attitudeValues = [];
+      for (const el of attitudeElements) {
+          if (el && el.value) {
+              attitudeValues.push(el.value);
+          }
+      }
+            
+      const degreeElements = document.querySelectorAll('input[name="value"]:checked');
+      const degreeValues = [];
+      for (const el of degreeElements) {
+          if (el && el.value) {
+              degreeValues.push(el.value);
+          }
+      }
+
+      const reviewData = {
+          rating: document.getElementById('myRange').value,
+          attitude: attitudeValues,
+          degree: degreeValues,
+          comment: document.querySelector('#online-review') ? document.querySelector('#online-review').value : '', // 한줄 후기가 없다면 빈 문자열 전송
+          meeting: document.querySelector('input[name="meet"]:checked').value,
+          match_id: matchId,
+      };
+
+      try {
+          const response = await apiFetch('/reviews/', {
+              method: 'POST',
+              body: JSON.stringify(reviewData)
+          });
+
+          if (response.ok) {
+              const result = await response.json();
+              alert('리뷰가 성공적으로 저장되었습니다!');
+              window.location.href = '/matches/';
+          } else {
+              const result = await response.json();
+              alert(`리뷰 저장에 실패했습니다: ${result.detail || '알 수 없는 오류'}`);
+          }
+      } catch (error) {
+          alert('요청 처리 중 오류가 발생했습니다.');
+      }
+  }
 });

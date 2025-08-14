@@ -13,7 +13,7 @@ from apps.matches.services.recommend import recommend_top_n
 from apps.profiles.ProfileSerializer import ProfileSimpleSerializer
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
-from apps.profiles.models import School
+from apps.profiles.models import School, Profile
 from apps.interests.models import Interest
 from django.db import transaction
 from rest_framework import generics, status
@@ -23,10 +23,15 @@ from rest_framework.response import Response
 from apps.matches.models import Matching, MatchingStatus
 from apps.matches.serializers import MatchDetailSerializer
 from apps.chats.models import ChatRoom, ChatParticipation
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from apps.profiles.models import Profile, Interest, School
 from apps.reviews.models import Review
 from datetime import datetime
 
+def wants_html(request):
+    """클라이언트가 HTML을 원하는지 확인하는 헬퍼 함수"""
+    return request.headers.get('Accept', '').find('text/html') != -1
 
 # 1. 매칭 목록 조회(GET) & 매칭 신청(POST)
 class MatchListCreateView(generics.ListCreateAPIView):
@@ -53,19 +58,41 @@ class MatchListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         sender = self.request.user
-        receiver = serializer.validated_data.get('receiver')
+
+        # 1) 기본: serializer에서 receiver를 받되,
+        # 2) 누락되었거나 잘못 매핑될 수 있으므로 to_profile_id 로 보강
+        receiver = serializer.validated_data.get('receiver', None)
+
+        if receiver is None:
+            # 프론트가 전달하는 대상 프로필 id 보조 키
+            raw_profile_id = self.request.data.get('to_profile_id') or self.request.data.get('profile_id')
+            if raw_profile_id is not None:
+                try:
+                    profile_id = int(raw_profile_id)
+                except (TypeError, ValueError):
+                    raise serializers.ValidationError({"receiver": ["대상 프로필 ID가 올바르지 않습니다."]})
+                try:
+                    target_profile = Profile.objects.select_related('user').get(pk=profile_id)
+                except Profile.DoesNotExist:
+                    raise serializers.ValidationError({"receiver": ["대상 프로필을 찾을 수 없습니다."]})
+                receiver = target_profile.user
+
+        if receiver is None:
+            raise serializers.ValidationError({"receiver": ["수신자 정보가 누락되었습니다."]})
+
+        # 자기 자신에게 신청 방지
         if receiver == sender:
             raise serializers.ValidationError({"receiver": ["본인에게는 신청할 수 없습니다."]})
 
-        # 이미 미결(PENDING) 상태의 동일 조합이 있으면 차단
-        exists_pending = Matching.objects.filter(
-            Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender),
-            status=MatchingStatus.PENDING
-        ).exists()
-        if exists_pending:
+        # 양방향 중복 매칭 방지: 거절된 건만 예외, 그 외 상태는 모두 차단
+        exists_conflict = Matching.objects.filter(
+            Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender)
+        ).exclude(status=MatchingStatus.REJECTED).exists()
+        if exists_conflict:
             raise serializers.ValidationError({"non_field_errors": ["이미 진행 중인 신청이 있습니다."]})
 
-        serializer.save(sender=sender)
+        # 정상 저장
+        serializer.save(sender=sender, receiver=receiver, status=MatchingStatus.PENDING)
 
 
 class MatchStatusUpdateView(generics.UpdateAPIView):
@@ -115,6 +142,10 @@ class MatchStatusUpdateView(generics.UpdateAPIView):
                 room = ChatRoom.objects.create()
                 ChatParticipation.objects.get_or_create(chatroom=room, user=sender)
                 ChatParticipation.objects.get_or_create(chatroom=room, user=receiver)
+                
+            # ✅ 추가된 로직: Matching 객체에 ChatRoom 연결
+            match.chatroom = room
+            match.save()  # 변경사항을 DB에 저장
 
         # 기본 응답 + room info
         data = self.get_serializer(serializer.instance).data
@@ -155,8 +186,8 @@ class MatchRecommendationView(APIView):
         return Response(data)
 
 
-# 매칭 리스트 페이지
-@login_required
+@api_view(['GET']) # 이 데코레이터를 추가하여 API 뷰로 만듭니다.
+@permission_classes([IsAuthenticated])
 def matching_list(request):
     user = request.user
 
@@ -167,25 +198,33 @@ def matching_list(request):
         'receiver__profile__department'
     ).order_by('-created_at')
 
-    request_matchings = base_qs.filter(status=MatchingStatus.PENDING)
-    accepted_matchings = base_qs.filter(status=MatchingStatus.ACCEPTED)
-    rejected_matchings = base_qs.filter(status=MatchingStatus.REJECTED)
+    chat_qs = ChatRoom.objects.filter(
+        participations__user=user
+    ).distinct().select_related(
+        'iscompleted__chatroom',
+    ).order_by('-completed_at')
 
-    context = {
-        # 기존 호환용
-        'matchings': base_qs,
-        'MatchingStatus': MatchingStatus,
-        'user': user,
-        # 탭별 분리 데이터
-        'request_matchings': request_matchings,
-        'accepted_matchings': accepted_matchings,
-        'rejected_matchings': rejected_matchings,
-        # 카운트 뱃지
-        'count_request': request_matchings.count(),
-        'count_accepted': accepted_matchings.count(),
-        'count_rejected': rejected_matchings.count(),
-    }
-    return render(request, 'matches/matches.html', context)
+    # 클라이언트가 HTML 페이지를 요청한 경우
+    if wants_html(request):
+        context = {
+            'matchings': base_qs,
+            'MatchingStatus': MatchingStatus,
+            'chatrooms': chat_qs,
+            'user': user,
+        }
+        return render(request, 'matches/matches.html', context)
+    
+    # 클라이언트가 JSON 데이터를 요청한 경우 (비동기 요청)
+    else:
+        status_filter = request.GET.get('status')
+        if status_filter:
+            qs = base_qs.filter(status=status_filter)
+        else:
+            qs = base_qs
+
+        # Serializer를 사용하여 데이터를 JSON으로 변환
+        serializer = MatchDetailSerializer(qs, many=True)
+        return Response(serializer.data, status=200)
 
 KOR_TO_EN_DAY = {
     "월": "Monday", "화": "Tuesday", "수": "Wednesday",

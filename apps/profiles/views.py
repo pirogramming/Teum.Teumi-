@@ -92,11 +92,10 @@ def profile_step5_page(request):
         'refresh_token': request.session.get('refresh_token'),
     })
 
-#
 # -------------------------------------------------------------------
 # [API] 프로필 1단계 데이터 조회/분기
-#  - HTML 요청: 템플릿 렌더 (wants_html 참일 때)
-#  - JSON 요청: 단계/다음 경로(next_step) 응답
+#  - HTML 요청: 템플릿 렌더
+#  - JSON 요청: 현재 단계 및 데이터 응답
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -104,44 +103,29 @@ def profile_step1(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        access_token = request.session.get('access_token')
-        refresh_token = request.session.get('refresh_token')
-        if current_step != 'step1':
-            step_mapping = {
-                'step2': 'profiles:profile_step2',
-                'step3': 'profiles:profile_step3',
-                'step4': 'profiles:profile_step4',
-                'step5': 'profiles:profile_step5',
-                'completed': 'profiles:profile-home'  # 완료되면 홈으로
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({
-                'current_step': current_step,
-                'next_step': reverse(next_name) if next_name else None
-            }, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            universities = School.objects.all()
-            return render(request, 'profiles/profile_1.html', {
-                'universities': universities,
-                'current_step': 'step1',
-                'access_token': request.session.get('access_token'),
-                'refresh_token': request.session.get('refresh_token'),
-            })
-        return Response({'current_step': 'step1', 'note': 'profile not found; proceed with step1'}, status=200)
-
+        current_step = 'step1'
+    
     universities = School.objects.all()
+
+    # 클라이언트가 HTML을 요청한 경우 (브라우저 접근)
     if wants_html(request):
+        # 뒤로가기 시 강제 리디렉션 로직을 제거하고,
+        # 현재 단계에 맞는 템플릿을 바로 렌더링합니다.
+        # 프론트엔드가 `current_step` 값을 보고 적절한 UI를 표시하도록 유도합니다.
         return render(request, 'profiles/profile_1.html', {
             'universities': universities,
-            'current_step': 'step1',
+            'current_step': current_step,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
+
+    # API 요청인 경우 (JSON 응답)
     universities_data = [{'id': u.id, 'school_name': u.school_name} for u in universities]
-    return Response({'current_step': 'step1', 'universities': universities_data}, status=200)
+    return Response({
+        'current_step': current_step,
+        'universities': universities_data
+    }, status=200)
 
 #
 # -------------------------------------------------------------------
@@ -158,9 +142,10 @@ def get_majors_by_school(request):
     except School.DoesNotExist:
         return Response({'majors': []})
 
-#
 # -------------------------------------------------------------------
 # [API] 프로필 2단계 데이터 조회/분기
+#  - HTML 요청: 템플릿 렌더
+#  - JSON 요청: 현재 단계 및 데이터 응답
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -168,40 +153,32 @@ def profile_step2(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        if current_step == 'step1':
-            if wants_html(request):
-                return redirect(reverse('profiles:profile_step1'))
-            return Response({'current_step': current_step, 'next_step': reverse('profiles:profile_step1')}, status=200)
-        if current_step not in ['step1', 'step2']:
-            step_mapping = {
-                'step3': 'profiles:profile_step3',
-                'step4': 'profiles:profile_step4',
-                'step5': 'profiles:profile_step5',
-                'completed': 'profiles:profile-home'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            return redirect(reverse('profiles:profile_step1'))
-        return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
-
+        current_step = 'step1'
+    
     interests = Interest.objects.all()
+
+    # 클라이언트가 HTML을 요청한 경우 (브라우저 접근)
     if wants_html(request):
+        # 강제 리디렉션 로직을 모두 제거하고, 현재 단계에 맞는 템플릿을 바로 렌더링합니다.
+        # 프론트엔드에서 `current_step` 값을 보고 UI를 결정하도록 합니다.
         return render(request, 'profiles/profile_2.html', {
             'interests': interests,
-            'current_step': 'step2',
+            'current_step': current_step,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
-    interests_data = [{'id': i.id, 'name': i.name} for i in interests]
-    return Response({'current_step': 'step2', 'interests': interests_data}, status=200)
 
-#
+    # API 요청인 경우 (JSON 응답)
+    interests_data = [{'id': i.id, 'name': i.name} for i in interests]
+    return Response({
+        'current_step': current_step,
+        'interests': interests_data
+    }, status=200)
 # -------------------------------------------------------------------
 # [API] 프로필 3단계 데이터 조회/분기
+#  - HTML 요청: 템플릿 렌더
+#  - JSON 요청: 현재 단계 정보 응답
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -209,41 +186,30 @@ def profile_step3(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        if current_step in ['step1', 'step2']:
-            step_mapping = {
-                'step1': 'profiles:profile_step1',
-                'step2': 'profiles:profile_step2'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
-        if current_step not in ['step1', 'step2', 'step3']:
-            step_mapping = {
-                'step4': 'profiles:profile_step4',
-                'step5': 'profiles:profile_step5',
-                'completed': 'profiles:profile-home'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            return redirect(reverse('profiles:profile_step1'))
-        return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
+        # 프로필이 없다면, 1단계부터 시작하도록 상태를 'step1'으로 설정
+        current_step = 'step1'
 
+    # 클라이언트가 HTML을 요청한 경우 (브라우저 접근)
     if wants_html(request):
+        # 강제 리디렉션 로직을 모두 제거하고, 현재 단계에 맞는 템플릿을 바로 렌더링합니다.
+        # 프론트엔드에서 `current_step` 값을 보고 UI를 결정하도록 합니다.
         return render(request, 'profiles/profile_3.html', {
-            'current_step': 'step3',
+            'current_step': current_step,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
-    return Response({'current_step': 'step3', 'message': 'Step 3: Please enter your free time.'}, status=200)
 
-#
+    # API 요청인 경우 (JSON 응답)
+    return Response({
+        'current_step': current_step,
+        'message': 'Step 3: Please enter your free time.'
+    }, status=200)
+
 # -------------------------------------------------------------------
 # [API] 프로필 4단계 데이터 조회/분기
+#  - HTML 요청: 템플릿 렌더
+#  - JSON 요청: 현재 단계 정보 응답
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -251,41 +217,30 @@ def profile_step4(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        if current_step in ['step1', 'step2', 'step3']:
-            step_mapping = {
-                'step1': 'profiles:profile_step1',
-                'step2': 'profiles:profile_step2',
-                'step3': 'profiles:profile_step3'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
-        if current_step not in ['step1', 'step2', 'step3', 'step4']:
-            step_mapping = {
-                'step5': 'profiles:profile_step5',
-                'completed': 'profiles:profile-home'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            return redirect(reverse('profiles:profile_step1'))
-        return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
+        # 프로필이 없다면, 1단계부터 시작하도록 상태를 'step1'으로 설정
+        current_step = 'step1'
 
+    # 클라이언트가 HTML을 요청한 경우 (브라우저 접근)
     if wants_html(request):
+        # 강제 리디렉션 로직을 모두 제거하고, 현재 단계에 맞는 템플릿을 바로 렌더링합니다.
+        # 프론트엔드에서 `current_step` 값을 보고 UI를 결정하도록 합니다.
         return render(request, 'profiles/profile_4.html', {
-            'current_step': 'step4',
+            'current_step': current_step,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
-    return Response({'current_step': 'step4', 'message': 'Step 4: Please enter your basic info.'}, status=200)
 
-#
+    # API 요청인 경우 (JSON 응답)
+    return Response({
+        'current_step': current_step,
+        'message': 'Step 4: Please enter your basic info.'
+    }, status=200)
+
 # -------------------------------------------------------------------
 # [API] 프로필 5단계 데이터 조회/분기
+#  - HTML 요청: 템플릿 렌더
+#  - JSON 요청: 현재 단계 및 데이터 응답
 # -------------------------------------------------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -293,28 +248,11 @@ def profile_step5(request):
     try:
         profile = Profile.objects.get(user=request.user)
         current_step = profile.current_step
-        if current_step in ['step1', 'step2', 'step3', 'step4']:
-            step_mapping = {
-                'step1': 'profiles:profile_step1',
-                'step2': 'profiles:profile_step2',
-                'step3': 'profiles:profile_step3',
-                'step4': 'profiles:profile_step4'
-            }
-            next_name = step_mapping.get(current_step)
-            if wants_html(request) and next_name:
-                return redirect(reverse(next_name))
-            return Response({'current_step': current_step, 'next_step': reverse(next_name) if next_name else None}, status=200)
-        if current_step == 'completed':
-            if wants_html(request):
-                return redirect(reverse('profiles:profile-home'))
-            return Response({'current_step': current_step, 'next_step': reverse('profiles:profile-home')}, status=200)
     except Profile.DoesNotExist:
-        if wants_html(request):
-            return redirect(reverse('profiles:profile_step1'))
-        return Response({'error': 'profile_not_found', 'next_step': reverse('profiles:profile_step1')}, status=404)
+        # 프로필이 없다면, 1단계부터 시작하도록 상태를 'step1'으로 설정
+        current_step = 'step1'
 
     try:
-        profile = Profile.objects.get(user=request.user)
         additional_info = getattr(profile, 'additional_info', None)
         additional_info_data = {
             'experience': additional_info.experience if additional_info else None,
@@ -323,21 +261,26 @@ def profile_step5(request):
             'goal_or_concern': additional_info.goal_or_concern if additional_info else None,
             'personality_keywords': list(additional_info.personality_keyword.values_list('keyword', flat=True)) if additional_info else [],
         }
-    except Profile.DoesNotExist:
+    except (Profile.DoesNotExist, AttributeError):
         additional_info_data = {}
+        
     personality_keywords = list(Personality.objects.values_list('keyword', flat=True))
 
+    # 클라이언트가 HTML을 요청한 경우 (브라우저 접근)
     if wants_html(request):
+        # 강제 리디렉션 로직을 모두 제거하고, 현재 단계에 맞는 템플릿을 바로 렌더링합니다.
+        # 프론트엔드에서 `current_step` 값을 보고 UI를 결정하도록 합니다.
         return render(request, 'profiles/profile_5.html', {
-            'current_step': 'step5',
+            'current_step': current_step, # 'step5'가 아닌 실제 current_step 값을 전달
             'additional_info': additional_info_data,
             'personality_keywords': personality_keywords,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
         })
 
+    # API 요청인 경우 (JSON 응답)
     return Response({
-        'current_step': 'step5',
+        'current_step': current_step, # 'step5'가 아닌 실제 current_step 값을 전달
         'additional_info': additional_info_data,
         'personality_keywords': personality_keywords,
     }, status=200)
