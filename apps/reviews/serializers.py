@@ -53,7 +53,6 @@ class ReviewCreateSerializer(serializers.Serializer):
     def create(self, validated_data):
         user = self.context["request"].user
         match_id = validated_data.pop("match_id")
-        review = Review.objects.get(match_id=match_id)
         attitude_ids = validated_data.pop("attitude_ids", [])
         degree_ids = validated_data.pop("degree_ids", [])
         
@@ -75,6 +74,7 @@ class ReviewCreateSerializer(serializers.Serializer):
             match=match,
             **validated_data
         )
+        # 대화태도와 대화가치 저장
         if attitude_ids:
             review_attitudes = [ReviewAttitude(review=review, attitude_id=attitude_id) for attitude_id in attitude_ids]
             ReviewAttitude.objects.bulk_create(review_attitudes)
