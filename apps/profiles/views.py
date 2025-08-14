@@ -107,7 +107,8 @@ def profile_step1(request):
         current_step = 'step1'
 
     universities = School.objects.all().order_by('school_name')
-
+    departments = Department.objects.all()
+    
     # 클라이언트가 HTML을 요청한 경우 (브라우저 접근)
     if wants_html(request):
         # 뒤로가기 시 강제 리디렉션 로직을 제거하고,
