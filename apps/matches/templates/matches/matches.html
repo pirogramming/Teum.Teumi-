@@ -1,11 +1,26 @@
-{% extends 'matches/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
+
+{% block title %}틈틈이 - 매칭{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'matches/css/matches.css' %}">
 {% endblock %}
 {% block extra_js %}
 <script src="{% static 'matches/js/matches.js' %}" defer></script>
+{% endblock %}
+
+{% block header %}
+<!-- Header -->
+<div id="header">
+    <div class="div-container">
+        <div class="icon">🤝</div>
+        <div class="header-context">
+            <h1 class="header-title">내 매칭 현황</h1>
+            <p class="comment">대화 신청과 완료된 만남들을 관리해요</p>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -16,7 +31,7 @@
 
 <div id="tab-request" class="tab-content">
     {% for match in matchings %}
-    <div class="tab-container">     <!--내부 텍스트는 나중에 수정 필요-->
+    <div class="tab-container">
         <div>
             <div class="circle">
                 {% if match.sender == user %}

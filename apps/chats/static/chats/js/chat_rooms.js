@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
         rooms.forEach((room) => {
             const names = room.participants.join(", ");
             const firstLetter = names[0] || "?";
-            const message = room.last_message || "(메시지 없음)";
+            const message = room.last_message || "대화를 시작해보세요!";
             const time = room.last_time
             ? new Date(room.last_time).toLocaleTimeString("ko-KR", {
                 hour: "2-digit",

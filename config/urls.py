@@ -35,9 +35,7 @@ schema_view = get_schema_view(
         title="TeumTeumi API 문서",
         default_version='v1',
         description="TeumTeumi 서비스의 API 명세서입니다.",
-        terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="your@email.com"),
-        license=openapi.License(name="BSD License"),
+
     ),
     public=True,  # True면 누구나 접근 가능, False면 권한 필요
     permission_classes=(permissions.AllowAny,),
