@@ -418,5 +418,277 @@ document.addEventListener('DOMContentLoaded', function() {
     ProfileStep2.init();
   } else if (path.includes('/step3/')) {
     ProfileStep3.init();
+  } else if (path.includes('/step4/')) {
+    ProfileStep4.init();
+  } else if (path.includes('/step5/')) {
+    ProfileStep5.init();
   }
 });
+
+// ========================================
+// Profile Step 4: 기본 정보 + 자기소개(50자 이상)
+// ========================================
+const ProfileStep4 = {
+  init() {
+    const MIN_TEXT = 50;
+
+    // 요소 참조
+    const nicknameInput = document.getElementById('nickname');
+    const mbtiSelect = document.getElementById('mbti');
+    const genderSelect = document.getElementById('gender');
+    const textarea = document.getElementById('introduction');
+    const textCount = document.getElementById('text-count');
+    const message = document.getElementById('text-comment');
+    const nextButton = document.getElementById('next-button');
+    const basicInfoForm = document.getElementById('basic-info-form');
+
+    // 필수 요소 없으면 종료 (다른 단계에서 공통 스크립트 사용 시 안전)
+    if (!nicknameInput || !mbtiSelect || !genderSelect || !textarea || !textCount || !message || !nextButton || !basicInfoForm) {
+      console.warn('[profile_4] 필요한 엘리먼트가 일부 없습니다. 스크립트를 종료합니다.');
+      return;
+    }
+
+    // 기존 데이터 불러오기
+    (async () => {
+      try {
+        const res = await ProfileOnboarding.authFetch('/profiles/api/basic_info/', { method: 'GET' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.nickname) nicknameInput.value = data.nickname;
+          if (data.mbti) mbtiSelect.value = data.mbti;
+          if (data.gender) genderSelect.value = data.gender;
+          if (data.introduction) textarea.value = data.introduction;
+          updateTextCount();
+          updateButtonState();
+        } else if (res.status === 401) {
+          console.warn('인증 필요: 토큰을 확인하세요.');
+        }
+      } catch (e) {
+        console.error('데이터 불러오기 실패:', e);
+      }
+    })();
+
+    function updateTextCount() {
+      const length = textarea.value.length;
+      textCount.textContent = `${length}/${MIN_TEXT}자`;
+      message.innerHTML = length >= MIN_TEXT ? '✅ 완성!' : '📝 조금 더 써주세요';
+    }
+
+    function updateButtonState() {
+      const isNicknameFilled = nicknameInput.value.trim() !== '';
+      const isMbtiSelected = mbtiSelect.value !== '';
+      const isGenderSelected = genderSelect.value !== '';
+      const isTextareaLongEnough = textarea.value.length >= MIN_TEXT;
+      nextButton.disabled = !(isNicknameFilled && isMbtiSelected && isGenderSelected && isTextareaLongEnough);
+    }
+
+    textarea.addEventListener('input', () => { updateTextCount(); updateButtonState(); });
+    nicknameInput.addEventListener('input', updateButtonState);
+    mbtiSelect.addEventListener('change', updateButtonState);
+    genderSelect.addEventListener('change', updateButtonState);
+
+    // 폼 제출: PATCH 저장 후 5단계로 이동
+    basicInfoForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        nickname: nicknameInput.value.trim(),
+        mbti: mbtiSelect.value,
+        gender: genderSelect.value,
+        introduction: textarea.value.trim(),
+      };
+
+      try {
+        const res = await ProfileOnboarding.authFetch('/profiles/api/basic_info/', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          window.location.href = '/profiles/step5/page/';
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(err));
+        }
+      } catch (e) {
+        console.error('저장 실패:', e);
+        alert('저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.');
+      }
+    });
+
+    // 초기 렌더 상태
+    updateTextCount();
+    updateButtonState();
+  }
+};
+
+// ========================================
+// Profile Step 5: 상세 프로필 작성 + 키워드 3개 선택
+// ========================================
+const ProfileStep5 = {
+  init() {
+    const MAX_SELECTION = 3;
+
+    // 요소 참조
+    const tags = Array.from(document.querySelectorAll('.tag[data-keyword]'));
+    const tagCountText = document.getElementById('tag-count');
+
+    const experienceInput = document.getElementById('experience');
+    const conversationSelect = document.getElementById('conversation_style');
+    const areaInput = document.getElementById('activity_location');
+    const goalInput = document.getElementById('goal_or_concern');
+
+    const detailStartBtn = document.getElementById('detail-start');
+    const defaultStartBtn = document.getElementById('default-start');
+    const profileForm = document.getElementById('profile-form');
+
+    // 필수 요소 확인
+    if (!profileForm || !detailStartBtn || !defaultStartBtn ||
+        !experienceInput || !conversationSelect || !areaInput || !goalInput ||
+        !tagCountText || tags.length === 0) {
+      console.warn('[profile_5] 필요한 엘리먼트가 일부 없습니다. 스크립트를 종료합니다.');
+      return;
+    }
+
+    // 기존 데이터 불러오기
+    (async () => {
+      try {
+        const response = await ProfileOnboarding.authFetch('/profiles/api/additional-info/', { method: 'GET' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.experience) experienceInput.value = data.experience;
+          if (data.conversation_style) conversationSelect.value = data.conversation_style;
+          if (data.activity_location) areaInput.value = data.activity_location;
+          if (data.goal_or_concern) goalInput.value = data.goal_or_concern;
+
+          if (Array.isArray(data.personality_keywords)) {
+            data.personality_keywords.slice(0, MAX_SELECTION).forEach(keyword => {
+              const tag = document.querySelector(`.tag[data-keyword="${keyword}"]`);
+              if (tag) {
+                tag.classList.add('selected');
+                tag.innerHTML = `✨ #${keyword}`;
+              }
+            });
+          }
+
+          updateCount();
+          validateForm();
+        } else if (response.status === 401) {
+          console.warn('[profile_5] 인증 필요: 토큰을 확인하세요.');
+        }
+      } catch (e) {
+        console.error('[profile_5] 데이터 불러오기 실패:', e);
+      }
+    })();
+
+    function updateCount() {
+      const selectedCount = document.querySelectorAll('.tag.selected').length;
+      tagCountText.textContent = `선택된 키워드 : ${selectedCount}/${MAX_SELECTION}`;
+
+      tags.forEach(tag => {
+        const isSelected = tag.classList.contains('selected');
+        if (selectedCount >= MAX_SELECTION && !isSelected) {
+          tag.classList.add('disabled');
+          tag.style.pointerEvents = 'none';
+          tag.style.opacity = '0.5';
+          tag.style.color = '#64748b';
+        } else {
+          tag.classList.remove('disabled');
+          tag.style.pointerEvents = 'auto';
+          tag.style.opacity = '1';
+          tag.style.color = '';
+        }
+      });
+    }
+
+    function validateForm() {
+      const isExperienceFilled = experienceInput.value.trim() !== '';
+      const isCommunicationSelected = conversationSelect.value !== '';
+      const isAreaFilled = areaInput.value.trim() !== '';
+      const isGoalFilled = goalInput.value.trim() !== '';
+      const selectedTagCountOk = document.querySelectorAll('.tag.selected').length === MAX_SELECTION;
+
+      const isValid = isExperienceFilled && isCommunicationSelected && isAreaFilled && isGoalFilled && selectedTagCountOk;
+      detailStartBtn.disabled = !isValid;
+    }
+
+    // 태그 토글
+    tags.forEach(tag => {
+      tag.addEventListener('click', () => {
+        const isSelected = tag.classList.contains('selected');
+        if (!isSelected) {
+          const selectedCount = document.querySelectorAll('.tag.selected').length;
+          if (selectedCount >= MAX_SELECTION) {
+            tag.classList.add('shake');
+            setTimeout(() => tag.classList.remove('shake'), 400);
+            return;
+          }
+        }
+        tag.classList.toggle('selected');
+        const keyword = tag.dataset.keyword;
+        tag.innerHTML = tag.classList.contains('selected') ? `✨ #${keyword}` : `#${keyword}`;
+        updateCount();
+        validateForm();
+      });
+    });
+
+    // 입력 이벤트
+    experienceInput.addEventListener('input', validateForm);
+    conversationSelect.addEventListener('change', validateForm);
+    areaInput.addEventListener('input', validateForm);
+    goalInput.addEventListener('input', validateForm);
+
+    // 상세 정보 저장 → 프로필 홈 이동
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (detailStartBtn.disabled) return;
+
+      detailStartBtn.disabled = true;
+
+      const selectedKeywords = Array.from(document.querySelectorAll('.tag.selected')).map(tag => tag.dataset.keyword);
+
+      const payload = {
+        experience: experienceInput.value.trim(),
+        conversation_style: conversationSelect.value,
+        activity_location: areaInput.value.trim(),
+        personality_keywords: selectedKeywords,
+        goal_or_concern: goalInput.value.trim(),
+      };
+
+      try {
+        const response = await ProfileOnboarding.authFetch('/profiles/api/additional-info/', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (response.ok) {
+          window.location.href = '/profiles/profile/';
+        } else {
+          const err = await response.json().catch(() => ({}));
+          alert('저장 중 오류가 발생했습니다: ' + JSON.stringify(err));
+          detailStartBtn.disabled = false;
+        }
+      } catch (e) {
+        console.error('[profile_5] 저장 실패:', e);
+        alert('저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.');
+        detailStartBtn.disabled = false;
+      }
+    });
+
+    // 기본 정보로만 시작하기
+    defaultStartBtn.addEventListener('click', async () => {
+      try {
+        await ProfileOnboarding.authFetch('/profiles/api/additional-info/', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+      } catch (_) {}
+      window.location.href = '/profiles/profile/';
+    });
+
+    // 초기 상태
+    updateCount();
+    validateForm();
+  }
+};

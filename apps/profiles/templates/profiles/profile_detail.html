@@ -303,52 +303,12 @@
             });
         });
 
-        // ===== JWT 템플릿 변수 → localStorage 저장 & authFetch 헬퍼 =====
-        (function(){
-          const tmplAccess = "{{ access_token|default:''|escapejs }}";
-          const tmplRefresh = "{{ refresh_token|default:''|escapejs }}";
-          if (tmplAccess) localStorage.setItem('access', tmplAccess);
-          if (tmplRefresh) localStorage.setItem('refresh', tmplRefresh);
-
-          async function refreshAccessToken() {
-            const refresh = localStorage.getItem('refresh');
-            if (!refresh) return null;
-            try {
-              const res = await fetch('/api/token/refresh/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refresh })
-              });
-              if (!res.ok) return null;
-              const data = await res.json();
-              if (data.access) {
-                localStorage.setItem('access', data.access);
-                return data.access;
-              }
-              return null;
-            } catch { return null; }
-          }
-
-          window.authFetch = async (url, options = {}, tryRefresh = true) => {
-            const token = localStorage.getItem('access') || '';
-            const headers = { ...(options.headers||{}), Authorization: token ? `Bearer ${token}` : '' };
-            let res = await fetch(url, { ...options, headers });
-            if (res.status === 401 && tryRefresh) {
-              const newAccess = await refreshAccessToken();
-              if (newAccess) {
-                const retryHeaders = { ...(options.headers||{}), Authorization: `Bearer ${newAccess}` };
-                res = await fetch(url, { ...options, headers: retryHeaders });
-              }
-            }
-            return res;
-          };
-
-          // 상세 페이지 대상 프로필 ID (서버 템플릿에서 주입)
-          window.TARGET_PROFILE_ID = "{{ profile.profile_id|escapejs }}";
-        })();
-        // 실제 프로필 데이터
-
-        const profileData = {
+        // ===== 템플릿 변수만 주입하고 외부 JS로 이동 =====
+        window.tmplAccess = "{{ access_token|default:''|escapejs }}";
+        window.tmplRefresh = "{{ refresh_token|default:''|escapejs }}";
+        window.TARGET_PROFILE_ID = "{{ profile.profile_id|escapejs }}";
+        // 실제 프로필 데이터 (외부 JS에서 접근)
+        window.PROFILE_DATA = {
             schedule: JSON.parse('{{ schedule|safe }}'),  // Django에서 전달받은 스케줄 데이터
             matching_score: {{ matching_score }},
             common_interests_count: {{ common_interests_count }}
@@ -400,121 +360,9 @@
             }
         }
 
-        function renderSchedule() {
-            const scheduleGrid = document.querySelector('.schedule-grid');
-            if (!scheduleGrid) return;
-            
-            console.log('renderSchedule 호출됨');
-            console.log('profileData.schedule:', profileData.schedule);
+        // 렌더/모달/신청 등은 외부 JS에서 처리
 
-            const days = ['월', '화', '수', '목', '금', '토', '일'];
-            const timeSlots = [];
-            
-            // Generate time slots from 9:00 to 21:00
-            for (let hour = 9; hour <= 20; hour++) {
-                timeSlots.push(`${hour}:00`);
-                timeSlots.push(`${hour}:30`);
-            }
-            timeSlots.push('21:00');
-
-            let scheduleHTML = `
-                <div class="schedule-header">
-                    <div class="time-label"></div>
-                    ${days.map(day => `<div class="day-label">${day}</div>`).join('')}
-                </div>
-            `;
-
-            timeSlots.forEach((time, hourIndex) => {
-                scheduleHTML += `
-                    <div class="schedule-row">
-                        <div class="time-label">${time}</div>
-                        ${days.map((day, dayIndex) => {
-                            // Django에서 전달받은 2차원 배열에서 해당 시간대의 가용성 확인
-                            const isAvailable = profileData.schedule && 
-                                               profileData.schedule[dayIndex] && 
-                                               profileData.schedule[dayIndex][hourIndex];
-                            return `<div class="schedule-cell ${isAvailable ? 'available' : ''}"></div>`;
-                        }).join('')}
-                    </div>
-                `;
-            });
-
-            scheduleGrid.innerHTML = scheduleHTML;
-        }
-
-        function submitApplication() {
-            const textarea = document.getElementById('applicationReason');
-            const reason = (textarea.value || '').trim();
-            if (!reason) {
-                alert('대화 신청 이유를 입력해주세요.');
-                return;
-            }
-
-            const toProfileId = window.TARGET_PROFILE_ID; // 상세 대상 프로필 ID
-            // 1) Change the payload to satisfy backend serializer expecting `receiver`
-            const payload = { receiver: toProfileId, reason, message: reason, to_profile_id: toProfileId };
-
-            // 전송 버튼 로딩 상태 처리
-            const button = document.querySelector('#applicationModal .submit-button');
-            const originalHTML = button ? button.innerHTML : null;
-            if (button) {
-                button.disabled = true;
-                button.innerHTML = '전송 중...';
-            }
-
-            (async () => {
-                // 매칭 신청 API 엔드포인트 (POST)
-                const endpoints = ['/matches/api/matches/'];
-                let lastError = null;
-
-                for (const url of endpoints) {
-                    try {
-                        // 3) Optional console debugging(디버깅용이어서 나중에 지워도 됨)
-                        console.log('POST', url, payload);
-                        const res = await authFetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        // 2) Improve error debug visibility (status + raw text fallback)
-                        if (res.ok) {
-                            alert('대화 신청이 전송되었습니다!');
-                            hideApplicationModal();
-                            textarea.value = '';
-                            // 성공 시 매치 리스트 페이지로 이동
-                            window.location.href = '/matches/';
-                            return;
-                        } else {
-                            let errText = '';
-                            try {
-                                const ct = res.headers.get('Content-Type') || '';
-                                if (ct.includes('application/json')) {
-                                    const errJson = await res.json();
-                                    errText = errJson.error || errJson.detail || JSON.stringify(errJson);
-                                } else {
-                                    errText = await res.text();
-                                }
-                            } catch (_) {
-                                errText = '';
-                            }
-                            lastError = `[${res.status}] ${errText || '응답 본문 없음'}`;
-                            // 404면 다음 후보 엔드포인트 시도
-                            if (res.status === 404) continue;
-                        }
-                    } catch (e) {
-                        lastError = e && e.message ? e.message : '네트워크 오류';
-                    }
-                }
-
-                alert('신청 실패: ' + (lastError || '알 수 없는 오류가 발생했습니다.'));
-            })().finally(() => {
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = originalHTML || '<span>💌</span> 신청하기';
-                }
-            });
-        }
+        // 외부 JS의 전역 핸들러 사용
 
         function toggleLike() {
             const heartIcon = document.querySelector('.heart-icon');
@@ -535,10 +383,8 @@
             }
         }
 
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('프로필 상세 페이지 로드됨');
-        });
+        // 외부 스크립트 로드
     </script>
+    <script src="{% static 'profiles/js/profile-pages.js' %}"></script>
 </body>
 </html>
