@@ -11,8 +11,14 @@ if (!token || !roomId) {
     alert("잘못된 접근입니다.");
 }
 
-// 운영 하드코딩: teumteumi.site 고정 (로컬 테스트 시 아래를 주석 처리하고 동적 생성 사용)
-const socket = new WebSocket(`ws://localhost:8000/ws/chat/${roomId}/?token=${token}`);
+// 1. HTTPS면 wss, HTTP면 ws 사용
+const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+
+// 2. 현재 페이지 도메인(host) 가져오기
+const host = window.location.host;
+
+const socket = new WebSocket(`${protocol}://${host}/ws/chat/${roomId}/?token=${token}`);
 const log = document.getElementById("chat-log");
 const input = document.getElementById("chat-input");
 const sendBtn = document.getElementById("send-btn");
@@ -174,7 +180,6 @@ function checkMeetingStatus() {
     .then(data => {
         if (data.is_completed) {
             showMeetingBanner();
-            document.getElementById("meeting-complete-btn").disabled = true;
         }
     });
 }

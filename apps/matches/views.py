@@ -6,7 +6,7 @@ from django.core.exceptions import PermissionDenied
 from rest_framework.exceptions import PermissionDenied
 from rest_framework import serializers
 from rest_framework.views import APIView
-from django.db.models import Q
+from django.db.models import Q, Avg
 from .models import Matching, MatchingStatus
 from .serializers import MatchCreateSerializer, MatchDetailSerializer
 from apps.matches.services.recommend import recommend_top_n
@@ -26,6 +26,8 @@ from apps.chats.models import ChatRoom, ChatParticipation
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from apps.profiles.models import Profile, Interest, School
+from apps.reviews.models import Review
+from datetime import datetime
 
 def wants_html(request):
     """클라이언트가 HTML을 원하는지 확인하는 헬퍼 함수"""
@@ -224,6 +226,44 @@ def matching_list(request):
         serializer = MatchDetailSerializer(qs, many=True)
         return Response(serializer.data, status=200)
 
+KOR_TO_EN_DAY = {
+    "월": "Monday", "화": "Tuesday", "수": "Wednesday",
+    "목": "Thursday", "금": "Friday", "토": "Saturday", "일": "Sunday",
+}
+
+WEEKDAY = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+WEEKEND = ["Saturday", "Sunday"]
+
+def _normalize_days(day_values):
+    result = []
+    for v in day_values:
+        v = v.strip()
+        if v.lower() in ("weekday", "평일"):
+            result.extend(WEEKDAY)
+        elif v.lower() in ("weekend", "주말"):
+            result.extend(WEEKEND)
+        elif v in KOR_TO_EN_DAY:
+            result.append(KOR_TO_EN_DAY[v])
+        else:
+            # 이미 "Monday" 같은 영어라면 그대로
+            result.append(v)
+    # 중복 제거
+    return list(dict.fromkeys(result))
+
+def _parse_time_range(s):
+    # "오전 (09:00~12:00)" 또는 "09:00~12:00"
+    if "(" in s and ")" in s:
+        s = s[s.find("(")+1 : s.find(")")]
+    if "~" not in s:
+        return None
+    start_str, end_str = s.split("~", 1)
+    try:
+        start_t = datetime.strptime(start_str.strip(), "%H:%M").time()
+        end_t = datetime.strptime(end_str.strip(), "%H:%M").time()
+        return start_t, end_t
+    except ValueError:
+        return None
+
 
 # 탐색 페이지
 def matching_browse(request):
@@ -242,6 +282,8 @@ def matching_browse(request):
         'department'
     ).prefetch_related(
         'interests__interest'
+    ).annotate(
+        avg_rating=Avg('user__received_reviews__rating')  # ★ 평균 평점 추가
     )
 
     # --- GET 파라미터로 필터링 ---
@@ -251,29 +293,31 @@ def matching_browse(request):
         profiles = profiles.filter(interests__interest_id__in=selected_interests)
 
     # 시간대
-    selected_times = request.GET.getlist('times')  # 예: ["09:00~12:00"]
-    selected_days = request.GET.getlist('days')    # 예: ["Monday", "Tuesday"]
+    selected_times = request.GET.getlist('times')   # ["09:00~12:00", ...]
+    selected_days_raw = request.GET.getlist('days') # ["weekday"] / ["Monday"] / ["월"] / ["주말"] ...
 
-    if selected_times or selected_days:
+    if selected_times or selected_days_raw:
         time_filters = Q()
-        if selected_days:
+
+        # 요일 정규화 후 적용
+        if selected_days_raw:
+            selected_days = _normalize_days(selected_days_raw)
             time_filters &= Q(user__free_times__day_of_week__in=selected_days)
+
+        # 시간 교집합(겹치면 OK)
         if selected_times:
             time_q = Q()
             for t in selected_times:
-                # 괄호 제거
-                if "(" in t and ")" in t:
-                    t = t[t.find("(")+1 : t.find(")")]
-                
-                if "~" not in t:
+                parsed = _parse_time_range(t)
+                if not parsed:
                     continue
-
-                start_str, end_str = t.split("~")
+                bucket_start, bucket_end = parsed
                 time_q |= Q(
-                    user__free_times__start_time__lt=end_str.strip(),
-                    user__free_times__end_time__gt=start_str.strip()
+                    user__free_times__start_time__lt=bucket_end,
+                    user__free_times__end_time__gt=bucket_start
                 )
             time_filters &= time_q
+
         profiles = profiles.filter(time_filters)
 
     # 대학교
