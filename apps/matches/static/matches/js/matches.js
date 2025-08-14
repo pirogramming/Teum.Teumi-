@@ -1,6 +1,11 @@
 // 전역변수 설정
 let currentMatchId = null;
 
+// 페이지 비동기 로딩 -> 지금은 우선 간단하게 1분마다 새로고침함
+setInterval(() => {
+  window.location.reload();
+}, 10);  // 10ms마다 새로고침
+
 // === Auth & HTTP helpers ===
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -33,7 +38,7 @@ async function apiFetch(url, options = {}) {
     const csrftoken = getCookie('csrftoken');
     if (csrftoken) headers['X-CSRFToken'] = csrftoken;
   }
-  const resp = await fetch(url, Object.assign({}, options, { headers }));
+  const resp = await fetch(url, Object.assign({}, options, { headers, method }));
   if (resp.status === 401) {
     // 토큰 만료 등: 로그인 페이지로 유도
     window.location.replace('/users/login/');
@@ -298,9 +303,9 @@ document.addEventListener('click', async function (event) {
 
       const reviewData = {
           rating: document.getElementById('myRange').value,
-          attitude: attitudeValues,
-          degree: degreeValues,
-          comment: document.querySelector('#online-review') ? document.querySelector('#online-review').value : '', // 한줄 후기가 없다면 빈 문자열 전송
+          attitude_ids: attitudeValues,
+          degree_ids: degreeValues,
+          comment: document.querySelector('#oneline-review')?.value || '',
           meeting: document.querySelector('input[name="meet"]:checked').value,
           match_id: matchId,
       };
@@ -316,8 +321,14 @@ document.addEventListener('click', async function (event) {
               alert('리뷰가 성공적으로 저장되었습니다!');
               window.location.href = '/matches/';
           } else {
-              const result = await response.json();
-              alert(`리뷰 저장에 실패했습니다: ${result.detail || '알 수 없는 오류'}`);
+              let errorMessage = '알 수 없는 오류';
+              try {
+                  const result = await response.json();
+                  errorMessage = result.detail || errorMessage;
+              } catch (_) {
+                  errorMessage = '서버 응답을 해석할 수 없습니다.';
+              }
+              alert(`리뷰 저장에 실패했습니다: ${errorMessage}`);
           }
       } catch (error) {
           alert('요청 처리 중 오류가 발생했습니다.');
