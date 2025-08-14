@@ -12,7 +12,6 @@ from .serializers import MatchCreateSerializer, MatchDetailSerializer
 from apps.matches.services.recommend import recommend_top_n
 from apps.profiles.ProfileSerializer import ProfileSimpleSerializer
 from django.shortcuts import get_object_or_404, render
-from django.contrib.auth.decorators import login_required
 from apps.profiles.models import School, Profile
 from apps.interests.models import Interest
 from django.db import transaction
@@ -33,7 +32,7 @@ def wants_html(request):
     """클라이언트가 HTML을 원하는지 확인하는 헬퍼 함수"""
     return request.headers.get('Accept', '').find('text/html') != -1
 
-# 1. 매칭 목록 조회(GET) & 매칭 신청(POST)
+# 1. 매칭 신청(POST)
 class MatchListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -59,8 +58,6 @@ class MatchListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         sender = self.request.user
 
-        # 1) 기본: serializer에서 receiver를 받되,
-        # 2) 누락되었거나 잘못 매핑될 수 있으므로 to_profile_id 로 보강
         receiver = serializer.validated_data.get('receiver', None)
 
         if receiver is None:
@@ -104,17 +101,17 @@ class MatchStatusUpdateView(generics.UpdateAPIView):
     """
     permission_classes = [IsAuthenticated]
     queryset = Matching.objects.all()
-    serializer_class = MatchDetailSerializer  # 응답 스키마 재사용
+    serializer_class = MatchDetailSerializer  # 사용할 시리얼라이저 지정
 
-    @transaction.atomic
+    @transaction.atomic # 하나로 묶어서 도중에 실패시 전ㅊ네 롤백
     def update(self, request, *args, **kwargs):
         match = self.get_object()
 
         # 권한 체크: 수신자만 수락/거절 가능
         if match.receiver != request.user:
-            raise PermissionDenied("수락 또는 거절은 수신자만 할 수 있습니다.")
+            raise PermissionDenied("수락 또는 거절은 수신자만 할 수 있습니다.") # 4003 Forbidden 발생
 
-        # 부분 업데이트 수행
+        # 매칭 상태 업데이트 수행
         partial = kwargs.pop('partial', True)
         serializer = self.get_serializer(match, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -142,12 +139,10 @@ class MatchStatusUpdateView(generics.UpdateAPIView):
                 room = ChatRoom.objects.create()
                 ChatParticipation.objects.get_or_create(chatroom=room, user=sender)
                 ChatParticipation.objects.get_or_create(chatroom=room, user=receiver)
-                
-            # ✅ 추가된 로직: Matching 객체에 ChatRoom 연결
             match.chatroom = room
-            match.save()  # 변경사항을 DB에 저장
+            match.save()
 
-        # 기본 응답 + room info
+        # 응답 데이터 구성
         data = self.get_serializer(serializer.instance).data
         if room is not None:
             data.update({
@@ -156,27 +151,7 @@ class MatchStatusUpdateView(generics.UpdateAPIView):
             })
         return Response(data, status=status.HTTP_200_OK)
 
-
-# 3. 상태별 필터링된 내 매칭 조회 (GET)
-class MyMatchListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = MatchDetailSerializer
-
-    def get_queryset(self):
-        u = self.request.user
-        qs = Matching.objects.filter(
-            Q(sender=u) | Q(receiver=u)
-        ).select_related(
-            'sender__profile__department',
-            'receiver__profile__department'
-        ).order_by('-created_at')
-        status_filter = self.request.query_params.get('status')
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
-
-
-# 4. AI 추천 매칭 대상 반환 (GET)
+# 3. AI 추천 매칭 대상 반환 (GET)
 class MatchRecommendationView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -185,7 +160,7 @@ class MatchRecommendationView(APIView):
         data = ProfileSimpleSerializer([user.profile for user in top_users], many=True, context={'request': request}).data
         return Response(data)
 
-
+# 4. 매칭 리스트 페이지 (HTML 또는 JSON)
 @api_view(['GET']) # 이 데코레이터를 추가하여 API 뷰로 만듭니다.
 @permission_classes([IsAuthenticated])
 def matching_list(request):
@@ -204,27 +179,14 @@ def matching_list(request):
         'iscompleted__chatroom',
     ).order_by('-completed_at')
 
-    # 클라이언트가 HTML 페이지를 요청한 경우
-    if wants_html(request):
-        context = {
-            'matchings': base_qs,
-            'MatchingStatus': MatchingStatus,
-            'chatrooms': chat_qs,
-            'user': user,
-        }
-        return render(request, 'matches/matches.html', context)
+    context = {
+        'matchings': base_qs,
+        'MatchingStatus': MatchingStatus,
+        'chatrooms': chat_qs,
+        'user': user,
+    }
+    return render(request, 'matches/matches.html', context)
     
-    # 클라이언트가 JSON 데이터를 요청한 경우 (비동기 요청)
-    else:
-        status_filter = request.GET.get('status')
-        if status_filter:
-            qs = base_qs.filter(status=status_filter)
-        else:
-            qs = base_qs
-
-        # Serializer를 사용하여 데이터를 JSON으로 변환
-        serializer = MatchDetailSerializer(qs, many=True)
-        return Response(serializer.data, status=200)
 
 KOR_TO_EN_DAY = {
     "월": "Monday", "화": "Tuesday", "수": "Wednesday",
