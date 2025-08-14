@@ -107,6 +107,7 @@ def profile_step1(request):
         current_step = 'step1'
     
     universities = School.objects.all()
+    departments = Department.objects.all()
 
     # 클라이언트가 HTML을 요청한 경우 (브라우저 접근)
     if wants_html(request):
@@ -115,6 +116,7 @@ def profile_step1(request):
         # 프론트엔드가 `current_step` 값을 보고 적절한 UI를 표시하도록 유도합니다.
         return render(request, 'profiles/profile_1.html', {
             'universities': universities,
+            'departments' : departments,
             'current_step': current_step,
             'access_token': request.session.get('access_token'),
             'refresh_token': request.session.get('refresh_token'),
