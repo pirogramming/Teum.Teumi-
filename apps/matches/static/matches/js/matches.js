@@ -195,11 +195,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 매너온도 남기기 버튼
     document.querySelectorAll(".tab-right").forEach(btn => {
-        btn.addEventListener("click", function (event) {
-          currentMatchId = this.dataset.id;
-          showModal(reviewModal);
-        });
-    });
+      if (btn.dataset.reviewed === 'false') {
+          btn.addEventListener("click", function (event) {
+              currentMatchId = this.dataset.id;
+              showModal(reviewModal);
+          });
+      }
+  });
 
     // 닫기 버튼
     rejectModal.querySelector(".close span").addEventListener("click", function () {

@@ -179,11 +179,16 @@ def matching_list(request):
         'iscompleted__chatroom',
     ).order_by('-completed_at')
 
+    user_reviews = Review.objects.filter(user=user, match__in=base_qs)
+    review_map = {review.match_id: review.rating for review in user_reviews} # 매칭아이디를 키로 리뷰 평점이 값
+    print(review_map)
+
     context = {
         'matchings': base_qs,
         'MatchingStatus': MatchingStatus,
         'chatrooms': chat_qs,
         'user': user,
+        'review_map': review_map,
     }
     return render(request, 'matches/matches.html', context)
     

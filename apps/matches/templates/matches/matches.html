@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load dict_filters %}
 
 {% block title %}틈틈이 - 매칭{% endblock %}
 
@@ -158,7 +159,13 @@
             {% else %}
                 data-target-user-id="{{ match.sender.id }}"
             {% endif %}>
-            <div>⭐ 매너온도 남기기</div>
+            {% with rating=review_map|dict_attr:match.id %}
+            {% if rating %}
+              <div class="rating">⭐ {{ rating }}점</div>
+            {% else %}
+              <button class="tab-right" data-id="{{ match.id }}" data-reviewed="false">매너온도 남기기</button>
+            {% endif %}
+            {% endwith %}
         </div>
     </div>
     {% endif %}
