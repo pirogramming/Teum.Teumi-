@@ -267,6 +267,19 @@ svg {
     font-weight: bold;
     margin-bottom: 10px;
 }
+/* 예원아 나중에 css다듬어줘 */
+.profile-rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: #d97706;
+    background: #fef3c7;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    margin: 0 auto;
+    width: fit-content;
+}
 
 .small-comment {
     color: var(--secondary-color);

@@ -62,8 +62,8 @@ function goToMatching() {
 
 /**
  * 하단 네비게이션 바의 페이지 전환을 처리하는 메인 함수
- * - 클릭된 네비게이션 아이템의 시각적 상태를 업데이트
  * - 해당 페이지로 실제 이동을 수행
+ * - 페이지 이동 후 setActiveNavigation()이 자동으로 활성 상태를 설정
  * 
  * @param {string} page - 이동할 페이지 식별자 ('home', 'browse', 'chat-list', 'matching', 'mypage')
  * 사용처: 하단 네비게이션의 모든 버튼들
@@ -71,20 +71,7 @@ function goToMatching() {
 function setCurrentPage(page) {
     console.log(`페이지 전환 요청: ${page}`);
     
-    // 1단계: 모든 네비게이션 아이템에서 active 클래스 제거
-    // active 클래스는 현재 선택된 페이지를 시각적으로 강조하는 역할
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    // 2단계: 클릭된 아이템에 active 클래스 추가
-    // event.target.closest()를 사용하여 버튼 내부의 어떤 요소를 클릭해도 정확한 버튼을 찾음
-    const clickedItem = event.target.closest('.nav-item');
-    if (clickedItem) {
-        clickedItem.classList.add('active');
-    }
-    
-    // 3단계: 페이지별 실제 이동 처리
+    // 페이지별 실제 이동 처리
     switch(page) {
         case 'home':
             console.log('홈 페이지로 이동');
@@ -116,4 +103,46 @@ function setCurrentPage(page) {
             
     }
 }
+
+/**
+ * 현재 페이지에 맞는 하단 네비게이션 활성 상태를 설정하는 함수
+ * 페이지 로드 시 자동으로 호출되어 현재 페이지에 맞는 네비게이션 아이템을 활성화
+ */
+function setActiveNavigation() {
+    const currentPath = window.location.pathname;
+    console.log('현재 경로:', currentPath);
+    
+    // 모든 네비게이션 아이템에서 active 클래스 제거
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // 현재 페이지에 맞는 네비게이션 아이템 활성화
+    if (currentPath.includes('/profiles/profile/') && !currentPath.includes('/detail/')) {
+        // 프로필 홈 페이지
+        const homeNav = document.querySelector('.nav-item[data-page="home"]');
+        if (homeNav) homeNav.classList.add('active');
+    } else if (currentPath.includes('/matches/browse/')) {
+        // 탐색 페이지
+        const browseNav = document.querySelector('.nav-item[data-page="browse"]');
+        if (browseNav) browseNav.classList.add('active');
+    } else if (currentPath.includes('/chats/')) {
+        // 대화 목록 페이지
+        const chatNav = document.querySelector('.nav-item[data-page="chat-list"]');
+        if (chatNav) chatNav.classList.add('active');
+    } else if (currentPath.includes('/matches/') && !currentPath.includes('/browse/')) {
+        // 매칭 페이지
+        const matchingNav = document.querySelector('.nav-item[data-page="matching"]');
+        if (matchingNav) matchingNav.classList.add('active');
+    } else if (currentPath.includes('/users/mypage/')) {
+        // 마이페이지
+        const mypageNav = document.querySelector('.nav-item[data-page="mypage"]');
+        if (mypageNav) mypageNav.classList.add('active');
+    }
+}
+
+// 페이지 로드 시 현재 페이지에 맞는 네비게이션 활성 상태 설정
+document.addEventListener('DOMContentLoaded', function() {
+    setActiveNavigation();
+});
 
