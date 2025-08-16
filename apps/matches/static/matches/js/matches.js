@@ -1,5 +1,9 @@
 // 전역변수 설정
 let currentMatchId = null;
+const MATCH_API_BASE = '/matches/api/matches';
+const STATUS = { PENDING: '대기중', ACCEPTED: '수락됨', REJECTED: '거절됨' };
+
+window.setCurrentPage = setCurrentPage;
 
 // === Auth & HTTP helpers ===
 function getCookie(name) {
@@ -33,7 +37,7 @@ async function apiFetch(url, options = {}) {
     const csrftoken = getCookie('csrftoken');
     if (csrftoken) headers['X-CSRFToken'] = csrftoken;
   }
-  const resp = await fetch(url, Object.assign({}, options, { headers }));
+  const resp = await fetch(url, Object.assign({}, options, { headers, method }));
   if (resp.status === 401) {
     // 토큰 만료 등: 로그인 페이지로 유도
     window.location.replace('/users/login/');
@@ -42,24 +46,18 @@ async function apiFetch(url, options = {}) {
   return resp;
 }
 
-const MATCH_API_BASE = '/matches/api/matches';
-const STATUS = { PENDING: '대기중', ACCEPTED: '수락됨', REJECTED: '거절됨' };
-
 // === Page navigation(base.html에 있는) ===
-// TODO: 추후에 url이나 페이지가 변경되면 수정해야됨
 function setCurrentPage(name) {
   const routes = {
     home: '/profiles/profile/',
     browse: '/matches/browse/',
-    chat_list: '/chats/',
+    'chat-list': '/chats/rooms/page/',
     matching: '/matches/',
     mypage: '/users/mypage/',
   };
-  const url = routes[name] || '/profiles/profile/';
+  const url = routes[name] || '/profiles/profile/'; // 기본값은 프로필 페이지로 이동
   window.location.href = url;
 }
-// ensure global
-window.setCurrentPage = setCurrentPage;
 
 // 탭 전환 함수
     function showTab(tabName) {
@@ -104,8 +102,6 @@ async function updateMatchStatus(matchId, nextStatus, payload = {}) {
 
   try {
     const url = `${MATCH_API_BASE}/${matchId}/status/`;
-    // 디버그 로그 (필요 시 제거)
-    console.debug('→ PATCH', url, { status: statusToSend, ...normalizedPayload });
 
     const resp = await apiFetch(url, {
       method: 'PATCH',
@@ -122,15 +118,13 @@ async function updateMatchStatus(matchId, nextStatus, payload = {}) {
     }
 
     const data = await resp.json().catch(() => ({}));
-    console.debug('← PATCH ok', data);
 
     // 서버가 채팅방 URL을 주면 바로 이동
     if (data && data.room_id) {
       window.location.href = `/chats/rooms/page/${data.room_id}/`;
       return;
     }
-
-    // 안전망: URL이 없으면 새로고침
+    // 아니면 매칭 페이지 리로드
     window.location.reload();
   } catch (e) {
     console.error(e);
@@ -201,11 +195,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 매너온도 남기기 버튼
     document.querySelectorAll(".tab-right").forEach(btn => {
-        btn.addEventListener("click", function (event) {
-          currentMatchId = this.dataset.id;
-          showModal(reviewModal);
-        });
-    });
+      if (btn.dataset.reviewed === 'false') {
+          btn.addEventListener("click", function (event) {
+              currentMatchId = this.dataset.id;
+              showModal(reviewModal);
+          });
+      }
+  });
 
     // 닫기 버튼
     rejectModal.querySelector(".close span").addEventListener("click", function () {
@@ -280,6 +276,8 @@ document.addEventListener('click', async function (event) {
           return;
       }
 
+
+      // 선택된 태도와 정도 값 가져오기
       const attitudeElements = document.querySelectorAll('input[name="attitude"]:checked');
       const attitudeValues = [];
       for (const el of attitudeElements) {
@@ -287,7 +285,6 @@ document.addEventListener('click', async function (event) {
               attitudeValues.push(el.value);
           }
       }
-            
       const degreeElements = document.querySelectorAll('input[name="value"]:checked');
       const degreeValues = [];
       for (const el of degreeElements) {
@@ -298,9 +295,9 @@ document.addEventListener('click', async function (event) {
 
       const reviewData = {
           rating: document.getElementById('myRange').value,
-          attitude: attitudeValues,
-          degree: degreeValues,
-          comment: document.querySelector('#online-review') ? document.querySelector('#online-review').value : '', // 한줄 후기가 없다면 빈 문자열 전송
+          attitude_ids: attitudeValues,
+          degree_ids: degreeValues,
+          comment: document.querySelector('#oneline-review')?.value || '',
           meeting: document.querySelector('input[name="meet"]:checked').value,
           match_id: matchId,
       };
@@ -316,8 +313,14 @@ document.addEventListener('click', async function (event) {
               alert('리뷰가 성공적으로 저장되었습니다!');
               window.location.href = '/matches/';
           } else {
-              const result = await response.json();
-              alert(`리뷰 저장에 실패했습니다: ${result.detail || '알 수 없는 오류'}`);
+              let errorMessage = '알 수 없는 오류';
+              try {
+                  const result = await response.json();
+                  errorMessage = result.detail || errorMessage;
+              } catch (_) {
+                  errorMessage = '서버 응답을 해석할 수 없습니다.';
+              }
+              alert(`리뷰 저장에 실패했습니다: ${errorMessage}`);
           }
       } catch (error) {
           alert('요청 처리 중 오류가 발생했습니다.');

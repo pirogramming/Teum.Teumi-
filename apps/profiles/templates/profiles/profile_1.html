@@ -46,6 +46,9 @@
                 <div class="select-text">📚 <strong>학과</strong></div>
                 <select name="department" id="major" class="selectbox" required>
                     <option selected disabled value="">전공하시는 학과를 선택해주세요</option>
+                    {% for dep in departments %}
+                    <option value="{{ dep }}">{{ dep }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="section">

@@ -361,28 +361,6 @@
         }
 
         // 렌더/모달/신청 등은 외부 JS에서 처리
-
-        // 외부 JS의 전역 핸들러 사용
-
-        function toggleLike() {
-            const heartIcon = document.querySelector('.heart-icon');
-            heartIcon.classList.toggle('liked');
-            console.log('좋아요 토글');
-        }
-
-        // Close modals when clicking outside
-        window.onclick = function(event) {
-            const applicationModal = document.getElementById('applicationModal');
-            const detailModal = document.getElementById('detailModal');
-            
-            if (event.target === applicationModal) {
-                hideApplicationModal();
-            }
-            if (event.target === detailModal) {
-                hideDetailModal();
-            }
-        }
-
         // 외부 스크립트 로드
     </script>
     <script src="{% static 'profiles/js/profile-pages.js' %}"></script>

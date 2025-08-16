@@ -6,12 +6,19 @@
 <link rel="stylesheet" href="{% static 'chats/css/chat_rooms.css' %}">
 {% endblock %}
 
-{% block content %}
-<div class="chat-rooms-header">
-  <h1 class="chat-rooms-title">💬 대화방</h1>
-  <p class="chat-rooms-subtitle">진행 중인 대화들을 확인해보세요</p>
+{% block header %}
+<div id="header">
+    <div class="div-container">
+        <div class="icon">💬</div>
+        <div class="header-context">
+            <h1 class="header-title">대화방</h1>
+            <p class="comment">진행 중인 대화들을 확인해보세요</p>
+        </div>
+    </div>
 </div>
+{% endblock %}
 
+{% block content %}
 <ul id="room-list"></ul>
 {% endblock %}
 

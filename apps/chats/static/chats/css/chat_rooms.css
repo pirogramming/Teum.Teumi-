@@ -1,8 +1,37 @@
-body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background-color: #f5f5f5;
+#header {
+    background-color: var(--card-background);
+    padding: 15px;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    border-bottom: 0.5px solid rgba(99, 102, 241, 0.1);
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.div-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 15px;
+}
+
+.icon {
+    font-size: 1.4rem;
+}
+
+.header-title {
+    font-size: 1.125rem;
+    font-weight: 600;
     margin: 0;
-    padding: 20px;
+}
+
+.comment {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
 }
 
 #room-list {
@@ -73,20 +102,4 @@ body {
     font-size: 12px;
     color: #94a3b8;
     white-space: nowrap;
-}
-.chat-rooms-header {
-    margin-bottom: 24px;
-}
-
-.chat-rooms-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: #1a1d29;
-    margin: 0;
-}
-
-.chat-rooms-subtitle {
-    font-size: 14px;
-    color: #64748b;
-    margin-top: 6px;
 }
