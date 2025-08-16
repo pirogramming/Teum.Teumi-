@@ -830,7 +830,7 @@
 }
 
 .modal-button.logout-button:hover {
-    background: var(--primary-hover);
+    background: color-mix(in srgb, var(--primary-color) 80%, black 20%);
 }
 
 /* 접근성 개선 */
