@@ -74,6 +74,7 @@
     background-color: var(--card-background);
     border-radius: var(--radius-xl);
     display: flex;
+    flex-direction: column;
     gap: 15px;
     padding: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -106,22 +107,32 @@
 }
 
 .nickname {
-    font-size: 1.1rem;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
 }
 
 .major {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var;
+    font-size: 0.8rem;
+    margin: 0;
+    font-size: 0.875rem;
+    color: #64748b;
 }
 
 .status {
     background-color: #fef9c3;
-    color: #b45309;
-    font-size: 0.8rem;
-    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 10px;
     border-radius: var(--radius-xl);
-    font-weight: 500;
+}
+
+#pending, #accept, #reject {
+    color: #b45309;
+    font-size: 0.7rem;
+    padding: 0;
+    margin: 0;
 }
 
 .tab-content-bottom {
@@ -188,37 +199,37 @@
 .matching-complete {
     color: var(--success-color);
     background-color: #ecfdf5;
-    display: flex;
+    display: inline-block;
     align-items: center;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: 500;
     border-radius: var(--radius-xl);
-    padding: 5px 8px;
+    padding: 3px 10px;
     margin-top: 10px;
 }
 
 svg {
-    width: 0.8rem;
-    height: 0.8rem;
+    width: 0.7rem;
+    height: 0.7rem;
 }
 
 .tab-right {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: right;
 }
 
-.tab-right > div {
+.tab-right > button {
     color: #3730a3;
     background-color: #f9fafb;
     border: 1px solid #E0E7FF;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 500;
     padding: 5px 15px;
     border-radius: var(--radius-xl);
 }
 
-.tab-right > div:hover {
+.tab-right > button:hover {
     background-color: var(--primary-color);
     color: var(--card-background);
     cursor: pointer;
@@ -263,6 +274,7 @@ svg {
 }
 
 .small-title {
+    -webkit-tap-highlight-color: transparent; /* iOS 탭 하이라이트 제거 */
     font-size: 1.2rem;
     font-weight: bold;
     margin-bottom: 10px;
@@ -431,12 +443,28 @@ input[type="checkbox"] {
     border-radius: 0.3rem;
     background-color: var(--card-background);
     border: 1px solid #E0E7FF;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08)
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 input[type="checkbox"]:checked {
     color: var(--card-background);
     background-color: var(--primary-color);
+}
+
+/* 체크 아이콘 */
+input[type="checkbox"]:checked::after {
+    content: "";
+    display: block;
+    width: 0.7rem;
+    height: 0.7rem;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M6.173 12.727L2.1 8.654l1.414-1.414 2.659 2.659 6.364-6.364 1.414 1.414z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
 }
 
 .attitude > div:nth-of-type(2), .value > div:nth-of-type(2), .meet > div:nth-of-type(2) {
@@ -458,6 +486,9 @@ textarea {
     width: 100%;
     color: var(--card-background);
     background: linear-gradient(135deg, var(--primary-color), #a855f7);
+    display: flex;
+    align-items: center;
+    gap: 5px;
     border-radius: var(--radius-xl);
     padding: 5px 10px;
     border: none;
@@ -467,13 +498,18 @@ textarea {
     display: none; /* 처음엔 보이지 않게 */
 }
 
-@media (min-width: 400px) {
+@media (min-width: 768px) {
     .small-view {
         width: 400px;
     }
+
+    .tab-container {
+        display: flex;
+        flex-direction: row;
+    }
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1024px) {
     .small-view {
         width: 500px;
     }
