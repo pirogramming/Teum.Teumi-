@@ -22,23 +22,23 @@
     {% block bottom_nav %}
     <div class="bottom-nav">
         <div class="nav-container">
-            <button class="nav-item {% if current_page == 'home' %}active{% endif %}" onclick="setCurrentPage('home')">
+            <button class="nav-item {% if current_page == 'home' %}active{% endif %}" data-page="home" onclick="setCurrentPage('home')">
                 <div class="nav-emoji">🏠</div>
                 <span class="nav-label">홈</span>
             </button>
-            <button class="nav-item {% if current_page == 'browse' %}active{% endif %}" onclick="setCurrentPage('browse')">
+            <button class="nav-item {% if current_page == 'browse' %}active{% endif %}" data-page="browse" onclick="setCurrentPage('browse')">
                 <div class="nav-emoji">🔍</div>
                 <span class="nav-label">탐색</span>
             </button>
-            <button class="nav-item {% if current_page == 'chat-list' %}active{% endif %}" onclick="setCurrentPage('chat-list')">
+            <button class="nav-item {% if current_page == 'chat-list' %}active{% endif %}" data-page="chat-list" onclick="setCurrentPage('chat-list')">
                 <div class="nav-emoji">💬</div>
                 <span class="nav-label">대화</span>
             </button>
-            <button class="nav-item {% if current_page == 'matching' %}active{% endif %}" onclick="setCurrentPage('matching')">
+            <button class="nav-item {% if current_page == 'matching' %}active{% endif %}" data-page="matching" onclick="setCurrentPage('matching')">
                 <div class="nav-emoji">🤝</div>
                 <span class="nav-label">매칭</span>
             </button>
-            <button class="nav-item {% if current_page == 'mypage' %}active{% endif %}" onclick="setCurrentPage('mypage')">
+            <button class="nav-item {% if current_page == 'mypage' %}active{% endif %}" data-page="mypage" onclick="setCurrentPage('mypage')">
                 <div class="nav-emoji">👤</div>
                 <span class="nav-label">마이</span>
             </button>
