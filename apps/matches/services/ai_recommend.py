@@ -52,6 +52,8 @@ def get_user_profile_summary(user, profile):
             goal_or_concern = additional_info.goal_or_concern or "없음"
 
         # 리뷰 정보
+        review= getattr(user, 'received_reviews', None)
+        review_comments = review.values_list('comment', flat=True) if review else []
         review_summary = get_review_summary_from_api(user.id)
         avg_rating = review_summary.get('average_rating', '없음')
         meeting_score = review_summary.get('meeting_score', '없음')
@@ -73,6 +75,7 @@ def get_user_profile_summary(user, profile):
             f"경험: {experience}, "
             f"목표/걱정: {goal_or_concern}, "
             f"평균리뷰평점: {avg_rating}, "
+            f"리뷰: {', '.join(review_comments) if review_comments else '없음'}, "
             f"재만남점수: {meeting_score}%"
         )
         
