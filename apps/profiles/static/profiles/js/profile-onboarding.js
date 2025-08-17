@@ -90,7 +90,7 @@ const ProfileStep1 = {
               option.textContent = major;
               majorSelect.appendChild(option);
             });
-            ProfileStep1.checkAllSelected();
+            checkAllSelected();
           })
           .catch(error => {
             console.error('학과 목록 불러오기 실패:', error);
