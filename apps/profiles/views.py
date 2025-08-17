@@ -23,6 +23,13 @@ from .models import School, Department, Profile, Personality
 
 from apps.matches.services.recommend import recommend_top_n
 
+# AI 자기소개 생성 서비스 import
+from apps.profiles.services.auto_introduction import (
+    generate_step_introduction, 
+    generate_enhanced_introduction, 
+    analyze_introduction_quality,
+    generate_conversation_topics
+)
 
 # ---- helpers ----
 def wants_html(request):
@@ -975,3 +982,232 @@ def update_advanced(request):
         return JsonResponse({'success': False, 'message': '프로필을 찾을 수 없습니다.'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'업데이트 중 오류가 발생했습니다: {str(e)}'}, status=500)
+
+# ============================================================================
+# AI 자기소개 생성 API 뷰들
+# ============================================================================
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_ai_introduction_step(request):
+    """
+    프로필 단계에서의 AI 자기소개 생성 API
+    이전 단계들의 정보만을 바탕으로 생성
+    """
+    try:
+        # 요청 데이터에서 프로필 정보 추출
+        profile_data = request.data.get('profile_data', {})
+        
+        if not profile_data:
+            return Response({
+                'success': False,
+                'message': '프로필 정보가 필요합니다.'
+            }, status=400)
+        
+        # AI 자기소개 생성
+        ai_introduction = generate_step_introduction(profile_data)
+        
+        # 품질 분석
+        quality_analysis = analyze_introduction_quality(ai_introduction)
+        
+        return Response({
+            'success': True,
+            'message': 'AI 자기소개가 성공적으로 생성되었습니다.',
+            'ai_introduction': ai_introduction,
+            'quality_analysis': quality_analysis,
+            'options': {
+                'use_ai': 'AI가 작성한 자기소개를 사용',
+                'edit_ai': 'AI 자기소개를 수정하여 사용',
+                'write_own': '직접 작성'
+            }
+        }, status=200)
+        
+    except Exception as e:
+        print(f"AI 자기소개 생성 오류: {e}")
+        return Response({
+            'success': False,
+            'message': 'AI 자기소개 생성 중 오류가 발생했습니다.',
+            'error': str(e)
+        }, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_ai_introduction_enhanced(request):
+    """
+    마이페이지에서의 향상된 AI 자기소개 생성 API
+    DB에 저장된 모든 정보를 바탕으로 생성
+    """
+    try:
+        # 현재 사용자의 프로필 가져오기
+        profile = get_object_or_404(Profile, user=request.user)
+        
+        # 기존 자기소개 (있는 경우)
+        existing_introduction = request.data.get('existing_introduction', profile.introduction or '')
+        
+        # 향상된 AI 자기소개 생성
+        ai_introduction = generate_enhanced_introduction(profile, existing_introduction)
+        
+        # 품질 분석
+        quality_analysis = analyze_introduction_quality(ai_introduction)
+        
+        return Response({
+            'success': True,
+            'message': '향상된 AI 자기소개가 성공적으로 생성되었습니다.',
+            'ai_introduction': ai_introduction,
+            'quality_analysis': quality_analysis,
+            'existing_introduction': existing_introduction,
+            'options': {
+                'use_ai': 'AI가 작성한 자기소개로 교체',
+                'edit_ai': 'AI 자기소개를 수정하여 사용',
+                'keep_existing': '기존 자기소개 유지',
+                'write_own': '새로 작성'
+            }
+        }, status=200)
+        
+    except Exception as e:
+        print(f"향상된 AI 자기소개 생성 오류: {e}")
+        return Response({
+            'success': False,
+            'message': '향상된 AI 자기소개 생성 중 오류가 발생했습니다.',
+            'error': str(e)
+        }, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def analyze_introduction(request):
+    """
+    자기소개 품질 분석 API
+    """
+    try:
+        introduction = request.data.get('introduction', '')
+        
+        if not introduction:
+            return Response({
+                'success': False,
+                'message': '분석할 자기소개가 필요합니다.'
+            }, status=400)
+        
+        # 품질 분석
+        quality_analysis = analyze_introduction_quality(introduction)
+        
+        return Response({
+            'success': True,
+            'message': '자기소개 품질 분석이 완료되었습니다.',
+            'quality_analysis': quality_analysis
+        }, status=200)
+        
+    except Exception as e:
+        print(f"자기소개 품질 분석 오류: {e}")
+        return Response({
+            'success': False,
+            'message': '자기소개 품질 분석 중 오류가 발생했습니다.',
+            'error': str(e)
+        }, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_introduction_choice(request):
+    """
+    사용자의 자기소개 선택을 저장하는 API
+    """
+    try:
+        choice = request.data.get('choice')
+        introduction = request.data.get('introduction')
+        
+        if not choice or not introduction:
+            return Response({
+                'success': False,
+                'message': '선택과 자기소개 내용이 필요합니다.'
+            }, status=400)
+        
+        # 현재 사용자의 프로필 가져오기
+        profile = get_object_or_404(Profile, user=request.user)
+        
+        # 선택에 따른 처리
+        if choice in ['use_ai', 'edit_ai', 'write_own']:
+            # 자기소개 저장
+            profile.introduction = introduction
+            profile.save()
+            
+            return Response({
+                'success': True,
+                'message': '자기소개가 성공적으로 저장되었습니다.',
+                'saved_introduction': introduction
+            }, status=200)
+            
+        elif choice == 'keep_existing':
+            # 기존 자기소개 유지
+            return Response({
+                'success': True,
+                'message': '기존 자기소개가 유지되었습니다.',
+                'saved_introduction': profile.introduction
+            }, status=200)
+            
+        else:
+            return Response({
+                'success': False,
+                'message': '잘못된 선택입니다.'
+            }, status=400)
+            
+    except Exception as e:
+        print(f"자기소개 선택 저장 오류: {e}")
+        return Response({
+            'success': False,
+            'message': '자기소개 선택 저장 중 오류가 발생했습니다.',
+            'error': str(e)
+        }, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_conversation_topics_api(request):
+    """
+    두 사용자 간의 대화주제 3가지를 AI로 추천하는 API
+    """
+    try:
+        # 요청 데이터 검증
+        user_a_id = request.data.get('user_a_id')
+        user_b_id = request.data.get('user_b_id')
+        
+        if not user_a_id or not user_b_id:
+            return Response({
+                'error': 'user_a_id와 user_b_id가 필요합니다.'
+            }, status=400)
+        
+        # 사용자 프로필 가져오기
+        try:
+            user_a_profile = Profile.objects.get(user_id=user_a_id)
+            user_b_profile = Profile.objects.get(user_id=user_b_id)
+        except Profile.DoesNotExist:
+            return Response({
+                'error': '사용자 프로필을 찾을 수 없습니다.'
+            }, status=404)
+        
+        # AI로 대화주제 생성
+        result = generate_conversation_topics(user_a_profile, user_b_profile)
+        
+        if result['success']:
+            return Response({
+                'success': True,
+                'topics': result['topics'],
+                'messages': result['messages'],
+                'raw_response': result['raw_response'],
+                'user_a_summary': result['user_a_summary'],
+                'user_b_summary': result['user_b_summary']
+            })
+        else:
+            return Response({
+                'success': False,
+                'topics': result['topics'],  # fallback 주제들
+                'messages': result['messages'],  # fallback 메시지들
+                'error': result.get('error', '대화주제 생성에 실패했습니다.'),
+                'user_a_summary': result['user_a_summary'],
+                'user_b_summary': result['user_b_summary']
+            })
+            
+    except Exception as e:
+        return Response({
+            'error': f'대화주제 생성 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
