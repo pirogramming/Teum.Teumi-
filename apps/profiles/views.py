@@ -24,10 +24,11 @@ from .models import School, Department, Profile, Personality
 from apps.matches.services.recommend import recommend_top_n
 
 # AI 자기소개 생성 서비스 import
-from .services.auto_introduction import (
+from apps.profiles.services.auto_introduction import (
     generate_step_introduction, 
-    generate_enhanced_introduction,
-    analyze_introduction_quality
+    generate_enhanced_introduction, 
+    analyze_introduction_quality,
+    generate_conversation_topics
 )
 
 # ---- helpers ----
@@ -1157,4 +1158,56 @@ def save_introduction_choice(request):
             'success': False,
             'message': '자기소개 선택 저장 중 오류가 발생했습니다.',
             'error': str(e)
+        }, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_conversation_topics_api(request):
+    """
+    두 사용자 간의 대화주제 3가지를 AI로 추천하는 API
+    """
+    try:
+        # 요청 데이터 검증
+        user_a_id = request.data.get('user_a_id')
+        user_b_id = request.data.get('user_b_id')
+        
+        if not user_a_id or not user_b_id:
+            return Response({
+                'error': 'user_a_id와 user_b_id가 필요합니다.'
+            }, status=400)
+        
+        # 사용자 프로필 가져오기
+        try:
+            user_a_profile = Profile.objects.get(user_id=user_a_id)
+            user_b_profile = Profile.objects.get(user_id=user_b_id)
+        except Profile.DoesNotExist:
+            return Response({
+                'error': '사용자 프로필을 찾을 수 없습니다.'
+            }, status=404)
+        
+        # AI로 대화주제 생성
+        result = generate_conversation_topics(user_a_profile, user_b_profile)
+        
+        if result['success']:
+            return Response({
+                'success': True,
+                'topics': result['topics'],
+                'messages': result['messages'],
+                'raw_response': result['raw_response'],
+                'user_a_summary': result['user_a_summary'],
+                'user_b_summary': result['user_b_summary']
+            })
+        else:
+            return Response({
+                'success': False,
+                'topics': result['topics'],  # fallback 주제들
+                'messages': result['messages'],  # fallback 메시지들
+                'error': result.get('error', '대화주제 생성에 실패했습니다.'),
+                'user_a_summary': result['user_a_summary'],
+                'user_b_summary': result['user_b_summary']
+            })
+            
+    except Exception as e:
+        return Response({
+            'error': f'대화주제 생성 중 오류가 발생했습니다: {str(e)}'
         }, status=500)

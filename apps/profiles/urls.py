@@ -19,6 +19,9 @@ urlpatterns = [
     path('api/introduction/analyze/', views.analyze_introduction, name='analyze_introduction'),
     path('api/introduction/save-choice/', views.save_introduction_choice, name='save_introduction_choice'),
 
+    # AI 대화주제 추천 API
+    path('api/conversation/topics/', views.generate_conversation_topics_api, name='generate_conversation_topics_api'),
+
     # --- 단계별(동일 뷰) ---
     path('step1/', views.profile_step1, name='profile_step1'),
     path('step2/', views.profile_step2, name='profile_step2'),
