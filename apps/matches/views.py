@@ -146,11 +146,7 @@ class MatchStatusUpdateView(generics.UpdateAPIView):
         matching.save()
 
         # 응답 데이터 구성
-        response_data = {
-            "message": "매칭 상태가 업데이트되었습니다.",
-            "matching_id": matching.id,
-            "status": matching.status
-        }
+        response_data = self.get_serializer(serializer.instance).data
         
         if matching.chatroom:
             response_data.update({
