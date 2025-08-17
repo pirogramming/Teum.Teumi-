@@ -400,13 +400,13 @@ const ProfileStep3 = {
 };
 
 // 시간표 스크롤 통일
+const time = document.getElementById('time');
+const day = document.getElementById('day');
 
-  const time = document.getElementById('time');
-  const day = document.getElementById('day');
+let isSyncing1 = false;
+let isSyncing2 = false;
 
-  let isSyncing1 = false;
-  let isSyncing2 = false;
-
+if (time && day) {
   time.addEventListener('scroll', () => {
     if (!isSyncing1) {
       isSyncing2 = true;
@@ -422,6 +422,8 @@ const ProfileStep3 = {
     }
     isSyncing2 = false;
   });
+}
+
 
 // ========================================
 // 초기화

@@ -4,36 +4,26 @@ on:
   push:
     branches:
       - develop
-  workflow_dispatch: # 수동 실행을 위한 트리거 추가
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Copy files to server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "."
-          target: "/home/ubuntu/Teum.Teumi-"
-
-      - name: Restart Daphne service
+      - name: Deploy on server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /home/ubuntu/Teum.Teumi- 
+            cd /home/ubuntu/Teum.Teumi-
+            git fetch origin develop
+            git reset --hard origin/develop  
             source venv/bin/activate
             pip install -r requirements.txt
-            python manage.py migrate
-            python manage.py collectstatic --noinput 
+            python manage.py migrate --noinput
+            python manage.py collectstatic --noinput
             sudo systemctl restart daphne
             sudo systemctl restart nginx
