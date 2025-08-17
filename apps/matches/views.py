@@ -10,6 +10,8 @@ from django.db.models import Q, Avg
 from .models import Matching, MatchingStatus
 from .serializers import MatchCreateSerializer, MatchDetailSerializer
 from apps.matches.services.recommend import recommend_top_n
+from apps.matches.services.ai_recommend import recommend_top_n_with_ai
+from apps.matches.services.explain_reason import explain_recommendation_reasons
 from apps.profiles.ProfileSerializer import ProfileSimpleSerializer
 from django.shortcuts import get_object_or_404, render
 from apps.profiles.models import School, Profile
@@ -27,6 +29,7 @@ from rest_framework.permissions import IsAuthenticated
 from apps.profiles.models import Profile, Interest, School
 from apps.reviews.models import Review
 from datetime import datetime
+from django.utils import timezone
 
 def wants_html(request):
     """클라이언트가 HTML을 원하는지 확인하는 헬퍼 함수"""
@@ -100,65 +103,172 @@ class MatchStatusUpdateView(generics.UpdateAPIView):
     - 성공 시 {room_id, room_url} 포함하여 반환
     """
     permission_classes = [IsAuthenticated]
+    serializer_class = MatchDetailSerializer
     queryset = Matching.objects.all()
-    serializer_class = MatchDetailSerializer  # 사용할 시리얼라이저 지정
 
-    @transaction.atomic # 하나로 묶어서 도중에 실패시 전ㅊ네 롤백
-    def update(self, request, *args, **kwargs):
-        match = self.get_object()
+    def patch(self, request, *args, **kwargs):
+        matching = self.get_object()
+        
+        # 수신자만 상태 변경 가능
+        if matching.receiver != request.user:
+            raise PermissionDenied("수신자만 매칭 상태를 변경할 수 있습니다.")
 
-        # 권한 체크: 수신자만 수락/거절 가능
-        if match.receiver != request.user:
-            raise PermissionDenied("수락 또는 거절은 수신자만 할 수 있습니다.") # 4003 Forbidden 발생
+        new_status = request.data.get('status')
+        if not new_status:
+            return Response({"error": "상태 정보가 필요합니다."}, status=400)
 
-        # 매칭 상태 업데이트 수행
-        partial = kwargs.pop('partial', True)
-        serializer = self.get_serializer(match, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        # 상태 변경
+        matching.status = new_status
+        
+        # 수락된 경우 채팅방 생성
+        if new_status == MatchingStatus.ACCEPTED:
+            matching.matched_at = timezone.now()
+            
+            # 기존 채팅방이 있는지 확인
+            if not matching.chatroom:
+                # 새 채팅방 생성
+                chatroom = ChatRoom.objects.create(
+                    name=f"{matching.sender.username} & {matching.receiver.username}",
+                    is_private=True
+                )
+                matching.chatroom = chatroom
+                
+                # 참여자 추가
+                ChatParticipation.objects.create(
+                    user=matching.sender,
+                    chatroom=chatroom
+                )
+                ChatParticipation.objects.create(
+                    user=matching.receiver,
+                    chatroom=chatroom
+                )
 
-        # 변경된 상태 확인 (한글 값: '대기중' / '수락됨' / '거절됨')
-        new_status = serializer.validated_data.get('status', serializer.instance.status)
-
-        room = None
-        if new_status == MatchingStatus.ACCEPTED:  # '수락됨'
-            sender = match.sender
-            receiver = match.receiver
-
-            # 두 사용자 모두 참여한 기존 방 조회 (through: ChatParticipation, related_name='participations')
-            room = (
-                ChatRoom.objects
-                .filter(participations__user=sender)
-                .filter(participations__user=receiver)
-                .distinct()
-                .first()
-            )
-
-            # 없으면 새 방 생성 + 두 참가자 등록 (idempotent)
-            if room is None:
-                room = ChatRoom.objects.create()
-                ChatParticipation.objects.get_or_create(chatroom=room, user=sender)
-                ChatParticipation.objects.get_or_create(chatroom=room, user=receiver)
-            match.chatroom = room
-            match.save()
+        matching.save()
 
         # 응답 데이터 구성
-        data = self.get_serializer(serializer.instance).data
-        if room is not None:
-            data.update({
-                "room_id": room.id,
-                "room_url": f"/chats/rooms/{room.id}/",
+        response_data = {
+            "message": "매칭 상태가 업데이트되었습니다.",
+            "matching_id": matching.id,
+            "status": matching.status
+        }
+        
+        if matching.chatroom:
+            response_data.update({
+                "room_id": matching.chatroom.id,
+                "room_url": f"/chats/{matching.chatroom.id}/"
             })
-        return Response(data, status=status.HTTP_200_OK)
 
-# 3. AI 추천 매칭 대상 반환 (GET)
-class MatchRecommendationView(APIView):
+        return Response(response_data, status=200)
+
+
+# AI 추천 API
+class AIRecommendationView(APIView):
+    """
+    AI 기반 매칭 추천 API
+    """
     permission_classes = [IsAuthenticated]
-
+    
     def get(self, request):
-        top_users = recommend_top_n(request.user)
-        data = ProfileSimpleSerializer([user.profile for user in top_users], many=True, context={'request': request}).data
-        return Response(data)
+        """AI 추천 결과와 이유 반환"""
+        try:
+            user = request.user
+            n = int(request.query_params.get('n', 3))
+            
+            # AI 추천 실행
+            recommended_profiles = recommend_top_n_with_ai(user, n)
+            
+            if not recommended_profiles:
+                return Response({
+                    "message": "추천할 수 있는 프로필이 없습니다.",
+                    "recommendations": []
+                }, status=200)
+            
+            # 추천 이유 설명 생성
+            explanations = explain_recommendation_reasons(user, recommended_profiles, n)
+            
+            # 응답 데이터 구성
+            recommendations = []
+            for i, profile in enumerate(recommended_profiles):
+                reason = "추천 이유를 생성할 수 없습니다."
+                if explanations.get("success") and explanations.get("explanations"):
+                    for exp in explanations["explanations"]:
+                        if exp.get("profile_id") == profile.profile_id:
+                            reason = exp.get("reason", "추천 이유를 생성할 수 없습니다.")
+                            break
+                
+                recommendations.append({
+                    "profile_id": profile.profile_id,
+                    "nickname": profile.nickname or "익명",
+                    "age": profile.age,
+                    "gender": profile.get_gender_display() if profile.gender else "없음",
+                    "school": profile.school.school_name if profile.school else "없음",
+                    "department": profile.department.department_name if profile.department else "없음",
+                    "introduction": profile.introduction or "없음",
+                    "recommendation_reason": reason
+                })
+            
+            return Response({
+                "message": f"AI 추천 {len(recommendations)}명을 성공적으로 생성했습니다.",
+                "recommendations": recommendations,
+                "total_count": len(recommendations)
+            }, status=200)
+            
+        except Exception as e:
+            print(f"AI 추천 API 오류: {e}")
+            return Response({
+                "error": "AI 추천 생성 중 오류가 발생했습니다.",
+                "detail": str(e)
+            }, status=500)
+
+
+# 룰 기반 추천 API
+class RuleBasedRecommendationView(APIView):
+    """
+    룰 기반 매칭 추천 API
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """룰 기반 추천 결과 반환"""
+        try:
+            user = request.user
+            n = int(request.query_params.get('n', 3))
+            
+            # 룰 기반 추천 실행
+            recommended_profiles = recommend_top_n(user, n)
+            
+            if not recommended_profiles:
+                return Response({
+                    "message": "추천할 수 있는 프로필이 없습니다.",
+                    "recommendations": []
+                }, status=200)
+            
+            # 응답 데이터 구성
+            recommendations = []
+            for profile in recommended_profiles:
+                recommendations.append({
+                    "profile_id": profile.profile_id,
+                    "nickname": profile.nickname or "익명",
+                    "age": profile.age,
+                    "gender": profile.get_gender_display() if profile.gender else "없음",
+                    "school": profile.school.school_name if profile.school else "없음",
+                    "department": profile.department.department_name if profile.department else "없음",
+                    "introduction": profile.introduction or "없음"
+                })
+            
+            return Response({
+                "message": f"룰 기반 추천 {len(recommendations)}명을 성공적으로 생성했습니다.",
+                "recommendations": recommendations,
+                "total_count": len(recommendations)
+            }, status=200)
+            
+        except Exception as e:
+            print(f"룰 기반 추천 API 오류: {e}")
+            return Response({
+                "error": "룰 기반 추천 생성 중 오류가 발생했습니다.",
+                "detail": str(e)
+            }, status=500)
+
 
 # 4. 매칭 리스트 페이지 (HTML 또는 JSON)
 @api_view(['GET']) # 이 데코레이터를 추가하여 API 뷰로 만듭니다.

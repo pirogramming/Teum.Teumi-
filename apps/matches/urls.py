@@ -9,5 +9,8 @@ urlpatterns = [
 
     path("api/matches/", views.MatchListCreateView.as_view(), name="match-list-create"),  # 매칭신청
     path("api/matches/<int:pk>/status/", views.MatchStatusUpdateView.as_view(), name="match-status-update"),  # 매칭 상태 업데이트
-    path("api/matches/recommendations/", views.MatchRecommendationView.as_view(), name="match-recommendations"),  # AI 추천 매칭 대상 반환
+    
+    # 추천 API
+    path("api/recommendations/ai/", views.AIRecommendationView.as_view(), name="ai-recommendations"),  # AI 추천
+    path("api/recommendations/rule/", views.RuleBasedRecommendationView.as_view(), name="rule-recommendations"),  # 룰 기반 추천
 ]

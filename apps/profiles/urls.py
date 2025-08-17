@@ -13,6 +13,12 @@ urlpatterns = [
     path('api/basic_info/', views.BasicInfoAPIView.as_view(), name='basic_info'),
     path('api/additional-info/', views.AddtionalInfoAPIView.as_view(), name='additional-info'),
 
+    # --- AI 자기소개 생성 API ---
+    path('api/introduction/step/', views.generate_ai_introduction_step, name='generate_ai_introduction_step'),
+    path('api/introduction/enhanced/', views.generate_ai_introduction_enhanced, name='generate_ai_introduction_enhanced'),
+    path('api/introduction/analyze/', views.analyze_introduction, name='analyze_introduction'),
+    path('api/introduction/save-choice/', views.save_introduction_choice, name='save_introduction_choice'),
+
     # --- 단계별(동일 뷰) ---
     path('step1/', views.profile_step1, name='profile_step1'),
     path('step2/', views.profile_step2, name='profile_step2'),
