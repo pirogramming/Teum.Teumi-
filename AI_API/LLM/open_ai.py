@@ -1,188 +1,75 @@
-from AI_API.LLM.open_ai import OpenAIAPIClient
-from AI_API.LLM.prompt_templates import EXPLANATION_PROMPT
-import re
+import os
+import openai
+from openai import OpenAI  # 👈 변경: OpenAI 클라이언트 임포트
+from dotenv import load_dotenv
 
-def explain_recommendation_reasons(user, recommended_profiles, n=3):
+# .env 파일에서 환경 변수 로드
+load_dotenv()
+
+class OpenAIAPIClient:
     """
-    AI가 추천한 사용자들을 추천한 이유를 설명하는 함수
-    
-    Args:
-        user: 추천을 받는 사용자
-        recommended_profiles: 추천된 프로필 리스트
-        n: 추천된 프로필 수 (기본값: 3)
-    
-    Returns:
-        dict: 각 추천 사용자별 추천 이유
+    OpenAI API를 호출하는 클라이언트 클래스 (버전 1.0.0 이상)
     """
-    try:
-        if not recommended_profiles:
-            return {"error": "추천된 프로필이 없습니다."}
-        
-        # 사용자 프로필 정보 수집
-        user_profile = user.profile
-        user_summary = _create_user_summary(user_profile)
-        
-        # 추천된 프로필들의 정보 수집
-        candidate_summaries = []
-        for i, profile in enumerate(recommended_profiles[:n], 1):
-            try:
-                summary = _create_candidate_summary(profile, i)
-                candidate_summaries.append(summary)
-            except Exception as e:
-                print(f"후보 {i} 요약 생성 실패: {e}")
-                continue
-        
-        if not candidate_summaries:
-            return {"error": "후보 프로필 요약 생성 실패"}
-        
-        # GPT에게 추천 이유 설명 요청
-        prompt = EXPLANATION_PROMPT.format(
-            user_summary=user_summary,
-            candidates="\n".join(candidate_summaries),
-            n=len(candidate_summaries)
-        )
-        
-        client = OpenAIAPIClient()
-        gpt_response = client.get_gpt_response(
-            prompt, 
-            max_tokens=500, 
-            temperature=0.7
-        )
-        
-        if not gpt_response:
-            return {"error": "GPT 응답 실패"}
-        
-        # 응답 파싱 및 구조화
-        explanations = _parse_explanation_response(gpt_response, recommended_profiles[:n])
-        
-        return {
-            "success": True,
-            "explanations": explanations,
-            "raw_response": gpt_response
-        }
-        
-    except Exception as e:
-        print(f"추천 이유 설명 생성 오류: {e}")
-        return {"error": f"추천 이유 설명 생성 오류: {str(e)}"}
+    def __init__(self):
+        self.api_key = os.getenv("OPENAI_API_KEY")
+        if not self.api_key:
+            raise ValueError("환경 변수 OPENAI_API_KEY가 설정되지 않았습니다.")
 
-def _create_user_summary(profile):
-    """사용자 프로필 요약 생성"""
-    try:
-        additional_info = getattr(profile, 'additional_info', None)
-        
-        summary = (
-            f"사용자 프로필: "
-            f"나이: {profile.age or '없음'}, "
-            f"성별: {profile.get_gender_display() if profile.gender else '없음'}, "
-            f"MBTI: {profile.mbti or '없음'}, "
-            f"자기소개: {profile.introduction or '없음'}"
-        )
-        
-        if additional_info:
-            personality_keywords = [k.keyword for k in additional_info.personality_keyword.all()]
-            if personality_keywords:
-                summary += f", 성격키워드: {', '.join(personality_keywords)}"
-            
-            if additional_info.conversation_style:
-                summary += f", 선호대화스타일: {additional_info.conversation_style}"
-            
-            if additional_info.goal_or_concern:
-                summary += f", 목표/걱정: {additional_info.goal_or_concern}"
-        
-        return summary
-        
-    except Exception as e:
-        print(f"사용자 요약 생성 오류: {e}")
-        return "사용자 프로필 정보 오류"
+        # 👈 변경: 클라이언트 객체 생성 시 API 키 전달
+        self.client = OpenAI(api_key=self.api_key)
 
-def _create_candidate_summary(profile, index):
-    """추천 후보 프로필 요약 생성"""
-    try:
-        additional_info = getattr(profile, 'additional_info', None)
-        
-        summary = (
-            f"{index}. 후보 프로필: "
-            f"닉네임: {profile.nickname or '없음'}, "
-            f"나이: {profile.age or '없음'}, "
-            f"성별: {profile.get_gender_display() if profile.gender else '없음'}, "
-            f"MBTI: {profile.mbti or '없음'}, "
-            f"자기소개: {profile.introduction or '없음'}"
-        )
-        
-        if additional_info:
-            personality_keywords = [k.keyword for k in additional_info.personality_keyword.all()]
-            if personality_keywords:
-                summary += f", 성격키워드: {', '.join(personality_keywords)}"
-            
-            if additional_info.conversation_style:
-                summary += f", 대화스타일: {additional_info.conversation_style}"
-            
-            if additional_info.experience:
-                summary += f", 경험: {additional_info.experience}"
-        
-        return summary
-        
-    except Exception as e:
-        print(f"후보 요약 생성 오류: {e}")
-        return f"{index}. 후보 프로필 정보 오류"
+    def get_gpt_response(self, prompt, model="gpt-4o", max_tokens=150, temperature=0.7):
+        """
+        GPT 모델에 프롬프트를 보내고 응답을 받습니다.
 
-def _parse_explanation_response(response, profiles):
-    """GPT 응답을 파싱하여 구조화된 추천 이유 반환"""
-    try:
-        explanations = []
-        
-        # 각 후보별로 응답에서 해당 부분 추출
-        for i, profile in enumerate(profiles, 1):
-            # 응답에서 해당 번호의 설명 부분 찾기
-            pattern = rf"{i}\.?\s*([^0-9]+?)(?=\d+\.|$)"
-            match = re.search(pattern, response, re.DOTALL)
-            
-            if match:
-                reason = match.group(1).strip()
+        Args:
+            prompt (str): GPT에게 전달할 입력 프롬프트.
+            model (str): 사용할 OpenAI 모델.
+            max_tokens (int): 응답으로 받을 최대 토큰 수.
+            temperature (float): 텍스트의 무작위성(창의성)을 조절하는 값.
+
+        Returns:
+            str: GPT 모델의 응답 텍스트.
+        """
+        try:
+            # 👈 변경: self.client 객체를 통해 API 호출
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+            # 👈 변경: 응답 객체 접근 방식 변경
+            return response.choices[0].message.content.strip()
+
+        except openai.APIStatusError as e:
+            print(f"OpenAI API 호출 중 오류 발생: {e.status_code}, {e.response}")
+            return None
+        except openai.APIConnectionError as e:
+            print(f"OpenAI API 호출 중 오류 발생: API 서버 연결 실패 - {e}")
+            return None
+        except Exception as e:
+            print(f"OpenAI API 호출 중 예기치 않은 오류가 발생했습니다: {e}")
+            return None
+
+if __name__ == "__main__":
+    client = OpenAIAPIClient()
+
+    def get_response_with_retry(prompt, retries=3, delay=3):
+        for attempt in range(retries):
+            response = client.get_gpt_response(prompt)
+            if response:
+                print("--- GPT 응답 ---")
+                print(response)
+                return
             else:
-                reason = "추천 이유를 파싱할 수 없습니다."
-            
-            explanations.append({
-                "profile_id": profile.profile_id,
-                "nickname": profile.nickname or "익명",
-                "reason": reason
-            })
-        
-        return explanations
-        
-    except Exception as e:
-        print(f"응답 파싱 오류: {e}")
-        return [{"error": f"파싱 오류: {str(e)}"}]
+                print(f"[재시도] 시도 {attempt + 1}/{retries} 실패... {delay}초 후 재시도합니다.")
+                time.sleep(delay)
+        print("GPT 응답 실패. 나중에 다시 시도해보세요.")
 
-def explain_single_recommendation(user, target_profile):
-    """
-    단일 추천에 대한 이유를 설명하는 함수
-    
-    Args:
-        user: 추천을 받는 사용자
-        target_profile: 추천 대상 프로필
-    
-    Returns:
-        str: 추천 이유 설명
-    """
-    try:
-        user_summary = _create_user_summary(user.profile)
-        target_summary = _create_candidate_summary(target_profile, 1)
-        
-        prompt = f"""
-사용자 프로필: {user_summary}
-
-추천 대상: {target_summary}
-
-위 사용자에게 이 추천 대상을 추천하는 구체적인 이유를 2-3문장으로 설명해주세요.
-성격, 관심사, 대화스타일 등의 호환성을 중심으로 설명하세요.
-"""
-        
-        client = OpenAIAPIClient()
-        response = client.get_gpt_response(prompt, max_tokens=200, temperature=0.7)
-        
-        return response or "추천 이유를 생성할 수 없습니다."
-        
-    except Exception as e:
-        print(f"단일 추천 이유 설명 오류: {e}")
-        return f"추천 이유 설명 오류: {str(e)}"
+    import time
+    test_prompt = "GPT야, 자기소개 예시 문장을 하나 만들어줘"
+    get_response_with_retry(test_prompt)
