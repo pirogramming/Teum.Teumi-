@@ -37,12 +37,12 @@
 #room-list {
     list-style: none;
     padding: 0;
-    margin: 0;
+    margin: 1rem 1rem 6rem;
 }
 
 .chat-room-item {
     background-color: white;
-    border-radius: 12px;
+    border-radius: 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     margin-bottom: 16px;
     transition: background-color 0.2s ease;

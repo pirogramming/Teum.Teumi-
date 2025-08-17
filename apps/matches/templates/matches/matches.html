@@ -47,27 +47,27 @@
                 <div>
                     {% if match.sender == user %}
                     <div>
-                        <strong class="nickname">{{ match.receiver.profile.nickname }}</strong>
+                        <h3 class="nickname">{{ match.receiver.profile.nickname }}</h3>
                     </div>
-                    <div class="major">
+                    <p class="major">
                         {{ match.receiver.profile.department.department_name }} {{ match.receiver.profile.grade }}
-                    </div>
+                    </p>
                     {% else %}
                     <div>
-                        <strong class="nickname">{{ match.sender.profile.nickname }}</strong>
+                        <h3 class="nickname">{{ match.sender.profile.nickname }}</h3>
                     </div>
-                    <div class="major">
+                    <p class="major">
                         {{ match.sender.profile.department.department_name }} {{ match.sender.profile.grade }}
-                    </div>
+                    </p>
                     {% endif %}
                 </div>
                 <div class="status">
                     {% if match.status == MatchingStatus.PENDING %}
-                        ⏳ 대기중
+                        <p id="pending">⏳ 대기중</p>
                     {% elif match.status == MatchingStatus.ACCEPTED %}
-                        ✅ 수락됨
+                        <p id="accept">✅ 수락됨</p>
                     {% elif match.status == MatchingStatus.REJECTED %}
-                        ❌ 거절됨
+                        <p id="reject">❌ 거절됨</p>
                     {% endif %}
                 </div>
             </div>
@@ -86,6 +86,7 @@
     {% endfor %}
     
 
+<!--정중히 거절하기 모달-->
     <div class="modal-overlay" id="modal-overlay"></div>
     <div id="reject-reason" class="small-view">     <!--작은 창-->
         <div class="close"><span>&times;</span></div>
@@ -120,7 +121,8 @@
     </div>
 </div>
 
-<div id="tab-completed" class="tab-content">        <!--내부 텍스트는 나중에 수정 필요-->
+<!--완료된 만남 창-->
+<div id="tab-completed" class="tab-content">
     {% for match in matchings %}
     {% if match.status == MatchingStatus.ACCEPTED and match.chatroom.is_completed %}
     <div class="tab-container" id="completed">
@@ -137,19 +139,19 @@
             <div class="content">
                 <div>
                     {% if match.sender == user %}
-                        <div><strong class="nickname">{{ match.receiver.profile.nickname }}</strong></div>
-                        <div class="major">{{ match.receiver.profile.department.department_name }} {{ match.receiver.profile.grade }}</div>
+                        <div><h3 class="nickname">{{ match.receiver.profile.nickname }}</h3></div>
+                        <p class="major">{{ match.receiver.profile.department.department_name }} {{ match.receiver.profile.grade }}</p>
                     {% else %}
-                        <div><strong class="nickname">{{ match.sender.profile.nickname }}</strong></div>
-                        <div class="major">{{ match.sender.profile.department.department_name }} {{ match.sender.profile.grade }}</div>
+                        <div><h3 class="nickname">{{ match.sender.profile.nickname }}</h3></div>
+                        <p class="major">{{ match.sender.profile.department.department_name }} {{ match.sender.profile.grade }}</p>
                     {% endif %}
                 </div>
-                <div class="matching-complete">
+                <p class="matching-complete">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
                         <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
                     </svg>
                      만남 완료
-                </div>
+                </p>
             </div>
         </div>
         <div class="tab-right" 
@@ -163,7 +165,7 @@
             {% if rating %}
               <div class="rating">⭐ {{ rating }}점</div>
             {% else %}
-              <button class="tab-right" data-id="{{ match.id }}" data-reviewed="false">매너온도 남기기</button>
+              <button class="tab-right" data-id="{{ match.id }}" data-reviewed="false">⭐ 매너온도 남기기</button>
             {% endif %}
             {% endwith %}
         </div>
@@ -177,7 +179,7 @@
     <div class="modal-overlay" id="review-modal-overlay"></div>
     <div id="review" class="small-view">        <!--작은 창-->
         <div class="close"><span>&times;</span></div>
-        <div class="small-title">⭐ 매너온도 남기기</div>
+        <p class="small-title">⭐ 매너온도 남기기</p>
         {% if match.sender == user %}
             <div class="small-comment">{{ match.receiver.profile.nickname }}님과의 만남은 어떠셨나요?</div>
         {% else %}

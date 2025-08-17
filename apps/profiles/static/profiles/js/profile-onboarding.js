@@ -98,7 +98,9 @@ const ProfileStep1 = {
               option.textContent = major;
               majorSelect.appendChild(option);
             });
+          
             // 선택 상태 갱신
+
             checkAllSelected();
           })
           .catch(error => {

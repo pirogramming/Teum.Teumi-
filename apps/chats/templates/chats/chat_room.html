@@ -3,6 +3,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>채팅방</title>
   <link rel="stylesheet" href="{% static 'chats/css/chat_room.css' %}">
 </head>
@@ -35,19 +36,20 @@
   </div>
 
   <div id="chat-log"></div>
-  <div class="meeting-complete-container">
-    <button id="meeting-complete-btn" class="meeting-complete-btn">
-        📍 만남 완료로 표시
-    </button>
-  </div>
-  <div class="chat-input-container">
-  <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." />
-  <button id="send-btn">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke="white" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-      </svg>
-    </button>
-  </button>
+  <div class="footer">
+    <div class="meeting-complete-container">
+      <button id="meeting-complete-btn" class="meeting-complete-btn">
+          📍 만남 완료로 표시
+      </button>
+    </div>
+    <div class="chat-input-container">
+      <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." />
+      <button id="send-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke="white" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+          </svg>
+      </button>
+    </div>
   </div>
   <script>
     const ROOM_ID = "{{ room_id }}";

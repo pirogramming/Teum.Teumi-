@@ -1,6 +1,6 @@
 function getAccessToken() {
     return (
-        localStorage.getItem('access_token')
+        localStorage.getItem('access')
     );
 }
 
