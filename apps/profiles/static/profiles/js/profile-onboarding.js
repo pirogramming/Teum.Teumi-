@@ -307,12 +307,6 @@ const ProfileStep3 = {
       return;
     }
 
-    // 셀 내용 완전히 비우기 (요일명 제거)
-    cells.forEach(cell => {
-      cell.textContent = '';
-      cell.innerHTML = '';
-    });
-
     // 기존 공강시간 불러오기
     this.loadExistingSchedule();
 
@@ -404,6 +398,30 @@ const ProfileStep3 = {
     }
   }
 };
+
+// 시간표 스크롤 통일
+
+  const time = document.getElementById('time');
+  const day = document.getElementById('day');
+
+  let isSyncing1 = false;
+  let isSyncing2 = false;
+
+  time.addEventListener('scroll', () => {
+    if (!isSyncing1) {
+      isSyncing2 = true;
+      day.scrollLeft = time.scrollLeft;
+    }
+    isSyncing1 = false;
+  });
+
+  day.addEventListener('scroll', () => {
+    if (!isSyncing2) {
+      isSyncing1 = true;
+      time.scrollLeft = day.scrollLeft;
+    }
+    isSyncing2 = false;
+  });
 
 // ========================================
 // 초기화
