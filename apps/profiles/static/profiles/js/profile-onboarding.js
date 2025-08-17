@@ -76,6 +76,14 @@ const ProfileStep1 = {
       return;
     }
 
+    function checkAllSelected() {
+      const allSelected = universitySelect.value &&
+                          majorSelect.value &&
+                          gradeSelect.value &&
+                          ageSelect.value;
+      nextButton.disabled = !allSelected;
+    }
+
     // 학교 선택 시 학과 목록 업데이트 (인증 필요하므로 authFetch 사용)
     universitySelect.addEventListener('change', function () {
       const schoolName = this.value;
@@ -90,6 +98,9 @@ const ProfileStep1 = {
               option.textContent = major;
               majorSelect.appendChild(option);
             });
+          
+            // 선택 상태 갱신
+
             checkAllSelected();
           })
           .catch(error => {
@@ -98,14 +109,6 @@ const ProfileStep1 = {
           });
       }
     });
-
-    function checkAllSelected() {
-      const allSelected = universitySelect.value &&
-                          majorSelect.value &&
-                          gradeSelect.value &&
-                          ageSelect.value;
-      nextButton.disabled = !allSelected;
-    }
 
     // 각 셀렉트에 change 핸들러 (존재하는 요소만 바인딩)
     [universitySelect, majorSelect, gradeSelect, ageSelect]
