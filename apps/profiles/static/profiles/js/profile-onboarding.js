@@ -76,6 +76,14 @@ const ProfileStep1 = {
       return;
     }
 
+    function checkAllSelected() {
+      const allSelected = universitySelect.value &&
+                          majorSelect.value &&
+                          gradeSelect.value &&
+                          ageSelect.value;
+      nextButton.disabled = !allSelected;
+    }
+
     // 학교 선택 시 학과 목록 업데이트 (인증 필요하므로 authFetch 사용)
     universitySelect.addEventListener('change', function () {
       const schoolName = this.value;
@@ -90,7 +98,10 @@ const ProfileStep1 = {
               option.textContent = major;
               majorSelect.appendChild(option);
             });
-            ProfileStep1.checkAllSelected();
+          
+            // 선택 상태 갱신
+
+            checkAllSelected();
           })
           .catch(error => {
             console.error('학과 목록 불러오기 실패:', error);
@@ -98,14 +109,6 @@ const ProfileStep1 = {
           });
       }
     });
-
-    function checkAllSelected() {
-      const allSelected = universitySelect.value &&
-                          majorSelect.value &&
-                          gradeSelect.value &&
-                          ageSelect.value;
-      nextButton.disabled = !allSelected;
-    }
 
     // 각 셀렉트에 change 핸들러 (존재하는 요소만 바인딩)
     [universitySelect, majorSelect, gradeSelect, ageSelect]
@@ -304,6 +307,12 @@ const ProfileStep3 = {
       return;
     }
 
+    // 셀 내용 완전히 비우기 (요일명 제거)
+    cells.forEach(cell => {
+      cell.textContent = '';
+      cell.innerHTML = '';
+    });
+
     // 기존 공강시간 불러오기
     this.loadExistingSchedule();
 
@@ -395,30 +404,6 @@ const ProfileStep3 = {
     }
   }
 };
-
-// 시간표 스크롤 통일
-
-  const time = document.getElementById('time');
-  const day = document.getElementById('day');
-
-  let isSyncing1 = false;
-  let isSyncing2 = false;
-
-  time.addEventListener('scroll', () => {
-    if (!isSyncing1) {
-      isSyncing2 = true;
-      day.scrollLeft = time.scrollLeft;
-    }
-    isSyncing1 = false;
-  });
-
-  day.addEventListener('scroll', () => {
-    if (!isSyncing2) {
-      isSyncing1 = true;
-      time.scrollLeft = day.scrollLeft;
-    }
-    isSyncing2 = false;
-  });
 
 // ========================================
 // 초기화

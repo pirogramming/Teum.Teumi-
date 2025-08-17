@@ -1,7 +1,7 @@
 // 마이페이지 JavaScript
 
 // 전역 변수
-let scheduleData = Array(7).fill(null).map(() => Array(25).fill(false));
+let scheduleData = Array(7).fill(null).map(() => Array(24).fill(false));
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
@@ -349,12 +349,14 @@ function initializeSchedule() {
     // 기존 내용 제거
     scheduleGrid.innerHTML = '';
     
-    // 시간대별로 행 생성 (9:00-21:00, 30분 단위, 총 25개 슬롯)
+    // 시간대별로 행 생성 (9:00-21:00, 30분 단위, 총 24개 슬롯)
     const timeSlots = [];
-    for (let hour = 9; hour <= 21; hour++) {
+    for (let hour = 9; hour <= 20; hour++) {
         timeSlots.push(`${hour}:00`);
         timeSlots.push(`${hour}:30`);
     }
+    // 21:00만 추가 (21:30 제외)
+    timeSlots.push('21:00');
     
     timeSlots.forEach((time, timeIndex) => {
         const row = document.createElement('div');
@@ -391,7 +393,7 @@ function loadExistingSchedule() {
     console.log('loadExistingSchedule 함수 호출됨');
     
     // scheduleData 초기화
-    scheduleData = Array(7).fill(null).map(() => Array(25).fill(false));
+    scheduleData = Array(7).fill(null).map(() => Array(24).fill(false));
     
     // Django 템플릿에서 전달받은 기존 스케줄 데이터를 scheduleData에 설정
     if (typeof existingScheduleData !== 'undefined' && existingScheduleData.length > 0) {
@@ -425,14 +427,14 @@ function loadExistingSchedule() {
                 const endHour = parseInt(endTime.split(':')[0]);
                 const endMinute = parseInt(endTime.split(':')[1]);
                 
-                // 30분 단위 인덱스 계산 (9:00부터 시작, 25개 슬롯)
+                // 30분 단위 인덱스 계산 (9:00부터 시작, 24개 슬롯)
                 const startIndex = (startHour - 9) * 2 + (startMinute >= 30 ? 1 : 0);
                 const endIndex = (endHour - 9) * 2 + (endMinute >= 30 ? 1 : 0);
                 
                 console.log('시간 인덱스:', { startIndex, endIndex });
                 
                 // 해당 시간 슬롯들을 true로 설정
-                for (let i = Math.max(0, startIndex); i < Math.min(25, endIndex); i++) {
+                for (let i = Math.max(0, startIndex); i < Math.min(24, endIndex); i++) {
                     scheduleData[dayIndex][i] = true;
                 }
             } else {
