@@ -370,7 +370,7 @@ body {
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .main-content {
-        padding: 0.75rem;
+        padding: 0.75rem 0.75rem 6rem;
     }
     
     .popular-profiles-grid {
