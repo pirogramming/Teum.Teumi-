@@ -148,7 +148,14 @@ function extractMatchIdFrom(el) {
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    showTab('request');
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+
+    if (tab) {
+        showTab(tab);
+    } else {
+        showTab('request');
+    }
 
     // 모달 공통 요소
     const overlay = document.getElementById("modal-overlay");
@@ -195,13 +202,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 매너온도 남기기 버튼
     document.querySelectorAll(".tab-right").forEach(btn => {
-      if (btn.dataset.reviewed === 'false') {
-          btn.addEventListener("click", function (event) {
-              currentMatchId = this.dataset.id;
-              showModal(reviewModal);
-          });
-      }
-  });
+        if (btn.dataset.reviewed === 'false') {
+            btn.addEventListener("click", function (event) {
+                currentMatchId = this.dataset.id;
+                showModal(reviewModal);
+            });
+        }
+    });
 
     // 닫기 버튼
     rejectModal.querySelector(".close span").addEventListener("click", function () {
@@ -311,7 +318,7 @@ document.addEventListener('click', async function (event) {
           if (response.ok) {
               const result = await response.json();
               alert('리뷰가 성공적으로 저장되었습니다!');
-              window.location.href = '/matches/';
+              window.location.href = '/matches/?tab=completed';
           } else {
               let errorMessage = '알 수 없는 오류';
               try {
