@@ -92,7 +92,8 @@
 
 
 ## 💻 Deploy
-<img width="600" alt="서비스 아키텍쳐" src="https://github.com/user-attachments/assets/04a8f906-8fe3-4579-aed7-b5b96e41fe29" />
+<img width="600" alt="진짜 마지막 서비스 아키텍쳐" src="https://github.com/user-attachments/assets/148a490f-b330-498f-b25b-6607664b25b8" />
+
 
 
 <br><br>
