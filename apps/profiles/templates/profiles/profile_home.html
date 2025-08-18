@@ -50,7 +50,7 @@
                                 </div>
                                 <div class="user-rating">
                                     <span class="star">⭐</span>
-                                    <span>{{ profile.average_rating|floatformat:1 }}</span>
+                                    <span>{{ profile.average_rating|default:"0.0"|floatformat:1 }}</span>
                                 </div>
                             </div>
                              <p class="user-intro">{{ profile.introduction|default_if_none:''|truncatewords:15 }}</p>
@@ -113,7 +113,7 @@
                     </div>
                     <div class="profile-rating">
                         <span class="star">⭐</span>
-                        <span>{{ profile.average_rating|floatformat:1 }}</span>
+                        <span>{{ profile.average_rating|default:"0.0"|floatformat:1 }}</span>
                     </div>
                 </div>
                 {% empty %}
