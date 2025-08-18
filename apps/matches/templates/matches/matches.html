@@ -74,7 +74,15 @@
             <div class="tab-content-bottom">
                 {% if match.status == MatchingStatus.PENDING and match.receiver == user %}
                     <button type="submit" class="accept" data-id="{{ match.id }}">수락하기</button>
-                    <button type="submit" class="reject" data-id="{{ match.id }}">정중히 거절하기</button>
+                    <button type="button" class="reject"
+                            data-id="{{ match.id }}"
+                            {% if match.sender == user %}
+                                data-nickname="{{ match.receiver.profile.nickname }}"
+                            {% else %}
+                                data-nickname="{{ match.sender.profile.nickname }}"
+                            {% endif %}>
+                        정중히 거절하기
+                    </button>
                 {% elif match.status == MatchingStatus.PENDING and match.sender == user %}
                     <button type="submit" class="ask">📤 신청 완료</button>
                 {% endif %}
@@ -91,7 +99,7 @@
     <div id="reject-reason" class="small-view">     <!--작은 창-->
         <div class="close"><span>&times;</span></div>
         <div class="small-title">🙏 정중히 거절하기</div>
-        <div class="small-comment">코딩마스터님께 정중한 거절 사유를 전달해드릴게요.</div>
+        <div class="small-comment"><span id="reject-name"></span>님께 정중한 거절 사유를 전달해드릴게요.</div>
         <div class="reject-radio">
             <label>
                 <input type="radio" name="reject" value="1">시간이 맞지 않아요
@@ -163,9 +171,17 @@
             {% endif %}>
             {% with rating=review_map|dict_attr:match.id %}
             {% if rating %}
-              <div class="rating">⭐ {{ rating }}점</div>
+                <div class="rating">⭐ {{ rating }}점</div>
             {% else %}
-              <button class="tab-right" data-id="{{ match.id }}" data-reviewed="false">⭐ 매너온도 남기기</button>
+            <button type="button" class="review"
+                    data-id="{{ match.id }}"
+                    {% if match.sender == user %}
+                        data-nickname="{{ match.receiver.profile.nickname }}"
+                    {% else %}
+                        data-nickname="{{ match.sender.profile.nickname }}"
+                    {% endif %}>
+                ⭐ 매너온도 남기기
+            </button>
             {% endif %}
             {% endwith %}
         </div>
@@ -180,11 +196,9 @@
     <div id="review" class="small-view">        <!--작은 창-->
         <div class="close"><span>&times;</span></div>
         <p class="small-title">⭐ 매너온도 남기기</p>
-        {% if match.sender == user %}
-            <div class="small-comment">{{ match.receiver.profile.nickname }}님과의 만남은 어떠셨나요?</div>
-        {% else %}
-            <div class="small-comment">{{ match.sender.profile.nickname }}님과의 만남은 어떠셨나요?</div>
-        {% endif %}
+        <div class="small-comment">
+            <span id="review-name"></span>님과의 만남은 어떠셨나요?
+        </div>
         <div class="review-container">
             <div class="manner">
                 <div class="review-title">🌡️ 매너온도 (1-5)</div>
