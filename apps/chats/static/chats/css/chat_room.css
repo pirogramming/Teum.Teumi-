@@ -200,6 +200,10 @@ body {
     flex-wrap: wrap;
 }
 
+.text {
+    line-height: 1.5;
+}
+
 .timestamp {
     font-size: 8px;
     line-height: 1;
