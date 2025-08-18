@@ -306,7 +306,7 @@ document.addEventListener('click', async function (event) {
           degree_ids: degreeValues,
           comment: document.querySelector('#oneline-review')?.value || '',
           meeting: document.querySelector('input[name="meet"]:checked').value,
-          match_id: matchId,
+          match_id: Number(currentMatchId), 
       };
 
       try {
@@ -356,6 +356,7 @@ const reviewName = document.getElementById("review-name");
 
 reviewButtons.forEach(btn => {
     btn.addEventListener("click", () => {
+        currentMatchId = btn.dataset.id; 
         reviewName.textContent = btn.dataset.nickname;
         document.getElementById("review").style.display = "block";
     });
