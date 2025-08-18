@@ -699,7 +699,7 @@ def profile_detail(request, profile_id):
     conversation_recommendations = []
     try:
         print(f"[대화주제] AI 대화주제 생성 시작 - 프로필: {profile.profile_id}")
-        ai_topics_res = generate_conversation_topics(profile, request.user.profile)
+        ai_topics_res = generate_conversation_topics(request.user.profile, profile)
         if ai_topics_res and ai_topics_res.get('success') and ai_topics_res.get('topics'):
             topics = ai_topics_res.get('topics')[:3]
             messages = ai_topics_res.get('messages', [])
@@ -1205,27 +1205,22 @@ def generate_conversation_topics_api(request):
     두 사용자 간의 대화주제 3가지를 AI로 추천하는 API
     """
     try:
-        # 요청 데이터 검증
-        user_a_id = request.data.get('user_a_id')
+        # 로그인 유저를 무조건 UserA로 고정
+        user_a_profile = request.user.profile  
+
+        # 요청 데이터 검증 (상대방만 받음)
         user_b_id = request.data.get('user_b_id')
-        
-        if not user_a_id or not user_b_id:
-            return Response({
-                'error': 'user_a_id와 user_b_id가 필요합니다.'
-            }, status=400)
-        
+        if not user_b_id:
+            return Response({'error': 'user_b_id가 필요합니다.'}, status=400)
+
         # 사용자 프로필 가져오기
         try:
-            user_a_profile = Profile.objects.get(user_id=user_a_id)
             user_b_profile = Profile.objects.get(user_id=user_b_id)
         except Profile.DoesNotExist:
-            return Response({
-                'error': '사용자 프로필을 찾을 수 없습니다.'
-            }, status=404)
+            return Response({'error': '상대방 프로필을 찾을 수 없습니다.'}, status=404)
         
         # AI로 대화주제 생성
         result = generate_conversation_topics(user_a_profile, user_b_profile)
-        
         if result['success']:
             return Response({
                 'success': True,
