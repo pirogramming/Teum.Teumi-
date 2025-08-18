@@ -2,7 +2,7 @@
 > 공강·틈새 시간을 성장으로, 캠퍼스 자기계발 네트워킹 플랫폼 [틈틈이 바로가기](https://teumteumi.site/)
 
 
-<img width="800" alt="Image" src="https://github.com/user-attachments/assets/593d04a3-50db-4120-8fed-0e114351892f" />
+<img width="800" height="400" alt="Image" src="https://github.com/user-attachments/assets/fa0e99db-2e5d-45d4-bb77-7ac054299edb" />
 
 <br><br>
 
@@ -108,5 +108,5 @@
 
 
 ## 🔧 Tech Stack
-<img width="600" alt="Image" src="https://github.com/user-attachments/assets/bc70b2a7-6a04-4e13-9c71-d9cf4a0c00a5" />
+<img width="600" alt="Image" src="https://github.com/user-attachments/assets/d647b813-ad89-448c-b2b2-e5dd31cd9bdf" />
 
