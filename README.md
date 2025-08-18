@@ -16,7 +16,7 @@
 
 # 🌱 Developers
 |  팀원  |  역할  |  주요 업무  |
-|  :---:  |  :---:  |  :---:  |
+|  :---:  |  :---:  |  ---  |
 |  <img width="100" src="https://github.com/Geun100.png"><br>[김동근](https://github.com/Geun100)  |  PM, FE  |  <ul><li>서비스 전체 기획, 디자인</li><li>메인 페이지 ui</li><li>프로필 상세 페이지 ui</li><li>마이페이지 ui</li></ul>  |
 |  <img width="100" src="https://github.com/Dev-Anniee.png"><br>[안정민](https://github.com/Dev-Anniee)  |  BE  |  <ul><li>채팅방 생성, 메시지 송수신, 참여자 관리 기능 구현</li><li>유저 관심사 enum 관리 및 유저-관심사 매핑 기능 구현</li><li>TimeStampedModel, Enum, 예외처리 등 공통 기능 구현</li><li>배포</li></ul>  |
 |  <img width="100" src="https://github.com/gicks04.png"><br>[윤기찬](https://github.com/gicks04)  |  BE  |  <ul><li>매칭 페이지 상태(커피챗 요청/수락/거절) 구현 및 관리</li><li>유저 공강 시간 등록,조회 및 비교 로직 구현</li><li>후기 작성/조회, 블록 처리 구현</li><li>유저 프로필 CRUD 구현</li></ul>  |
