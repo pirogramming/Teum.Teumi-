@@ -4,7 +4,7 @@
 
 
 
-# 📃 Contents
+## 📃 Contents
 1. [🌱 Developers](#-Developers)
 2. [🌟 Services](#-Services)
 3. [💻 Deploy](#-Deploy)
@@ -14,18 +14,18 @@
    
 
 
-# 🌱 Developers
+## 🌱 Developers
 |  팀원  |  역할  |  주요 업무  |
 |  :---:  |  :---:  |  ---  |
 |  <img width="100" src="https://github.com/Geun100.png"><br>[김동근](https://github.com/Geun100)  |  PM, FE  |  <ul><li>서비스 전체 기획, 디자인</li><li>메인 페이지 ui</li><li>프로필 상세 페이지 ui</li><li>마이페이지 ui</li></ul>  |
 |  <img width="100" src="https://github.com/Dev-Anniee.png"><br>[안정민](https://github.com/Dev-Anniee)  |  BE  |  <ul><li>채팅방 생성, 메시지 송수신, 참여자 관리 기능 구현</li><li>유저 관심사 enum 관리 및 유저-관심사 매핑 기능 구현</li><li>TimeStampedModel, Enum, 예외처리 등 공통 기능 구현</li><li>배포</li></ul>  |
 |  <img width="100" src="https://github.com/gicks04.png"><br>[윤기찬](https://github.com/gicks04)  |  BE  |  <ul><li>매칭 페이지 상태(커피챗 요청/수락/거절) 구현 및 관리</li><li>유저 공강 시간 등록,조회 및 비교 로직 구현</li><li>후기 작성/조회, 블록 처리 구현</li><li>유저 프로필 CRUD 구현</li></ul>  |
 |  <img width="100" src="https://github.com/Yewonlim-04.png"><br>[임예원](https://github.com/Yewonlim-04)  |  FE, BE  |  <ul><li>소셜 로그인 구현</li><li>프로필 5단계 ui</li><li>탐색 페이지 ui</li><li>매칭 페이지 ui</li></ul> |
+<br>
 
 
 
-
-# 🌟 Services
+## 🌟 Services
 
 
   **✏️ Onboarding**
@@ -83,24 +83,24 @@
   
   - 마이 페이지에서는 내가 작성한 세부 정보들을 확인할 수 있어요.
   - 만약 수정하고 싶다면, 편집 버튼을 눌러 수정할 수 있어요.
-
+<br>
     
 
 
-# 💻 Deploy
+## 💻 Deploy
 
 
 
 
-
-# 🔁 Service Flow
+<br>
+## 🔁 Service Flow
 
 
 <img width="600" alt="Image" src="https://github.com/user-attachments/assets/ed977865-4e28-443a-82b7-109dea534b5a" />
+<br>
 
 
 
-
-# 🔧 Tech Stack
+## 🔧 Tech Stack
 <img width="600" alt="Image" src="https://github.com/user-attachments/assets/bc70b2a7-6a04-4e13-9c71-d9cf4a0c00a5" />
 
