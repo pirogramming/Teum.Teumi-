@@ -459,6 +459,7 @@ const ProfileStep4 = {
     const message = document.getElementById('text-comment');
     const nextButton = document.getElementById('next-button');
     const basicInfoForm = document.getElementById('basic-info-form');
+    const aiButton = document.getElementById('ai-button');
 
     // 필수 요소 없으면 종료 (다른 단계에서 공통 스크립트 사용 시 안전)
     if (!nicknameInput || !mbtiSelect || !genderSelect || !textarea || !textCount || !message || !nextButton || !basicInfoForm) {
@@ -504,6 +505,43 @@ const ProfileStep4 = {
     nicknameInput.addEventListener('input', updateButtonState);
     mbtiSelect.addEventListener('change', updateButtonState);
     genderSelect.addEventListener('change', updateButtonState);
+
+    // AI 자기소개 생성 버튼
+    if (aiButton) {
+      aiButton.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          aiButton.disabled = true;
+
+          // 가능한 현재 단계 정보만 담아 보냄 (없으면 서비스에서 기본값 처리)
+          const profileData = {
+            mbti: mbtiSelect.value || undefined,
+            gender: genderSelect.value || undefined,
+            // 추가 정보가 있다면 확장 가능
+          };
+
+          const res = await ProfileOnboarding.authFetch('/profiles/api/introduction/step/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profile_data: profileData })
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data && data.ai_introduction) {
+            textarea.value = data.ai_introduction;
+            updateTextCount();
+            updateButtonState();
+          } else {
+            alert((data && data.message) ? data.message : 'AI 자기소개 생성에 실패했습니다.');
+          }
+        } catch (err) {
+          console.error('[profile_4] AI 자기소개 생성 오류:', err);
+          alert('AI 자기소개 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } finally {
+          aiButton.disabled = false;
+        }
+      });
+    }
 
     // 폼 제출: PATCH 저장 후 5단계로 이동
     basicInfoForm.addEventListener('submit', async (e) => {
