@@ -18,12 +18,26 @@ class UserSimpleSerializer(serializers.ModelSerializer):
 
 
 class MatchCreateSerializer(serializers.ModelSerializer):
-    receiver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     request_message = serializers.CharField(allow_blank=True, required=False)
 
     class Meta:
         model = Matching
-        fields = ['receiver', 'request_message']
+        fields = ['request_message']
+
+    def validate(self, attrs):
+        request = self.context['request']
+        raw_profile_id = request.data.get('to_profile_id') or request.data.get('profile_id')
+        if not raw_profile_id:
+            raise serializers.ValidationError({"receiver": ["profile_id가 필요합니다."]})
+
+        from apps.profiles.models import Profile
+        try:
+            profile = Profile.objects.select_related('user').get(pk=int(raw_profile_id))
+        except (ValueError, Profile.DoesNotExist):
+            raise serializers.ValidationError({"receiver": ["대상 프로필을 찾을 수 없습니다."]})
+
+        attrs['receiver'] = profile.user
+        return attrs
 
 class MatchDetailSerializer(serializers.ModelSerializer):
     sender = UserSimpleSerializer(read_only=True)

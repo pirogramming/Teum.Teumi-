@@ -60,40 +60,18 @@ class MatchListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         sender = self.request.user
+        receiver = serializer.validated_data['receiver']
 
-        receiver = serializer.validated_data.get('receiver', None)
-
-        if receiver is None:
-            # 프론트가 전달하는 대상 프로필 id 보조 키
-            raw_profile_id = self.request.data.get('to_profile_id') or self.request.data.get('profile_id')
-            if raw_profile_id is not None:
-                try:
-                    profile_id = int(raw_profile_id)
-                except (TypeError, ValueError):
-                    raise serializers.ValidationError({"receiver": ["대상 프로필 ID가 올바르지 않습니다."]})
-                try:
-                    target_profile = Profile.objects.select_related('user').get(pk=profile_id)
-                except Profile.DoesNotExist:
-                    raise serializers.ValidationError({"receiver": ["대상 프로필을 찾을 수 없습니다."]})
-                receiver = target_profile.user
-
-        if receiver is None:
-            raise serializers.ValidationError({"receiver": ["수신자 정보가 누락되었습니다."]})
-
-        # 자기 자신에게 신청 방지
         if receiver == sender:
             raise serializers.ValidationError({"receiver": ["본인에게는 신청할 수 없습니다."]})
 
-        # 양방향 중복 매칭 방지: 거절된 건만 예외, 그 외 상태는 모두 차단
         exists_conflict = Matching.objects.filter(
             Q(sender=sender, receiver=receiver) | Q(sender=receiver, receiver=sender)
-        ).exclude(status=MatchingStatus.REJECTED).exists()
+        ).exists()
         if exists_conflict:
             raise serializers.ValidationError({"non_field_errors": ["이미 진행 중인 신청이 있습니다."]})
 
-        # 정상 저장
         serializer.save(sender=sender, receiver=receiver, status=MatchingStatus.PENDING)
-
 
 class MatchStatusUpdateView(generics.UpdateAPIView):
     """
@@ -127,10 +105,7 @@ class MatchStatusUpdateView(generics.UpdateAPIView):
             # 기존 채팅방이 있는지 확인
             if not matching.chatroom:
                 # 새 채팅방 생성
-                chatroom = ChatRoom.objects.create(
-                    name=f"{matching.sender.username} & {matching.receiver.username}",
-                    is_private=True
-                )
+                chatroom = ChatRoom.objects.create()
                 matching.chatroom = chatroom
                 
                 # 참여자 추가

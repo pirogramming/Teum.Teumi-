@@ -36,9 +36,9 @@
         <div>
             <div class="circle">
                 {% if match.sender == user %}
-                    {{ match.receiver.username|slice:":1" }}
+                    {{ match.receiver.profile.nickname |slice:":1" }}
                 {% else %}
-                    {{ match.sender.username|slice:":1" }}
+                    {{ match.sender.profile.nickname |slice:":1" }}
                 {% endif %}
             </div>
         </div>
@@ -130,9 +130,9 @@
             <div>
                 <div class="circle-1">
                     {% if match.sender == user %}
-                        {{ match.receiver.username|slice:":1" }}
+                        {{ match.receiver.profile.nickname |slice:":1" }}
                     {% else %}
-                        {{ match.sender.username|slice:":1" }}
+                        {{ match.sender.profile.nickname |slice:":1" }}
                     {% endif %}
                 </div>
             </div>
