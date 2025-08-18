@@ -4,6 +4,9 @@ AI 기반 자기소개 자동 생성 서비스
 """
 
 from typing import Dict, Any, Optional
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from django.core.cache import cache
 from AI_API.LLM.open_ai import OpenAIAPIClient
 from AI_API.LLM.prompt_templates import (
     PROFILE_INTRODUCTION_PROMPT, 
@@ -93,6 +96,7 @@ def generate_enhanced_introduction(profile: Any, existing_introduction: str = ""
 def generate_conversation_topics(user_a_profile, user_b_profile):
     """
     두 사용자 간의 대화주제 3가지를 AI로 추천
+    성능 개선: 캐싱 적용
     
     Args:
         user_a_profile: 사용자 A의 프로필
@@ -101,10 +105,28 @@ def generate_conversation_topics(user_a_profile, user_b_profile):
     Returns:
         dict: 대화주제 목록과 메타데이터
     """
+    # 캐시 키 생성 (두 사용자 조합별로 고유)
+    cache_key = f"conversation_topics_{user_a_profile.profile_id}_{user_b_profile.profile_id}"
+    
+    # 캐시에서 결과 확인 (10분 캐시)
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        print(f"캐시된 대화주제 결과 사용")
+        return cached_result
+    
     try:
-        # 두 사용자의 프로필 요약 생성
-        user_a_summary = _create_profile_summary_for_conversation(user_a_profile)
-        user_b_summary = _create_profile_summary_for_conversation(user_b_profile)
+        # 두 사용자의 프로필 요약 생성 (동기 처리로 변경)
+        try:
+            user_a_summary = _create_profile_summary_for_conversation(user_a_profile)
+        except Exception as e:
+            print(f"사용자 A 프로필 요약 생성 실패: {e}")
+            user_a_summary = "프로필 정보를 불러올 수 없습니다."
+        
+        try:
+            user_b_summary = _create_profile_summary_for_conversation(user_b_profile)
+        except Exception as e:
+            print(f"사용자 B 프로필 요약 생성 실패: {e}")
+            user_b_summary = "프로필 정보를 불러올 수 없습니다."
         
         # OpenAI API 클라이언트 초기화
         client = OpenAIAPIClient()
@@ -126,7 +148,7 @@ def generate_conversation_topics(user_a_profile, user_b_profile):
             # 응답에서 대화주제 추출
             topics_with_messages = _parse_conversation_topics(response)
             
-            return {
+            result = {
                 'success': True,
                 'topics': [t['topic'] for t in topics_with_messages],
                 'messages': [t['message'] for t in topics_with_messages],
@@ -135,19 +157,25 @@ def generate_conversation_topics(user_a_profile, user_b_profile):
                 'user_b_summary': user_b_summary
             }
         else:
-            return {
+            result = {
                 'success': False,
                 'error': 'AI 응답이 비어있습니다.',
                 'topics': _generate_fallback_conversation_topics_with_messages(user_a_profile, user_b_profile)
             }
+        
+        # 결과 캐싱 (10분)
+        cache.set(cache_key, result, 600)
+        return result
             
     except Exception as e:
         print(f"대화주제 생성 오류: {e}")
-        return {
+        result = {
             'success': False,
             'error': str(e),
             'topics': _generate_fallback_conversation_topics_with_messages(user_a_profile, user_b_profile)
         }
+        cache.set(cache_key, result, 600)  # 10분 캐시
+        return result
 
 
 def _collect_step_context(profile_data: Dict[str, Any]) -> Dict[str, Any]:
