@@ -1,10 +1,69 @@
 // 마이페이지 JavaScript
 
+// 공통 인증 함수 (프로필 온보딩과 동일)
+const ProfileOnboarding = {
+  // 토큰 부트스트랩
+  bootstrapToken() {
+    const tmplAccess = window.tmplAccess || '';
+    const tmplRefresh = window.tmplRefresh || '';
+    if (tmplAccess) localStorage.setItem('access', tmplAccess);
+    if (tmplRefresh) localStorage.setItem('refresh', tmplRefresh);
+  },
+
+  // 인증된 fetch 헬퍼
+  async authFetch(url, options = {}, tryRefresh = true) {
+    const token = localStorage.getItem('access') || '';
+    const headers = {
+      ...(options.headers || {}),
+      'Authorization': token ? `Bearer ${token}` : '',
+    };
+    const req = { ...options, headers };
+
+    let res = await fetch(url, req);
+    if (res.status === 401 && tryRefresh) {
+      const newAccess = await this.refreshAccessToken();
+      if (newAccess) {
+        const retryHeaders = {
+          ...(options.headers || {}),
+          'Authorization': `Bearer ${newAccess}`,
+        };
+        res = await fetch(url, { ...options, headers: retryHeaders });
+      }
+    }
+    return res;
+  },
+
+  // 토큰 갱신
+  async refreshAccessToken() {
+    const refresh = localStorage.getItem('refresh');
+    if (!refresh) return null;
+    try {
+      const res = await fetch('/api/token/refresh/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh })
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.access) {
+        localStorage.setItem('access', data.access);
+        return data.access;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+};
+
 // 전역 변수
 let scheduleData = Array(7).fill(null).map(() => Array(24).fill(false));
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    // 토큰 부트스트랩
+    ProfileOnboarding.bootstrapToken();
+    
     // 자기소개 50자 카운터 즉시 반영
     const introArea = document.getElementById('basic-introduction');
     const countEl = document.getElementById('basic-intro-count');
@@ -36,6 +95,54 @@ document.addEventListener('DOMContentLoaded', function() {
         // 초기 상태 설정
         updateTextCount();
         updateButtonState();
+    }
+    
+    // AI 자기소개 버튼 핸들러 추가
+    const aiButton = document.getElementById('ai-button');
+    if (aiButton) {
+        aiButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                aiButton.disabled = true;
+                const originalText = aiButton.innerHTML;
+                aiButton.innerHTML = `
+                    <svg class="ai-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                    </svg>AI로 추천받기
+                    <span>✨</span>
+                    <div style="margin-top: 4px; font-size: 12px; color: #666;">생성중...</div>
+                `;
+                
+                // 기존 자기소개 (있는 경우)
+                const existingIntroduction = introArea ? introArea.value : '';
+                
+                const res = await ProfileOnboarding.authFetch('/profiles/api/introduction/enhanced/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        existing_introduction: existingIntroduction 
+                    })
+                });
+                
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data && data.ai_introduction) {
+                    if (introArea) {
+                        introArea.value = data.ai_introduction;
+                        // 카운터와 버튼 상태 업데이트
+                        const event = new Event('input', { bubbles: true });
+                        introArea.dispatchEvent(event);
+                    }
+                } else {
+                    alert((data && data.message) ? data.message : 'AI 자기소개 생성에 실패했습니다.');
+                }
+            } catch (err) {
+                console.error('[mypage] AI 자기소개 생성 오류:', err);
+                alert('AI 자기소개 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            } finally {
+                aiButton.disabled = false;
+                aiButton.innerHTML = originalText;
+            }
+        });
     }
     console.log('마이페이지 로드됨');
     

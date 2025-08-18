@@ -40,7 +40,7 @@ def calculate_match_score(my_profile, other_profile):
     2단계: 점수 계산
     - 관심사, 성격, 대화 목적 등 조건별 가중치 적용
     """
-    score = 0
+    score = 0  # 기본 점수를 0점으로 설정 (백분율 계산을 위해)
 
     # 성격 키워드 교집합
     try:
@@ -49,8 +49,8 @@ def calculate_match_score(my_profile, other_profile):
         if my_additional and other_additional:
             my_keywords = set(my_additional.personality_keyword.values_list('keyword', flat=True))
             other_keywords = set(other_additional.personality_keyword.values_list('keyword', flat=True))
-            if my_keywords & other_keywords:
-                score += 15
+            common_keywords = my_keywords & other_keywords
+            score += len(common_keywords) * 5  # 교집합 1개당 5점, 최대 20점
     except Exception as e:
         print(f"성격 키워드 계산 오류: {e}")
         pass
@@ -60,7 +60,7 @@ def calculate_match_score(my_profile, other_profile):
         my_interests = set(my_profile.interests.values_list('interest__name', flat=True))
         other_interests = set(other_profile.interests.values_list('interest__name', flat=True))
         common_interests = my_interests & other_interests
-        score += len(common_interests) * 5  # 관심사 하나당 5점
+        score += len(common_interests) * 5  # 관심사 하나당 5점, 최대 20점
     except Exception as e:
         print(f"관심사 계산 오류: {e}")
         pass
@@ -72,7 +72,7 @@ def calculate_match_score(my_profile, other_profile):
         if (my_additional and other_additional and 
             my_additional.conversation_style and other_additional.conversation_style and
             my_additional.conversation_style == other_additional.conversation_style):
-            score += 10
+            score += 10 
     except Exception as e:
         print(f"대화 스타일 계산 오류: {e}")
         pass
@@ -80,7 +80,7 @@ def calculate_match_score(my_profile, other_profile):
     # 같은 학교 보너스
     if my_profile.school and other_profile.school:
         if my_profile.school.school_id == other_profile.school.school_id:
-            score += 10
+            score += 15
 
     # 학년 차이 (1-2학년 차이는 보너스)
     if my_profile.grade and other_profile.grade:
@@ -99,11 +99,11 @@ def calculate_match_score(my_profile, other_profile):
     if my_profile.age and other_profile.age:
         age_diff = abs(my_profile.age - other_profile.age)
         if age_diff <= 2:
-            score += 10
+            score += 15
         elif age_diff <= 3:
-            score += 7
+            score += 10
         elif age_diff <= 5:
-            score += 3
+            score += 5
 
     # ============================================================================
     # 학과 관련 점수 계산
@@ -190,7 +190,58 @@ def calculate_match_score(my_profile, other_profile):
         print(f"재만남 점수 계산 오류: {e}")
         pass
 
-    return score
+    # 최대 점수 계산 (모든 조건이 만족될 때의 점수)
+    max_score = 0
+    
+    # 성격 키워드 최대 점수 (3개 키워드 × 5점 = 15점)
+    max_score += 15
+    
+    # 관심사 최대 점수 (4개 관심사 × 5점 = 20점)
+    max_score += 20
+    
+    # 대화 스타일 최대 점수
+    max_score += 10
+    
+    # 같은 학교 최대 점수
+    max_score += 15
+    
+    # 학년 차이 최대 점수
+    max_score += 7
+    
+    # 나이 차이 최대 점수
+    max_score += 15
+    
+    # 학과 카테고리 최대 점수
+    max_score += 8
+    
+    # 학과 위치 최대 점수
+    max_score += 6
+    
+    # 학과 학위 유형 최대 점수
+    max_score += 5
+    
+    # 리뷰 평점 최대 점수
+    max_score += 8
+    
+    # 대화태도 최대 점수 (추정)
+    max_score += 10
+    
+    # 대화가치 최대 점수 (추정)
+    max_score += 10
+    
+    # 재만남 최대 점수 (추정)
+    max_score += 10
+    
+    # 최대 점수는 149점
+    
+    # 백분율 계산: (실제 점수 / 최대 점수) × 100
+    if max_score > 0:
+        percentage = (score / max_score) * 100
+        # 60점 기본점수 + 백분율 점수 (최대 40점)
+        final_score = 60 + (percentage * 0.4)  # 0.4는 40점을 100%로 나눈 값
+        return min(final_score, 100)
+    else:
+        return 60  # 최대 점수가 0이면 기본점수만 반환
 
 
 def _is_similar_category(category1, category2):

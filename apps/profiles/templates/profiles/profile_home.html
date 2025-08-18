@@ -63,15 +63,8 @@
                             
                             <div class="match-info">
                                 <p class="match-text">
-                                    <span class="brain-icon">🧠</span>
-                                    💡 {{ profile.matching_score|default:70 }}% 매칭 + {{ profile.common_interests|length }}개 공통 관심사!
+                                    💡 {{ profile.matching_score|floatformat:1 }}% 매칭!
                                 </p>
-                                {% if profile.ai_reason %}
-                                <div class="ai-reason">
-                                    <span class="sparkle">✨</span>
-                                    <span class="ai-reason-text">{{ profile.ai_reason }}</span>
-                                </div>
-                                {% endif %}
                             </div>
                             
                             <div class="action-button">

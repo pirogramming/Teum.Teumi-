@@ -71,7 +71,12 @@
                 {% for recommendation in conversation_recommendations %}
                 <div class="recommendation-item">
                     <span class="recommendation-icon">{{ recommendation.icon }}</span>
-                    <p>{{ recommendation.text }}</p>
+                    <div>
+                        <p style="margin:0; font-weight:600;">{{ recommendation.text }}</p>
+                        {% if recommendation.message %}
+                        <p style="margin:4px 0 0; color:#6b7280; font-size: 14px;">💬 {{ recommendation.message }}</p>
+                        {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
             </div>

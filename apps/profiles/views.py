@@ -498,7 +498,7 @@ def profile_home(request):
         # 이하 추천/인기 프로필 데이터는 그대로 유지
 
     try:
-        from apps.matches.services.recommend import calculate_match_score
+        from apps.matches.services.recommend import recommend_top_n, calculate_match_score
         from apps.matches.services.ai_recommend import recommend_top_n_with_ai
         from apps.reviews.models import Review
         from django.db.models import Avg
@@ -509,14 +509,24 @@ def profile_home(request):
             .values_list('name', flat=True)
         )
 
-        # 추천 3명
-        recommended_users = recommend_top_n_with_ai(request.user, n=3)
+        # 추천 3명 (AI 재랭킹 기반, 실패 시 룰 기반으로 fallback)
+        ai_recommendation_used = False
+        try:
+            print(f"[추천] AI 추천 시작 - 사용자: {request.user.username}")
+            recommended_users = recommend_top_n_with_ai(request.user, n=3)
+            print(f"[추천] AI 추천 성공: {len(recommended_users)}명")
+            ai_recommendation_used = True
+        except Exception as e:
+            print(f"[추천] AI 추천 실패, 룰 기반으로 fallback: {e}")
+            recommended_users = recommend_top_n(request.user, n=3)
+            ai_recommendation_used = False
         recommendations = []
 
         for recommended_user in recommended_users:
             # recommend_top_n_with_ai는 Profile 객체 리스트를 반환
-            # 기존 호환성을 위해 User 객체가 들어와도 처리되도록 가드
-            p = getattr(recommended_user, 'profile', recommended_user)
+            # Profile 객체를 직접 사용
+            p = recommended_user  # Profile 객체
+            user_obj = p.user     # User 객체
 
             # 상대 관심사: 최대 4개 (feat 로직)
             other_interest_names = list(
@@ -527,43 +537,34 @@ def profile_home(request):
             # 공통 관심사
             common_interests = list(my_interest_names & set(other_interest_names))
 
-            # 매칭 점수 (실패 시 기본값)
+            # 룰 기반 매칭 점수 계산 (AI 제거로 속도 개선)
             try:
+                from apps.matches.services.recommend import calculate_match_score
                 matching_score = calculate_match_score(profile, p)
             except Exception:
-                matching_score = 75
+                matching_score = 60
 
             # 매너온도(리뷰 평균) - 없으면 4.0
-            target_user = getattr(recommended_user, 'user', recommended_user)
-            avg_rating = Review.objects.filter(target=target_user).aggregate(r=Avg('rating'))['r'] or 4.0
+            avg_rating = Review.objects.filter(target=user_obj).aggregate(r=Avg('rating'))['r'] or 4.0
 
             # 모델 인스턴스 직접 append 금지 → dict로 직렬화
             item = {
                 'profile_id': p.profile_id,
+                'nickname': p.nickname,
+                'school': p.school.school_name if p.school else None,
+                'department': p.department.department_name if p.department else None,
+                'age': p.age,
+                'introduction': p.introduction,
+                'user_interests': other_interest_names,     # 최대 4개
+                'common_interests': common_interests,       # 교집합
+                'matching_score': matching_score,
                 'average_rating': float(avg_rating),
             }
 
-            # AI 추천 이유가 있으면 포함 (ai_recommend에서 요약을 재사용하지 않으므로 안전 가드)
-            try:
-                # 간단한 추천 이유 생성: 공통 관심사/키워드 기반
-                reason_bits = []
-                if common_interests:
-                    reason_bits.append(f"공통 관심사 {len(common_interests)}개")
-                additional = getattr(p, 'additional_info', None)
-                my_additional = getattr(profile, 'additional_info', None)
-                if additional and my_additional:
-                    a_kw = set(additional.personality_keyword.values_list('keyword', flat=True))
-                    m_kw = set(my_additional.personality_keyword.values_list('keyword', flat=True))
-                    common_kw = a_kw & m_kw
-                    if common_kw:
-                        reason_bits.append(f"성격 키워드 매치: {', '.join(list(common_kw)[:2])}")
-                if p.school and profile.school and p.school_id == profile.school_id:
-                    reason_bits.append("같은 학교")
-                item['ai_reason'] = ' · '.join(reason_bits) if reason_bits else '관심사/학과/리뷰 점수를 반영해 추천했어요'
-            except Exception:
-                item['ai_reason'] = '관심사/학과/리뷰 점수를 반영해 추천했어요'
+
 
             recommendations.append(item)
+
     except Exception as e:
         print(f"추천 시스템 오류: {e}")
         recommendations = []
@@ -694,34 +695,41 @@ def profile_detail(request, profile_id):
         additional_info = None
         personality_keywords = []
 
-    # AI 추천 대화 주제 생성 (API 사용)
+    # AI 추천 대화 주제 3가지 생성 (API 사용)
     conversation_recommendations = []
     try:
+        print(f"[대화주제] AI 대화주제 생성 시작 - 프로필: {profile.profile_id}")
         ai_topics_res = generate_conversation_topics(profile, request.user.profile)
         if ai_topics_res and ai_topics_res.get('success') and ai_topics_res.get('topics'):
             topics = ai_topics_res.get('topics')[:3]
             messages = ai_topics_res.get('messages', [])
             icon_cycle = ['💼', '📚', '🎯']
+            
+            print(f"[대화주제] AI 대화주제 생성 성공: {len(topics)}개")
             for idx, topic in enumerate(topics):
                 conversation_recommendations.append({
                     'icon': icon_cycle[idx % len(icon_cycle)],
-                    'text': topic
+                    'text': topic,
+                    'message': messages[idx] if idx < len(messages) else ''
                 })
         else:
+            print(f"[대화주제] AI 대화주제 생성 실패: {ai_topics_res.get('error', 'Unknown error')}")
             # fallback (기존 간단 추천 유지)
             if profile.department:
-                conversation_recommendations.append({'icon': '💼', 'text': f'{profile.department.department_name} 전공과 관련된 진로 방향성 논의하기'})
+                conversation_recommendations.append({'icon': '💼', 'text': f'{profile.department.department_name} 전공과 관련된 진로 방향성 논의하기', 'message': '전공 분야에서 어떤 방향으로 발전하고 싶으신가요?'})
             if interests.exists():
                 first_interest = interests.first()
-                conversation_recommendations.append({'icon': '📚', 'text': f'{first_interest.name} 분야의 실무 경험과 인사이트 공유하기'})
-            conversation_recommendations.append({'icon': '🎯', 'text': '목표 달성을 위한 조언과 경험 나누기'})
-    except Exception:
+                conversation_recommendations.append({'icon': '📚', 'text': f'{first_interest.name} 분야의 실무 경험과 인사이트 공유하기', 'message': '관심 있는 분야에서 어떤 경험을 해보셨나요?'})
+            conversation_recommendations.append({'icon': '🎯', 'text': '목표 달성을 위한 조언과 경험 나누기', 'message': '앞으로의 목표나 계획에 대해 이야기해보세요.'})
+    except Exception as e:
+        print(f"[대화주제] 대화주제 생성 오류: {e}")
+        # fallback (기존 간단 추천 유지)
         if profile.department:
-            conversation_recommendations.append({'icon': '💼', 'text': f'{profile.department.department_name} 전공과 관련된 진로 방향성 논의하기'})
+            conversation_recommendations.append({'icon': '💼', 'text': f'{profile.department.department_name} 전공과 관련된 진로 방향성 논의하기', 'message': '전공 분야에서 어떤 방향으로 발전하고 싶으신가요?'})
         if interests.exists():
             first_interest = interests.first()
-            conversation_recommendations.append({'icon': '📚', 'text': f'{first_interest.name} 분야의 실무 경험과 인사이트 공유하기'})
-        conversation_recommendations.append({'icon': '🎯', 'text': '목표 달성을 위한 조언과 경험 나누기'})
+            conversation_recommendations.append({'icon': '📚', 'text': f'{first_interest.name} 분야의 실무 경험과 인사이트 공유하기', 'message': '관심 있는 분야에서 어떤 경험을 해보셨나요?'})
+        conversation_recommendations.append({'icon': '🎯', 'text': '목표 달성을 위한 조언과 경험 나누기', 'message': '앞으로의 목표나 계획에 대해 이야기해보세요.'})
     
     # 스케줄 정보 가져오기
     schedule_data = [[False] * 25 for _ in range(7)]  # 7일간의 스케줄
@@ -770,8 +778,12 @@ def profile_detail(request, profile_id):
         # 현재 로그인한 사용자의 프로필
         my_profile = Profile.objects.get(user=request.user)
         
-        # calculate_match_score 함수로 매칭 점수 계산
-        matching_score = calculate_match_score(my_profile, profile)
+        # 룰 기반 매칭 점수 계산 (AI 제거로 속도 개선)
+        try:
+            from apps.matches.services.recommend import calculate_match_score
+            matching_score = calculate_match_score(my_profile, profile)
+        except Exception:
+            matching_score = 60
         
         # 공통 관심사 계산
         my_interests = Interest.objects.filter(profileinterest__profile=my_profile)

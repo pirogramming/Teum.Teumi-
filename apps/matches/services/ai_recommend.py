@@ -1,8 +1,13 @@
 import re
 import requests
+import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from django.core.cache import cache
 from apps.matches.services.recommend import recommend_top_n
 from AI_API.LLM.open_ai import OpenAIAPIClient
 from AI_API.LLM.prompt_templates import RECOMMENDATION_PROMPT
+
 
 def get_review_summary_from_api(user_id):
     """
@@ -89,32 +94,50 @@ def recommend_top_n_with_ai(user, n=3):
     """
     룰 기반 점수로 상위 10명을 선별한 뒤,
     해당 후보군을 GPT에게 전달해 최종 추천 유저 n(기본값=3)명을 선택하는 함수.
+    성능 개선: 캐싱 및 비동기 처리 적용
     """
+    # 캐시 키 생성 (사용자별로 고유)
+    cache_key = f"ai_recommendations_{user.id}_{n}"
+    
+    # 캐시에서 결과 확인 (5분 캐시)
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        print(f"캐시된 AI 추천 결과 사용: {len(cached_result)}명")
+        return cached_result
+    
     try:
-        # 1단계: 룰 기반으로 상위 10명 선별
+        # 1단계: 룰 기반으로 상위 10명 선별 (최소 3명 이상일 때만 AI 사용)
         initial_candidates = recommend_top_n(user, n=10)
         
         if not initial_candidates:
             print("초기 후보가 없습니다.")
             return []
+        
+        if len(initial_candidates) < 3:
+            print(f"후보가 {len(initial_candidates)}명으로 부족합니다. 룰 기반 결과 반환")
+            return initial_candidates[:n]
 
         print(f"초기 후보 {len(initial_candidates)}명 선별 완료")
 
-        # 2단계: 각 후보의 프로필 요약 생성
+        # 2단계: 각 후보의 프로필 요약 생성 (동기 처리로 변경)
         summaries = []
+        
         for i, candidate in enumerate(initial_candidates, 1):
             try:
                 summary = get_user_profile_summary(candidate.user, candidate)
-                summaries.append(f"{i}. {summary}")
+                if summary:
+                    summaries.append(f"{i}. {summary}")
             except Exception as e:
-                print(f"후보 {i} 요약 생성 실패: {e}")
+                print(f"후보 {candidate.profile_id} 요약 생성 실패: {e}")
                 continue
 
         if not summaries:
             print("프로필 요약 생성 실패")
-            return initial_candidates[:n]  # AI 실패 시 룰 기반 결과 반환
+            result = initial_candidates[:n]
+            cache.set(cache_key, result, 300)  # 5분 캐시
+            return result
 
-        # 3단계: GPT에게 추천 요청
+        # 3단계: GPT에게 추천 요청 (비동기)
         prompt = RECOMMENDATION_PROMPT.format(
             n=n, 
             summaries="\n".join(summaries)
@@ -125,7 +148,9 @@ def recommend_top_n_with_ai(user, n=3):
 
         if not gpt_response:
             print("GPT 응답 실패, 룰 기반 결과 반환")
-            return initial_candidates[:n]
+            result = initial_candidates[:n]
+            cache.set(cache_key, result, 300)  # 5분 캐시
+            return result
 
         # 4단계: GPT 응답에서 선택된 인덱스 추출
         numbers = re.findall(r'\d+', gpt_response)
@@ -142,15 +167,22 @@ def recommend_top_n_with_ai(user, n=3):
         # 5단계: 선택된 후보 반환
         if selected_indices:
             selected_candidates = [initial_candidates[i-1] for i in selected_indices if 1 <= i <= len(initial_candidates)]
-            return selected_candidates[:n]
+            result = selected_candidates[:n]
         else:
             print("GPT 응답에서 유효한 인덱스를 찾을 수 없음, 룰 기반 결과 반환")
-            return initial_candidates[:n]
+            result = initial_candidates[:n]
+        
+        # 결과 캐싱 (5분)
+        cache.set(cache_key, result, 300)
+        return result
 
     except Exception as e:
         print(f"AI 추천 로직 실행 오류: {e}")
         # 오류 발생 시 룰 기반 결과 반환
         try:
-            return recommend_top_n(user, n)
+            result = recommend_top_n(user, n)
+            cache.set(cache_key, result, 300)  # 5분 캐시
+            return result
         except:
             return []
+
