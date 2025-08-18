@@ -498,7 +498,8 @@ def profile_home(request):
         # 이하 추천/인기 프로필 데이터는 그대로 유지
 
     try:
-        from apps.matches.services.recommend import recommend_top_n, calculate_match_score
+        from apps.matches.services.recommend import calculate_match_score
+        from apps.matches.services.ai_recommend import recommend_top_n_with_ai
         from apps.reviews.models import Review
         from django.db.models import Avg
 
@@ -509,11 +510,13 @@ def profile_home(request):
         )
 
         # 추천 3명
-        recommended_users = recommend_top_n(request.user, n=3)
+        recommended_users = recommend_top_n_with_ai(request.user, n=3)
         recommendations = []
 
         for recommended_user in recommended_users:
-            p = recommended_user.profile
+            # recommend_top_n_with_ai는 Profile 객체 리스트를 반환
+            # 기존 호환성을 위해 User 객체가 들어와도 처리되도록 가드
+            p = getattr(recommended_user, 'profile', recommended_user)
 
             # 상대 관심사: 최대 4개 (feat 로직)
             other_interest_names = list(
@@ -531,22 +534,36 @@ def profile_home(request):
                 matching_score = 75
 
             # 매너온도(리뷰 평균) - 없으면 4.0
-            avg_rating = Review.objects.filter(target=recommended_user).aggregate(r=Avg('rating'))['r'] or 4.0
+            target_user = getattr(recommended_user, 'user', recommended_user)
+            avg_rating = Review.objects.filter(target=target_user).aggregate(r=Avg('rating'))['r'] or 4.0
 
             # 모델 인스턴스 직접 append 금지 → dict로 직렬화
-            recommendations.append({
+            item = {
                 'profile_id': p.profile_id,
-                'nickname': p.nickname,
-                'school': p.school.school_name if p.school else None,
-                'department': p.department.department_name if p.department else None,
-                'age': p.age,
-                'introduction': p.introduction,
-                'user_interests': other_interest_names,     # 최대 4개
-                'common_interests': common_interests,       # 교집합
-                'matching_score': matching_score,
                 'average_rating': float(avg_rating),
-            })
+            }
 
+            # AI 추천 이유가 있으면 포함 (ai_recommend에서 요약을 재사용하지 않으므로 안전 가드)
+            try:
+                # 간단한 추천 이유 생성: 공통 관심사/키워드 기반
+                reason_bits = []
+                if common_interests:
+                    reason_bits.append(f"공통 관심사 {len(common_interests)}개")
+                additional = getattr(p, 'additional_info', None)
+                my_additional = getattr(profile, 'additional_info', None)
+                if additional and my_additional:
+                    a_kw = set(additional.personality_keyword.values_list('keyword', flat=True))
+                    m_kw = set(my_additional.personality_keyword.values_list('keyword', flat=True))
+                    common_kw = a_kw & m_kw
+                    if common_kw:
+                        reason_bits.append(f"성격 키워드 매치: {', '.join(list(common_kw)[:2])}")
+                if p.school and profile.school and p.school_id == profile.school_id:
+                    reason_bits.append("같은 학교")
+                item['ai_reason'] = ' · '.join(reason_bits) if reason_bits else '관심사/학과/리뷰 점수를 반영해 추천했어요'
+            except Exception:
+                item['ai_reason'] = '관심사/학과/리뷰 점수를 반영해 추천했어요'
+
+            recommendations.append(item)
     except Exception as e:
         print(f"추천 시스템 오류: {e}")
         recommendations = []
@@ -677,25 +694,34 @@ def profile_detail(request, profile_id):
         additional_info = None
         personality_keywords = []
 
-    # AI 추천 대화 주제 생성
+    # AI 추천 대화 주제 생성 (API 사용)
     conversation_recommendations = []
-    if profile.department:
-        conversation_recommendations.append({
-            'icon': '💼',
-            'text': f'{profile.department.department_name} 전공과 관련된 진로 방향성 논의하기'
-        })
-    
-    if interests.exists():
-        first_interest = interests.first()
-        conversation_recommendations.append({
-            'icon': '📚',
-            'text': f'{first_interest.name} 분야의 실무 경험과 인사이트 공유하기'
-        })
-    
-    conversation_recommendations.append({
-        'icon': '🎯',
-        'text': '목표 달성을 위한 조언과 경험 나누기'
-    })
+    try:
+        ai_topics_res = generate_conversation_topics(profile, request.user.profile)
+        if ai_topics_res and ai_topics_res.get('success') and ai_topics_res.get('topics'):
+            topics = ai_topics_res.get('topics')[:3]
+            messages = ai_topics_res.get('messages', [])
+            icon_cycle = ['💼', '📚', '🎯']
+            for idx, topic in enumerate(topics):
+                conversation_recommendations.append({
+                    'icon': icon_cycle[idx % len(icon_cycle)],
+                    'text': topic
+                })
+        else:
+            # fallback (기존 간단 추천 유지)
+            if profile.department:
+                conversation_recommendations.append({'icon': '💼', 'text': f'{profile.department.department_name} 전공과 관련된 진로 방향성 논의하기'})
+            if interests.exists():
+                first_interest = interests.first()
+                conversation_recommendations.append({'icon': '📚', 'text': f'{first_interest.name} 분야의 실무 경험과 인사이트 공유하기'})
+            conversation_recommendations.append({'icon': '🎯', 'text': '목표 달성을 위한 조언과 경험 나누기'})
+    except Exception:
+        if profile.department:
+            conversation_recommendations.append({'icon': '💼', 'text': f'{profile.department.department_name} 전공과 관련된 진로 방향성 논의하기'})
+        if interests.exists():
+            first_interest = interests.first()
+            conversation_recommendations.append({'icon': '📚', 'text': f'{first_interest.name} 분야의 실무 경험과 인사이트 공유하기'})
+        conversation_recommendations.append({'icon': '🎯', 'text': '목표 달성을 위한 조언과 경험 나누기'})
     
     # 스케줄 정보 가져오기
     schedule_data = [[False] * 25 for _ in range(7)]  # 7일간의 스케줄
