@@ -46,6 +46,8 @@
   - '완료된 만남'에서는 대화가 종료된 상대에 대한 정보가 나타나고, 매너온도 남기기 창을 통해 평점과 후기를 남길 수 있어요.
 
   **💬 Chats**
+
+  
   <img height="450" alt="Image" src="https://github.com/user-attachments/assets/aa6dbbfb-1e2d-4a72-b0c7-d196f07f51ea" />
   
   - 대화 페이지에서는 내가 대화를 수락하거나 상대방에 의해 수락된 후 대화를 나눌 수 있는 공간이에요.
@@ -53,6 +55,8 @@
   - 만남이 완료된 상대는 매칭 페이지의 '완료된 만남' 탭에서 확인할 수 있어요.
 
   **👨🏻‍💻 My Page**
+
+  
   <img height="450" alt="Image" src="https://github.com/user-attachments/assets/b4a7c70b-9bb2-43d4-a220-0d0600620f4b" />
   
   - 마이 페이지에서는 내가 작성한 세부 정보들을 확인할 수 있어요.
