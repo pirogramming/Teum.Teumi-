@@ -544,8 +544,8 @@ def profile_home(request):
             except Exception:
                 matching_score = 60
 
-            # 매너온도(리뷰 평균) - 없으면 4.0
-            avg_rating = Review.objects.filter(target=user_obj).aggregate(r=Avg('rating'))['r'] or 4.0
+            # 매너온도(리뷰 평균) - 없으면 0.0
+            avg_rating = Review.objects.filter(target=user_obj).aggregate(r=Avg('rating'))['r'] or 0.0
 
             # 모델 인스턴스 직접 append 금지 → dict로 직렬화
             item = {
@@ -632,7 +632,7 @@ def profile_home(request):
                 'kang_jiseok': 4.5,
             }
             username = p.user.username
-            avg_rating = manner_temperatures.get(username, getattr(p, 'avg_rating', None) or 4.0)
+            avg_rating = manner_temperatures.get(username, getattr(p, 'avg_rating', None) or 0.0)
 
             popular_profiles.append({
                 'profile_id': p.profile_id,
