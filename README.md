@@ -3,20 +3,20 @@
 
 
 # 📃 Contents
-1. [🌱 Developers](#-🌱-Developers-)
-2. [🌟 Services](#-🌟-Services-)
-3. [💻 Deploy](#-💻-Deploy-)
-4. [🔁 Service Flow](#-🔁-Service-Flow-)
-5. [🔧 Tech Stack](#🔧-Tech-Stack-)
+1. [🌱 Developers](#-Developers-)
+2. [🌟 Services](#-Services-)
+3. [💻 Deploy](#-Deploy-)
+4. [🔁 Service Flow](#-Service-Flow-)
+5. [🔧 Tech Stack](#-Tech-Stack-)
 
 
 # 🌱 Developers
 |  팀원  |  역할  |  주요 업무  |
 |  ---  |  ---  |  ---  |
-|  <img src="https://github.com/Geun100.png"<br>[김동근](https://github.com/Geun100)  |  PM, FE  |    |
-|  <img src="https://github.com/Dev-Anniee.png"<br>[안정민](https://github.com/Dev-Anniee)  |  BE  |    |
-|  <img src="https://github.com/gicks04.png"<br>[윤기찬](https://github.com/gicks04)  |  BE  |    |
-|  <img src="https://github.com/Yewonlim-04.png"<br>[임예원](https://github.com/Yewonlim-04)  |  FE, BE  |    |
+|  <img src="https://github.com/Geun100.png"><br>[김동근](https://github.com/Geun100)  |  PM, FE  |    |
+|  <img src="https://github.com/Dev-Anniee.png"><br>[안정민](https://github.com/Dev-Anniee)  |  BE  |    |
+|  <img src="https://github.com/gicks04.png"><br>[윤기찬](https://github.com/gicks04)  |  BE  |    |
+|  <img src="https://github.com/Yewonlim-04.png"><br>[임예원](https://github.com/Yewonlim-04)  |  FE, BE  |    |
 
 
 # 🌟 Services
