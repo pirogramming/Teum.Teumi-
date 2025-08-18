@@ -334,3 +334,29 @@ document.addEventListener('click', async function (event) {
       }
   }
 });
+
+document.querySelectorAll('.reject').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const nickname = btn.dataset.nickname;
+
+        // 모달에 값 주입
+        document.getElementById('reject-name').innerText = nickname;
+        document.getElementById('reject-submit').dataset.id = id;
+        document.getElementById('reject-submit').dataset.nickname = nickname;
+
+        // 모달 열기
+        document.getElementById('reject-reason').style.display = 'block';
+        document.getElementById('modal-overlay').style.display = 'block';
+    });
+});
+
+const reviewButtons = document.querySelectorAll(".review");
+const reviewName = document.getElementById("review-name");
+
+reviewButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+        reviewName.textContent = btn.dataset.nickname;
+        document.getElementById("review").style.display = "block";
+    });
+});
