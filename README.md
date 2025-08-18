@@ -96,7 +96,7 @@
 # 🔁 Service Flow
 
 
-<img width="800" alt="Image" src="https://github.com/user-attachments/assets/ed977865-4e28-443a-82b7-109dea534b5a" />
+<img width="600" alt="Image" src="https://github.com/user-attachments/assets/ed977865-4e28-443a-82b7-109dea534b5a" />
 
 
 
